@@ -14,9 +14,9 @@ from pymilvus import Collection, connections, utility
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-MILVUS_HOST = "localhost"
-MILVUS_PORT = "19530"
-EMBEDDING_MODEL = "text-embedding-3-small"
+MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
+MILVUS_PORT = os.getenv("MILVUS_PORT", "19530")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
 _openai_client = None
 _connected = False

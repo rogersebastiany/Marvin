@@ -28,7 +28,7 @@ def _slugify(text: str) -> str:
 
 
 def _fetch(url: str) -> httpx.Response:
-    resp = httpx.get(url, follow_redirects=True, timeout=30, verify=False)
+    resp = httpx.get(url, follow_redirects=True, timeout=30)
     resp.raise_for_status()
     return resp
 

@@ -4,12 +4,16 @@ Ontology backend — Python library wrapping Neo4j.
 Not an MCP server. Used internally by mcp-marvin.
 """
 
+import os
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
-NEO4J_URI = "bolt://localhost:7687"
-NEO4J_AUTH = ("neo4j", "tautologia")
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautologia"))
 
 _driver = None
 

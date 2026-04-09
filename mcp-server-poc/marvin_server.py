@@ -24,6 +24,19 @@ import web_to_docs_backend
 import prompt_engineer_backend
 import system_design_backend
 
+# Canonical tool list — update when adding/removing tools
+MARVIN_TOOLS = [
+    "retrieve", "get_concept", "traverse", "why_exists",
+    "log_tool_call", "log_decision", "log_session",
+    "expand", "link",
+    "propose_schema_change", "execute_schema_change",
+    "search_docs", "list_docs", "get_doc",
+    "fetch_url", "save_doc", "crawl_docs",
+    "generate_prompt", "refine_prompt", "audit_prompt",
+    "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
+    "inspect_schemas", "stats",
+]
+
 mcp = FastMCP(
     "mcp-marvin",
     instructions=(
@@ -32,7 +45,7 @@ mcp = FastMCP(
         "## Thesis\n"
         "Ontologia completa → Tautologia → Determinismo. "
         "Complete ontological context yields deterministic LLM behavior. "
-        "Your 27 tautological tools ARE the ontology — typed I/O, finite output, explicit failure.\n\n"
+        f"Your {len(MARVIN_TOOLS)} tautological tools ARE the ontology — typed I/O, finite output, explicit failure.\n\n"
         "## Execution Pattern\n"
         "1. RETRIEVE BEFORE ACT — always query ontology (get_concept, traverse) "
         "and episodic memory (retrieve) before generating anything. "
@@ -379,17 +392,7 @@ def generate_prompt(task_description: str, domain: str = "general") -> str:
         task_description: What the prompt should accomplish
         domain: Domain context (e.g. 'cloud-infrastructure', 'web-development')
     """
-    # Build Marvin's own tool catalog for inclusion in generated prompts
-    tool_names = [
-        "retrieve", "get_concept", "traverse", "why_exists",
-        "log_tool_call", "log_decision", "log_session",
-        "expand", "link", "search_docs", "list_docs", "get_doc",
-        "fetch_url", "save_doc", "crawl_docs",
-        "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
-        "propose_schema_change", "execute_schema_change",
-        "inspect_schemas", "stats",
-    ]
-    catalog = "\n".join(f"- `{t}`" for t in tool_names)
+    catalog = "\n".join(f"- `{t}`" for t in MARVIN_TOOLS)
     return prompt_engineer_backend.generate_prompt(task_description, domain, catalog)
 
 
