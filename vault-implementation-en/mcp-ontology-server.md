@@ -1,6 +1,6 @@
 # mcp-ontology-server
 
-MCP server that exposes the [[Neo4j]] knowledge graph as tools for the [[Agente na POC|agent]]. It allows querying, traversing, and enriching the [[Ontologia como Código|ontology]].
+MCP server that exposes the [[Neo4j]] knowledge graph as tools for the [[Agent in POC|agent]]. It allows querying, traversing, and enriching the [[Ontology as Code|ontology]].
 
 ---
 
@@ -31,7 +31,7 @@ Edges created by the agent have `discovered_by: "agent"` -- distinguishable from
 
 ## In the Server Chain
 
-The mcp-ontology-server integrates into the existing [[Cadeia de Servers]]:
+The mcp-ontology-server integrates into the existing [[Server Chain]]:
 
 ```
 Agent needs to understand a concept -> mcp-ontology-server (traverse)
@@ -47,4 +47,4 @@ mcp-ontology-server (expand)
 
 ---
 
-Related to: [[Neo4j]], [[Ontologia como Código]], [[Cadeia de Servers]], [[docs-server]], [[Loop de Auto-Melhoria]], [[MCP]], [[FastMCP]]
+Related to: [[Neo4j]], [[Ontology as Code]], [[Server Chain]], [[docs-server]], [[Self-Improvement Loop]], [[MCP]], [[FastMCP]]

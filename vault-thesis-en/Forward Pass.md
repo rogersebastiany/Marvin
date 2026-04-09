@@ -1,6 +1,6 @@
 # Forward Pass
 
-The passage of input through the [[Rede Neural]] to produce an output. Each neuron applies its [[Activation Function]] and the signal propagates forward, layer by layer.
+The passage of input through the [[Neural Network]] to produce an output. Each neuron applies its [[Activation Function]] and the signal propagates forward, layer by layer.
 
 ---
 
@@ -18,8 +18,8 @@ The forward pass is the "boolean" in action -- each neuron fires or not, each la
 
 ## In Inference
 
-When the model is already trained ([[Matriz M]] frozen), each interaction with the user is a forward pass. The [[Contexto]] enters, propagates through the layers, and the output (next token) emerges. Repeats token by token until the response is complete.
+When the model is already trained ([[Matrix M]] frozen), each interaction with the user is a forward pass. The [[Context]] enters, propagates through the layers, and the output (next token) emerges. Repeats token by token until the response is complete.
 
 ---
 
-Related to: [[Rede Neural]], [[Activation Function]], [[Bias]], [[Loss Function]], [[Backpropagation]], [[Matriz M]]
+Related to: [[Neural Network]], [[Activation Function]], [[Bias]], [[Loss Function]], [[Backpropagation]], [[Matrix M]]

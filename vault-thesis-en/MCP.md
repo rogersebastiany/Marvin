@@ -1,6 +1,6 @@
 # MCP
 
-Model Context Protocol. O(1) indirect addressing for external [[Contexto]] via gRPC. The open gate between AI and data.
+Model Context Protocol. O(1) indirect addressing for external [[Context]] via gRPC. The open gate between AI and data.
 
 ---
 
@@ -22,10 +22,10 @@ MCP is the open gate between AI and context. The gate itself has no security -- 
 
 ## Enabler of the Ontology
 
-MCP is what makes complete [[Ontologia]] viable in real time. Without MCP, accessing each external context would have variable latency, different authentication, incompatible formats. With MCP, everything is O(1), everything is stream, everything is standardized.
+MCP is what makes complete [[Ontology]] viable in real time. Without MCP, accessing each external context would have variable latency, different authentication, incompatible formats. With MCP, everything is O(1), everything is stream, everything is standardized.
 
 It is the infrastructure component that transforms theory (complete ontology) into practice (instant access to all context).
 
 ---
 
-Related to: [[Tool]], [[Contexto]], [[Agente]], [[Ontologia]], [[RAG]]
+Related to: [[Tool]], [[Context]], [[Agent]], [[Ontology]], [[RAG]]

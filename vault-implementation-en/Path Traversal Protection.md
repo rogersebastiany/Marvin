@@ -27,14 +27,14 @@ If the check fails, it returns `None`. The tools check and return an error: `"Do
 
 ## In the Thesis
 
-Path Traversal Protection is a [[Decision Boundary]] implemented in code. Inside `docs/` = safe zone (the [[Subconjunto]] A). Outside `docs/` = forbidden zone (complement S \ A).
+Path Traversal Protection is a [[Decision Boundary]] implemented in code. Inside `docs/` = safe zone (the [[Subset]] A). Outside `docs/` = forbidden zone (complement S \ A).
 
-It is the same principle as [[Anti-Alucinação]]: confining the system to the mapped domain and rejecting everything outside. In the thesis, the model is confined to the [[Espaço Amostral]] defined by the [[Contexto]]. In the code, files are confined to the directory defined by the protection.
+It is the same principle as [[Anti-Hallucination]]: confining the system to the mapped domain and rejecting everything outside. In the thesis, the model is confined to the [[Sample Space]] defined by the [[Context]]. In the code, files are confined to the directory defined by the protection.
 
 ## Preview of [[Tenant Isolation]]
 
-In [[Arquitetura de Produção|production]], `_safe_path()` evolves into per-tenant isolation: instead of confining to `docs/`, it confines to `tenant-a/docs/`. The principle is the same -- different scale.
+In [[Production Architecture|production]], `_safe_path()` evolves into per-tenant isolation: instead of confining to `docs/`, it confines to `tenant-a/docs/`. The principle is the same -- different scale.
 
 ---
 
-Related to: [[docs-server]], [[web-to-docs]], [[system-design]], [[Anti-Alucinação]], [[Tenant Isolation]], [[Arquitetura de Produção]], [[Decision Boundary]]
+Related to: [[docs-server]], [[web-to-docs]], [[system-design]], [[Anti-Hallucination]], [[Tenant Isolation]], [[Production Architecture]], [[Decision Boundary]]

@@ -1,19 +1,19 @@
 # Milvus
 
-Vector database that stores the [[Agente na POC|agent]]'s episodic memory. Each tool call, decision, and session is embedded and stored. The agent queries Milvus to find similar past actions via [[mcp-memory-server]].
+Vector database that stores the [[Agent in POC|agent]]'s episodic memory. Each tool call, decision, and session is embedded and stored. The agent queries Milvus to find similar past actions via [[mcp-memory-server]].
 
 ---
 
 ## Why Vectors
 
-The [[Agente na POC|agent]] needs semantic memory, not textual. "When was the last time I searched for AWS Lambda documentation?" is not a text query -- it is a similarity query in the [[Embedding|embeddings]] space. Milvus performs nearest-neighbor search in high-dimensional spaces.
+The [[Agent in POC|agent]] needs semantic memory, not textual. "When was the last time I searched for AWS Lambda documentation?" is not a text query -- it is a similarity query in the [[Embedding|embeddings]] space. Milvus performs nearest-neighbor search in high-dimensional spaces.
 
 ## Three Collections
 
 Three simultaneous collections, each capturing a memory granularity:
 
 **1. Tool Calls (~6KB each)**
-Each tool invocation: which tool, parameters, result, timestamp, context. Finest granularity. It is L1 (Experience) of the HCC described in [[Acumulação Cognitiva]].
+Each tool invocation: which tool, parameters, result, timestamp, context. Finest granularity. It is L1 (Experience) of the HCC described in [[Cognitive Accumulation]].
 
 **2. Decisions (~6KB each)**
 Each high-level decision: what objective, which options considered, which chosen, why. Medium granularity. It is L2 (Knowledge) of the HCC.
@@ -43,8 +43,8 @@ Milvus is the backend of [[mcp-memory-server]]. The agent:
 - **Searches** for similar actions before acting ("have I done something like this before?")
 - **Learns** from the past -- if an approach worked before, reuses it; if it failed, avoids it
 
-It is the memory that makes the [[Loop de Auto-Melhoria]] possible.
+It is the memory that makes the [[Self-Improvement Loop]] possible.
 
 ---
 
-Related to: [[mcp-memory-server]], [[Embedding]], [[Acumulação Cognitiva]], [[Loop de Auto-Melhoria]], [[Agente na POC]], [[MCP]]
+Related to: [[mcp-memory-server]], [[Embedding]], [[Cognitive Accumulation]], [[Self-Improvement Loop]], [[Agent in POC]], [[MCP]]

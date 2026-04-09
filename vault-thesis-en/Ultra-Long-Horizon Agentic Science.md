@@ -1,6 +1,6 @@
 # Ultra-Long-Horizon Agentic Science
 
-Paper presenting ML-Master 2.0, an autonomous agent that maintains strategic coherence over long cycles (24h+) through hierarchical [[Acumulação Cognitiva]]. Introduces the HCC (Hierarchical Cognitive Caching) framework.
+Paper presenting ML-Master 2.0, an autonomous agent that maintains strategic coherence over long cycles (24h+) through hierarchical [[Cognitive Accumulation]]. Introduces the HCC (Hierarchical Cognitive Caching) framework.
 
 ---
 
@@ -12,14 +12,14 @@ https://arxiv.org/abs/2601.10402
 
 ## Contribution
 
-The paper redefines long-horizon autonomy not as context expansion, but as an evolutionary process of [[Acumulação Cognitiva]]: transient experience -> validated knowledge -> reusable wisdom. Introduces HCC as a concrete mechanism.
+The paper redefines long-horizon autonomy not as context expansion, but as an evolutionary process of [[Cognitive Accumulation]]: transient experience -> validated knowledge -> reusable wisdom. Introduces HCC as a concrete mechanism.
 
 ## Hierarchical Cognitive Caching (HCC)
 
 Three-layer memory hierarchy, inspired by computer cache:
 
 **L1 -- Evolving Experience (working memory)**
-Raw execution traces: code patches, terminal output, current research plan. High fidelity, short duration. The [[Agente]]'s scratchpad.
+Raw execution traces: code patches, terminal output, current research plan. High fidelity, short duration. The [[Agent]]'s scratchpad.
 
 **L2 -- Refined Knowledge (medium-term strategic memory)**
 Key judgments ("feature X is harmful"), experimental insights ("CV leakage under split Y"), progress summaries. Distilled from L1 after each phase. Enables long-term planning without carrying verbose logs.
@@ -55,12 +55,12 @@ L1 is the most critical -- without raw experience, the agent cannot iterate on i
 
 ## The "+" of 89%+
 
-This paper supports the "plus" of the 89%+ demonstrated by the [[DFAH]]. [[Determinismo]] is not static -- it grows over time when [[Contexto]] is cumulative and structured in layers.
+This paper supports the "plus" of the 89%+ demonstrated by the [[DFAH]]. [[Determinism]] is not static -- it grows over time when [[Context]] is cumulative and structured in layers.
 
-Mechanism: each [[ReAct]] cycle of the [[Agente]] produces new knowledge -> distilled into L2 -> crystallized into L3 -> available in the next cycle -> richer context -> greater determinism.
+Mechanism: each [[ReAct]] cycle of the [[Agent]] produces new knowledge -> distilled into L2 -> crystallized into L3 -> available in the next cycle -> richer context -> greater determinism.
 
-The central insight: **[[Acumulação Cognitiva]] is not linear aggregation of context**. It is experience -> knowledge -> wisdom. Each level has different temporal dynamics and levels of abstraction.
+The central insight: **[[Cognitive Accumulation]] is not linear aggregation of context**. It is experience -> knowledge -> wisdom. Each level has different temporal dynamics and levels of abstraction.
 
 ---
 
-Related to: [[Determinismo]], [[RAG]], [[Agente]], [[ReAct]], [[DFAH]], [[Contexto]], [[Ontological Tautology]], [[Acumulação Cognitiva]], [[Embedding]]
+Related to: [[Determinism]], [[RAG]], [[Agent]], [[ReAct]], [[DFAH]], [[Context]], [[Ontological Tautology]], [[Cognitive Accumulation]], [[Embedding]]

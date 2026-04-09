@@ -1,6 +1,6 @@
 # FastMCP
 
-The Python library that implements [[MCP]] (Model Context Protocol). It abstracts the protocol into simple decorators -- `@mcp.tool()`, `@mcp.resource()`, `@mcp.prompt()` -- that register [[Primitivas MCP]] automatically.
+The Python library that implements [[MCP]] (Model Context Protocol). It abstracts the protocol into simple decorators -- `@mcp.tool()`, `@mcp.resource()`, `@mcp.prompt()` -- that register [[MCP Primitives]] automatically.
 
 ---
 
@@ -36,15 +36,15 @@ The `mcp.run()` in `__main__` starts the server on the [[stdio]] transport.
 
 **MCP Protocol:** JSON-RPC serialization/deserialization, capabilities handshake, listing of tools/resources/prompts.
 
-**[[stdio]] Transport:** reading from stdin, writing to stdout, message framing. The bidirectional pipe between [[Agente na POC|agent]] and server.
+**[[stdio]] Transport:** reading from stdin, writing to stdout, message framing. The bidirectional pipe between [[Agent in POC|agent]] and server.
 
 **Type extraction:** FastMCP extracts parameters and types from Python signatures and docstrings. `search_docs(query: str)` becomes a JSON schema with `{"query": {"type": "string"}}`. This automatic extraction is what allows the [[prompt-engineer]] to auto-discover tools via `await server_mcp.list_tools()`.
 
 ## FastMCP as Enabler
 
-In the thesis, [[MCP]] is the O(1) indirect addressing for external [[Contexto]]. FastMCP is the implementation that makes this trivial for the developer. Without FastMCP, each server would need to implement the protocol manually -- serialization, transport, schema.
+In the thesis, [[MCP]] is the O(1) indirect addressing for external [[Context]]. FastMCP is the implementation that makes this trivial for the developer. Without FastMCP, each server would need to implement the protocol manually -- serialization, transport, schema.
 
-With FastMCP, adding a tool is adding a Python function with a decorator. The barrier to building [[Ontologia como Código|ontology]] drops to nearly zero.
+With FastMCP, adding a tool is adding a Python function with a decorator. The barrier to building [[Ontology as Code|ontology]] drops to nearly zero.
 
 ## Dependency
 
@@ -60,4 +60,4 @@ dependencies = [
 
 ---
 
-Related to: [[MCP]], [[Primitivas MCP]], [[stdio]], [[Ontologia como Código]], [[Catálogo de Tools]], [[docs-server]], [[web-to-docs]], [[prompt-engineer]], [[system-design]], [[Agente na POC]]
+Related to: [[MCP]], [[MCP Primitives]], [[stdio]], [[Ontology as Code]], [[Tool Catalog]], [[docs-server]], [[web-to-docs]], [[prompt-engineer]], [[system-design]], [[Agent in POC]]

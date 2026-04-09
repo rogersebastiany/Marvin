@@ -1,12 +1,12 @@
 # Neo4j
 
-Graph database that stores the [[Ontologia como Código|ontology]] as a knowledge graph. Each concept from the vaults becomes a node, each link becomes an edge. The [[Agente na POC|agent]] queries and enriches the graph via [[mcp-ontology-server]].
+Graph database that stores the [[Ontology as Code|ontology]] as a knowledge graph. Each concept from the vaults becomes a node, each link becomes an edge. The [[Agent in POC|agent]] queries and enriches the graph via [[mcp-ontology-server]].
 
 ---
 
 ## Why a Graph
 
-The [[Ontologia como Código|ontology]] in the Obsidian vaults is already a graph -- notes are nodes, wikilinks are edges. Neo4j materializes this graph into a queryable, traversable, and agent-enrichable database.
+The [[Ontology as Code|ontology]] in the Obsidian vaults is already a graph -- notes are nodes, wikilinks are edges. Neo4j materializes this graph into a queryable, traversable, and agent-enrichable database.
 
 Unlike a relational database, Neo4j allows traversal queries (2 hops, 3 hops, path between concepts) in constant time relative to the neighborhood, not the total graph size.
 
@@ -42,8 +42,8 @@ Neo4j is the backend of [[mcp-ontology-server]]. The agent queries the graph to:
 - Discover gaps (which ghost nodes exist?)
 - Enrich the ontology (add concepts, relationships, properties)
 
-It is the living [[Ontologia como Código|ontology]] -- not static, enriched with every interaction of the [[Loop de Auto-Melhoria]].
+It is the living [[Ontology as Code|ontology]] -- not static, enriched with every interaction of the [[Self-Improvement Loop]].
 
 ---
 
-Related to: [[Ontologia como Código]], [[mcp-ontology-server]], [[Loop de Auto-Melhoria]], [[Agente na POC]], [[MCP]]
+Related to: [[Ontology as Code]], [[mcp-ontology-server]], [[Self-Improvement Loop]], [[Agent in POC]], [[MCP]]

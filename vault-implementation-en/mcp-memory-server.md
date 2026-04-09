@@ -1,6 +1,6 @@
 # mcp-memory-server
 
-MCP server that exposes the [[Milvus]] vector database as tools for the [[Agente na POC|agent]]. It allows searching for similar memories and logging new actions.
+MCP server that exposes the [[Milvus]] vector database as tools for the [[Agent in POC|agent]]. It allows searching for similar memories and logging new actions.
 
 ---
 
@@ -26,7 +26,7 @@ Agent receives objective -> search_decisions("migrate service to ECS")
 Agent decides informed -> executes -> log_decision(result)
 ```
 
-This is **prefetching** in HCC vocabulary ([[Acumulação Cognitiva]]): retrieving similar wisdom before starting.
+This is **prefetching** in HCC vocabulary ([[Cognitive Accumulation]]): retrieving similar wisdom before starting.
 
 ## Automatic Logging
 
@@ -39,7 +39,7 @@ The log is append-only -- memory is never erased. The agent accumulates experien
 
 ## Difference from Implicit RAG
 
-The [[RAG Implícito]] in the POC searches text in `docs/`. The mcp-memory-server searches **semantic experience** by vector similarity. The difference:
+The [[Implicit RAG]] in the POC searches text in `docs/`. The mcp-memory-server searches **semantic experience** by vector similarity. The difference:
 
 - `search_docs("lambda")` -> documentation about Lambda
 - `search_tool_calls("deploy lambda function")` -> the last 5 times the agent deployed Lambda, with context and result
@@ -48,4 +48,4 @@ One is domain knowledge. The other is action memory.
 
 ---
 
-Related to: [[Milvus]], [[Embedding]], [[RAG Implícito]], [[Loop de Auto-Melhoria]], [[Acumulação Cognitiva]], [[Cadeia de Servers]], [[MCP]], [[FastMCP]]
+Related to: [[Milvus]], [[Embedding]], [[Implicit RAG]], [[Self-Improvement Loop]], [[Cognitive Accumulation]], [[Server Chain]], [[MCP]], [[FastMCP]]

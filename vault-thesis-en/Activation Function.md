@@ -28,4 +28,4 @@ The activation function creates [[Decision Boundary|decision boundaries]]. Where
 
 ---
 
-Related to: [[Decision Boundary]], [[Rede Neural]], [[Bias]], [[Relação Não-Linear]], [[Relação Linear]]
+Related to: [[Decision Boundary]], [[Neural Network]], [[Bias]], [[Non-Linear Relationship]], [[Linear Relationship]]

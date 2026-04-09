@@ -1,6 +1,6 @@
 # stdio
 
-The POC's transport. Standard input/output -- the bidirectional pipe between the [[Agente na POC|agent]] and each MCP server. The "open gate" of [[MCP]] in its simplest form.
+The POC's transport. Standard input/output -- the bidirectional pipe between the [[Agent in POC|agent]] and each MCP server. The "open gate" of [[MCP]] in its simplest form.
 
 ---
 
@@ -42,7 +42,7 @@ For local development, stdio is ideal:
 
 In the thesis, [[MCP]] is "the open gate between AI and context." In stdio, the gate is literally open -- anything on stdin is processed, anything on stdout is consumed. There is no authentication.
 
-Security lies "in the terrain around" -- in the local case, security is the OS itself (process permissions). In the production case ([[Arquitetura de Produção]]), the gate is closed with [[Três Camadas de Segurança|three layers]] and the transport changes to SSE via [[MCP Gateway]].
+Security lies "in the terrain around" -- in the local case, security is the OS itself (process permissions). In the production case ([[Production Architecture]]), the gate is closed with [[Three Security Layers|three layers]] and the transport changes to SSE via [[MCP Gateway]].
 
 ## stdio vs SSE in Production
 
@@ -58,4 +58,4 @@ The transition from stdio to SSE is the transition from POC to production. The [
 
 ---
 
-Related to: [[MCP]], [[FastMCP]], [[Agente na POC]], [[Arquitetura de Produção]], [[MCP Gateway]], [[Três Camadas de Segurança]], [[docs-server]], [[web-to-docs]], [[prompt-engineer]], [[system-design]]
+Related to: [[MCP]], [[FastMCP]], [[Agent in POC]], [[Production Architecture]], [[MCP Gateway]], [[Three Security Layers]], [[docs-server]], [[web-to-docs]], [[prompt-engineer]], [[system-design]]

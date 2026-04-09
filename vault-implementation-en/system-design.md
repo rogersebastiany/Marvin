@@ -1,6 +1,6 @@
 # system-design
 
-Domain tool for architectural diagrams. `system_design_server.py` generates and evaluates [[Mermaid.js]] diagrams with a [[Scoring de Diagramas|scoring framework]] across 4 dimensions. Loads syntax references from `docs/mermaid-*.md` as [[Contexto Programático|context]] at startup.
+Domain tool for architectural diagrams. `system_design_server.py` generates and evaluates [[Mermaid.js]] diagrams with a [[Diagram Scoring|scoring framework]] across 4 dimensions. Loads syntax references from `docs/mermaid-*.md` as [[Programmatic Context|context]] at startup.
 
 ---
 
@@ -12,7 +12,7 @@ mcp = FastMCP("system-design",
 DIAGRAMS_DIR = Path(__file__).parent / "diagrams"
 ```
 
-Five [[Primitivas MCP|tools]], one [[Primitivas MCP|resource]], two [[Primitivas MCP|prompts]]:
+Five [[MCP Primitives|tools]], one [[MCP Primitives|resource]], two [[MCP Primitives|prompts]]:
 
 | Type | Name | Function |
 |---|---|---|
@@ -37,7 +37,7 @@ def _load_syntax_refs() -> str:
     return "\n\n---\n\n".join(refs)
 ```
 
-These syntax refs are injected into `generate_diagram` and `judge_diagram`. The model does not need to remember Mermaid syntax from training -- it receives the complete reference as [[Contexto Programático|context]]. It is concrete [[Tool como Bias|bias]]: "use THIS syntax, not what you think you remember."
+These syntax refs are injected into `generate_diagram` and `judge_diagram`. The model does not need to remember Mermaid syntax from training -- it receives the complete reference as [[Programmatic Context|context]]. It is concrete [[Tool as Bias|bias]]: "use THIS syntax, not what you think you remember."
 
 ## DIAGRAM_GUIDELINES
 
@@ -47,9 +47,9 @@ These are the constraints that the [[Transformer-Driven Prompt Architect]] would
 
 ## Role in the Thesis
 
-system-design demonstrates [[Ontologia como Código|domain ontology]]. The architectural diagram ontology is encoded in: syntax refs (how), guidelines (when), and scoring (how well). The model does not infer what a "good diagram" is -- it is defined in 4 measurable dimensions via [[Scoring de Diagramas]].
+system-design demonstrates [[Ontology as Code|domain ontology]]. The architectural diagram ontology is encoded in: syntax refs (how), guidelines (when), and scoring (how well). The model does not infer what a "good diagram" is -- it is defined in 4 measurable dimensions via [[Diagram Scoring]].
 
-It is [[Determinismo Mensurável|determinism]] in action: given the same description and the same syntax refs, the generated diagram is predictable and objectively evaluable.
+It is [[Measurable Determinism|determinism]] in action: given the same description and the same syntax refs, the generated diagram is predictable and objectively evaluable.
 
 ## [[Path Traversal Protection]]
 
@@ -57,4 +57,4 @@ Uses `_safe_diagram_path()` -- same logic as [[docs-server]], but confined to `d
 
 ---
 
-Related to: [[Mermaid.js]], [[Scoring de Diagramas]], [[FastMCP]], [[Primitivas MCP]], [[Ontologia como Código]], [[Contexto Programático]], [[Tool como Bias]], [[Cadeia de Servers]], [[Path Traversal Protection]], [[Determinismo Mensurável]]
+Related to: [[Mermaid.js]], [[Diagram Scoring]], [[FastMCP]], [[MCP Primitives]], [[Ontology as Code]], [[Programmatic Context]], [[Tool as Bias]], [[Server Chain]], [[Path Traversal Protection]], [[Measurable Determinism]]

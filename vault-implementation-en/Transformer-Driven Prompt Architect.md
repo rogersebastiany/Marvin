@@ -1,6 +1,6 @@
 # Transformer-Driven Prompt Architect
 
-The [[prompt-engineer]] framework for generating structured prompts. 6 mandatory sections, each attacking a dimension of the [[Espaço Amostral]]. Based on the mathematical principles of the Transformer: Constant Path Length of Attention, Multi-Head Attention, and Attention Masking.
+The [[prompt-engineer]] framework for generating structured prompts. 6 mandatory sections, each attacking a dimension of the [[Sample Space]]. Based on the mathematical principles of the Transformer: Constant Path Length of Attention, Multi-Head Attention, and Attention Masking.
 
 ---
 
@@ -12,7 +12,7 @@ It is the same principle as [[MCP]]: O(1) indirect addressing. In the prompt, cr
 
 **Multi-Head Attention:** Distributing the task across multiple "Expert Heads" -- Security, Performance, Cost. Each head operates in a different subspace of attention. In section 1 (ROLE & PERSPECTIVES), multiple personas capture different subspaces of the problem.
 
-**Attention Masking (Negative Constraints):** Defining "Forbidden Zones" that prevent the model from attending to legacy or insecure patterns. In section 5 (ATTENTION MASK), the "DO NOT" list is a literal mask -- it blocks regions of the [[Espaço Amostral]].
+**Attention Masking (Negative Constraints):** Defining "Forbidden Zones" that prevent the model from attending to legacy or insecure patterns. In section 5 (ATTENTION MASK), the "DO NOT" list is a literal mask -- it blocks regions of the [[Sample Space]].
 
 ## The 6 Mandatory Sections
 
@@ -25,21 +25,21 @@ It is the same principle as [[MCP]]: O(1) indirect addressing. In the prompt, cr
 | 5. ATTENTION MASK (CONSTRAINTS) | "DO NOT" list | What not to do |
 | 6. FINAL TASK | Specific trigger to begin | What to do now |
 
-Each section is a [[Redução de Espaço na Prática|reduction]] operation on the [[Espaço Amostral]]: section 1 constrains the "who" space, section 2 the "with what", section 3 the "what it looks like", section 4 the "how to think", section 5 the "what to avoid", section 6 the "what to do."
+Each section is a [[Space Reduction in Practice|reduction]] operation on the [[Sample Space]]: section 1 constrains the "who" space, section 2 the "with what", section 3 the "what it looks like", section 4 the "how to think", section 5 the "what to avoid", section 6 the "what to do."
 
-## [[Catálogo de Tools]] Injection
+## [[Tool Catalog]] Injection
 
-Section 2 (KNOWLEDGE BEYOND WEIGHTS) is where the auto-discovered catalog is injected. The generated prompt tells the model: "these tools exist in the workspace, use them in the MCP section of the prompt you are generating." It is meta-context -- [[Contexto Programático|context]] about how to provide context.
+Section 2 (KNOWLEDGE BEYOND WEIGHTS) is where the auto-discovered catalog is injected. The generated prompt tells the model: "these tools exist in the workspace, use them in the MCP section of the prompt you are generating." It is meta-context -- [[Programmatic Context|context]] about how to provide context.
 
 ## Role in the Thesis
 
-The framework is a formalization of how to assemble [[Contexto]] that maximizes [[Determinismo Mensurável|determinism]]. Each section attacks a source of [[Drift]]:
+The framework is a formalization of how to assemble [[Context]] that maximizes [[Measurable Determinism|determinism]]. Each section attacks a source of [[Drift]]:
 - Without role -> persona drift (who is responding?)
 - Without few-shots -> format drift (what should the response look like?)
 - Without constraints -> scope drift (what is forbidden?)
 
-With all 6 sections filled, the prompt is the task's [[Ontologia]] -- complete enough that the response is nearly [[Tautologia|tautological]].
+With all 6 sections filled, the prompt is the task's [[Ontology]] -- complete enough that the response is nearly [[Tautology|tautological]].
 
 ---
 
-Related to: [[prompt-engineer]], [[Catálogo de Tools]], [[Contexto Programático]], [[Anti-Alucinação]], [[Redução de Espaço na Prática]], [[Determinismo Mensurável]], [[MCP]], [[Primitivas MCP]], [[Espaço Amostral]], [[Drift]]
+Related to: [[prompt-engineer]], [[Tool Catalog]], [[Programmatic Context]], [[Anti-Hallucination]], [[Space Reduction in Practice]], [[Measurable Determinism]], [[MCP]], [[MCP Primitives]], [[Sample Space]], [[Drift]]

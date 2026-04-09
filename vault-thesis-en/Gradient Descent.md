@@ -1,6 +1,6 @@
 # Gradient Descent
 
-The algorithm that adjusts the weights of the [[Rede Neural]] in the direction that reduces the error. The gradient is the derivative -- it indicates "which way to go down to make fewer mistakes."
+The algorithm that adjusts the weights of the [[Neural Network]] in the direction that reduces the error. The gradient is the derivative -- it indicates "which way to go down to make fewer mistakes."
 
 ---
 
@@ -12,7 +12,7 @@ The classic analogy: a ball rolling down a mountain in the dark. The gradient is
 
 ## Learning Rate
 
-The learning rate alpha controls the step size. Too large -> the ball "jumps" over the valley and [[Divergência|diverges]]. Too small -> the ball descends too slowly. The ideal value produces smooth [[Convergência]].
+The learning rate alpha controls the step size. Too large -> the ball "jumps" over the valley and [[Divergence|diverges]]. Too small -> the ball descends too slowly. The ideal value produces smooth [[Convergence]].
 
 ## Variants
 
@@ -26,4 +26,4 @@ The learning rate alpha controls the step size. Too large -> the ball "jumps" ov
 
 ---
 
-Related to: [[Backpropagation]], [[Loss Function]], [[Convergência]], [[Divergência]], [[Rede Neural]]
+Related to: [[Backpropagation]], [[Loss Function]], [[Convergence]], [[Divergence]], [[Neural Network]]

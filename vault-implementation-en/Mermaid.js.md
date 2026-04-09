@@ -1,6 +1,6 @@
 # Mermaid.js
 
-Text-based diagramming language used by [[system-design]] to generate and evaluate architectural diagrams. The syntax refs in `docs/mermaid-*.md` are loaded as [[Contexto Programático|context]] at startup.
+Text-based diagramming language used by [[system-design]] to generate and evaluate architectural diagrams. The syntax refs in `docs/mermaid-*.md` are loaded as [[Programmatic Context|context]] at startup.
 
 ---
 
@@ -27,16 +27,16 @@ def _load_syntax_refs() -> str:
     return "\n\n---\n\n".join(refs)
 ```
 
-These docs contain the [[Ontologia como Código|ontology]] of the Mermaid language: valid syntax, keywords, edge types, subgraph syntax, C4 macros. Without them, the model would depend on what it remembers from training ([[Matriz M]]) -- prone to syntax errors and outdated features.
+These docs contain the [[Ontology as Code|ontology]] of the Mermaid language: valid syntax, keywords, edge types, subgraph syntax, C4 macros. Without them, the model would depend on what it remembers from training ([[Matrix M]]) -- prone to syntax errors and outdated features.
 
-With them, the model has the complete and up-to-date reference as [[Tool como Bias|bias]]. It is [[Redução de Espaço na Prática|space reduction]]: the universe of "possible ways to write a diagram" is constrained to the documented valid syntax.
+With them, the model has the complete and up-to-date reference as [[Tool as Bias|bias]]. It is [[Space Reduction in Practice|space reduction]]: the universe of "possible ways to write a diagram" is constrained to the documented valid syntax.
 
 ## .mmd Files
 
 Diagrams are saved as `.mmd` in `diagrams/`. The format is plain text -- the mermaid code without fences. Accessible via `diagrams://{filename}` (resource) or `get_diagram(filename)` (tool).
 
-In the POC, there are two pre-saved diagrams: `aws-deployment.mmd` and `secure-mcp-platform.mmd` -- which document the [[Arquitetura de Produção]].
+In the POC, there are two pre-saved diagrams: `aws-deployment.mmd` and `secure-mcp-platform.mmd` -- which document the [[Production Architecture]].
 
 ---
 
-Related to: [[system-design]], [[Scoring de Diagramas]], [[Ontologia como Código]], [[Tool como Bias]], [[Contexto Programático]], [[Redução de Espaço na Prática]], [[Arquitetura de Produção]]
+Related to: [[system-design]], [[Diagram Scoring]], [[Ontology as Code]], [[Tool as Bias]], [[Programmatic Context]], [[Space Reduction in Practice]], [[Production Architecture]]
