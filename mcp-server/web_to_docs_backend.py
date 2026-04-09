@@ -140,3 +140,117 @@ def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
     if remaining:
         summary += f"\n\n{remaining} link(s) not visited (hit max_pages limit)."
     return summary
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RESEARCH FLOW — Fetch → Merge in-memory → Compare with existing → Save final
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _extract_title(md: str) -> str:
+    """Extract the first H1 title from markdown, or return empty string."""
+    match = re.search(r"^#\s+(.+)", md, re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
+def _existing_doc_content(topic_slug: str) -> str | None:
+    """Return existing doc content if a file matching the slug exists."""
+    path = DOCS_DIR / f"{topic_slug}.md"
+    if path.is_file():
+        return path.read_text()
+    return None
+
+
+def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
+    """Fetch multiple URLs into memory, merge, compare with existing docs, save final.
+
+    New web-to-docs flow:
+      1. Fetch all URLs → in-memory markdown per page
+      2. Merge into a single document with sections per source
+      3. Compare with existing doc (if any) — report what's new
+      4. Save final consolidated document with bibliography
+
+    Args:
+        urls: List of URLs to fetch and consolidate
+        topic: Topic name (used as document title and for finding existing docs)
+        save_as: Filename to save as (default: slugified topic)
+
+    Returns:
+        The consolidated document content and a save report.
+    """
+    if not urls:
+        return "No URLs provided."
+
+    # Step 1: Fetch all URLs into memory
+    fetched: list[dict] = []
+    errors: list[str] = []
+
+    for url in urls:
+        try:
+            md = _fetch_and_convert(url)
+            title = _extract_title(md) or url.split("/")[-1]
+            fetched.append({"url": url, "title": title, "content": md})
+        except Exception as e:
+            errors.append(f"  {url} → ERROR: {e}")
+
+    if not fetched:
+        error_report = "\n".join(errors)
+        return f"All URLs failed:\n{error_report}"
+
+    # Step 2: Merge into single document with sections
+    sections: list[str] = [f"# {topic}\n"]
+
+    for i, page in enumerate(fetched, 1):
+        # Strip the page's own H1 to avoid duplicate titles
+        content = re.sub(r"^#\s+.+\n*", "", page["content"], count=1).strip()
+        sections.append(f"## {i}. {page['title']}\n\n{content}")
+
+    # Bibliography
+    bib_lines = [f"## Bibliography\n"]
+    for i, page in enumerate(fetched, 1):
+        bib_lines.append(f"{i}. [{page['title']}]({page['url']})")
+    sections.append("\n".join(bib_lines))
+
+    consolidated = "\n\n---\n\n".join(sections)
+
+    # Step 3: Compare with existing doc
+    slug = save_as.replace(".md", "") if save_as else _slugify(topic)
+    existing = _existing_doc_content(slug)
+    comparison = ""
+
+    if existing:
+        existing_len = len(existing)
+        new_len = len(consolidated)
+        existing_lines = set(existing.splitlines())
+        new_lines = set(consolidated.splitlines())
+        added = len(new_lines - existing_lines)
+        removed = len(existing_lines - new_lines)
+        comparison = (
+            f"\n\n## Comparison with existing doc\n"
+            f"- Existing: {existing_len:,} chars\n"
+            f"- New: {new_len:,} chars\n"
+            f"- Lines added: {added}\n"
+            f"- Lines removed: {removed}\n"
+        )
+
+    # Step 4: Save final document
+    filename = f"{slug}.md" if not slug.endswith(".md") else slug
+    path = _safe_doc_path(filename)
+    if not path:
+        return f"Invalid filename '{filename}'."
+
+    path.write_text(consolidated)
+
+    # Report
+    report_lines = [
+        f"## Research complete: {topic}",
+        f"- Sources fetched: {len(fetched)}/{len(urls)}",
+        f"- Final document: docs/{filename} ({len(consolidated):,} chars)",
+    ]
+    if errors:
+        report_lines.append(f"- Fetch errors: {len(errors)}")
+        report_lines.extend(errors)
+    if comparison:
+        report_lines.append(comparison)
+
+    return "\n".join(report_lines)

@@ -19,11 +19,16 @@ Behavior:
 
 import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
+
+# Import relationship type definitions from ontology backend
+sys.path.insert(0, str(Path(__file__).parent.parent / "mcp-server"))
+from ontology import RELATION_TYPES, SYMMETRIC_TYPES
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -232,10 +237,10 @@ def auto_link_all(driver):
             print("Auto-link: no concepts with content to process.")
             return
 
-        # Pre-fetch all existing edges to avoid N queries
+        # Pre-fetch all existing edges (any type) to avoid N queries
         existing_edges = set()
         for r in s.run(
-            "MATCH (a:Concept)-[:RELATES_TO]->(b:Concept) "
+            "MATCH (a:Concept)-[]->(b:Concept) "
             "RETURN a.name AS src, b.name AS tgt"
         ):
             existing_edges.add((r["src"], r["tgt"]))
@@ -272,30 +277,38 @@ def auto_link_all(driver):
 
 
 def ensure_bidirectional_all(driver):
-    """For every A→B edge, ensure B→A also exists."""
+    """For every A→B symmetric edge, ensure B→A also exists (same type).
+
+    Only processes symmetric types (RELATES_TO, TRANSLATES_TO, CONTRADICTS).
+    Directional types are left as-is.
+    """
+    sym_cypher = "|".join(SYMMETRIC_TYPES)
+
     with driver.session() as s:
         missing = list(s.run(
-            "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
-            "WHERE NOT (b)-[:RELATES_TO]->(a) "
-            "  AND a <> b "
-            "RETURN a.name AS src, b.name AS tgt"
+            f"MATCH (a:Concept)-[r:{sym_cypher}]->(b:Concept) "
+            "WHERE a <> b "
+            "WITH a, b, type(r) AS rel_type "
+            "WHERE NOT EXISTS { MATCH (b)-[r2]->(a) WHERE type(r2) = rel_type } "
+            "RETURN a.name AS src, b.name AS tgt, rel_type"
         ))
 
         if not missing:
-            print("Bidirectional: all edges already bidirectional.")
+            print("Bidirectional: all symmetric edges already bidirectional.")
             return
 
         for m in missing:
+            rel = m["rel_type"]
             s.run(
-                "MATCH (a:Concept {name: $src}) "
-                "MATCH (b:Concept {name: $tgt}) "
-                "CREATE (b)-[r:RELATES_TO {discovered_by: 'bidirectional', "
-                "  weight: 1.0, reasoning: $reasoning}]->(a)",
+                f"MATCH (a:Concept {{name: $src}}) "
+                f"MATCH (b:Concept {{name: $tgt}}) "
+                f"CREATE (b)-[r:{rel} {{discovered_by: 'bidirectional', "
+                f"  weight: 1.0, reasoning: $reasoning}}]->(a)",
                 src=m["src"], tgt=m["tgt"],
-                reasoning=f"Bidirectional completion: {m['src']} → {m['tgt']} existed",
+                reasoning=f"Bidirectional completion: {m['src']} —[{rel}]→ {m['tgt']} existed",
             )
 
-        print(f"Bidirectional: created {len(missing)} reverse edges.")
+        print(f"Bidirectional: created {len(missing)} reverse edges (symmetric types only).")
 
 
 def load_to_neo4j(concepts: list[dict], edges: list[dict]):
@@ -399,12 +412,19 @@ def load_to_neo4j(concepts: list[dict], edges: list[dict]):
             print(f"  {record['vault']}: {record['n']}")
 
         total_edges = session.run(
-            "MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS n"
+            "MATCH ()-[r]->() RETURN count(r) AS n"
         ).single()["n"]
         agent_edges = session.run(
-            "MATCH ()-[r:RELATES_TO]->() WHERE r.discovered_by = 'agent' RETURN count(r) AS n"
+            "MATCH ()-[r]->() WHERE r.discovered_by = 'agent' RETURN count(r) AS n"
         ).single()["n"]
+        edge_types = list(session.run(
+            "MATCH ()-[r]->() RETURN type(r) AS t, count(r) AS n ORDER BY n DESC"
+        ))
         print(f"\nTotal edges: {total_edges} ({agent_edges} agent-discovered)")
+        if edge_types:
+            print("By type:")
+            for et in edge_types:
+                print(f"  {et['t']}: {et['n']}")
 
     driver.close()
     print("\nDone.")

@@ -6,7 +6,8 @@ Unified MCP server implementing the Tautologia Ontologica thesis. The agent's so
 
 ```bash
 uv sync
-uv run python marvin_server.py
+uv run python marvin_server.py          # production (stdio)
+uv run fastmcp run marvin_server.py --reload  # dev mode (auto-reload on file changes)
 ```
 
 ## Architecture
@@ -22,7 +23,7 @@ Single server (`marvin_server.py`) wrapping 6 backend modules:
 | `prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework |
 | `system_design_backend.py` | Filesystem | Mermaid.js diagram generation/review (`diagrams/`) |
 
-## 29 Tools (8 categories)
+## 32 Tools (8 categories)
 
 | Category | Tools | Tautological? |
 |----------|-------|--------------|
@@ -30,7 +31,7 @@ Single server (`marvin_server.py`) wrapping 6 backend modules:
 | Logging | `log_tool_call`, `log_decision`, `log_session` | Yes |
 | Enrichment | `expand`, `link`, `auto_link`, `ensure_bidirectional` | Yes |
 | Evolution | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
-| Documentation | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `crawl_docs` | Yes |
+| Documentation | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `crawl_docs`, `research_topic` | Yes |
 | Prompt Engineering | `generate_prompt`, `refine_prompt`, `audit_prompt` | Partial |
 | Diagrams | `generate_diagram`, `judge_diagram`, `save_diagram`, `list_diagrams`, `get_diagram` | Partial |
 | Introspection | `inspect_schemas`, `stats` | Yes |

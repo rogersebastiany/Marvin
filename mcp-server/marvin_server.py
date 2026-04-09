@@ -16,6 +16,8 @@ Capabilities:
 """
 
 from fastmcp import FastMCP
+from fastmcp.server.middleware import Middleware, MiddlewareContext
+from fastmcp.exceptions import ToolError
 
 import ontology
 import memory
@@ -27,11 +29,12 @@ import system_design_backend
 # Canonical tool list — update when adding/removing tools
 MARVIN_TOOLS = [
     "retrieve", "get_concept", "traverse", "why_exists",
+    "set_aliases", "batch_set_aliases",
     "log_tool_call", "log_decision", "log_session",
     "expand", "link", "auto_link", "ensure_bidirectional",
     "propose_schema_change", "execute_schema_change",
     "search_docs", "list_docs", "get_doc",
-    "fetch_url", "save_doc", "crawl_docs",
+    "fetch_url", "save_doc", "crawl_docs", "research_topic",
     "generate_prompt", "refine_prompt", "audit_prompt",
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
     "inspect_schemas", "stats",
@@ -47,6 +50,12 @@ mcp = FastMCP(
         "Complete ontological context yields deterministic LLM behavior. "
         f"Your {len(MARVIN_TOOLS)} tautological tools ARE the ontology — typed I/O, finite output, explicit failure.\n\n"
         "## Execution Pattern\n"
+        "0. SESSION START — on the FIRST interaction of every session, "
+        "call `stats` for a system overview, then `traverse` from root concepts "
+        "(e.g. 'Tautologia Ontológica', 'Determinismo', 'MCP') with hops=4 "
+        "to map the full knowledge graph. Also call `retrieve` with a broad query "
+        "to load recent episodic memory. Do this BEFORE responding to any user request. "
+        "The agent cannot reason about the ontology it hasn't seen.\n"
         "1. RETRIEVE BEFORE ACT — always query ontology (get_concept, traverse) "
         "and episodic memory (retrieve) before generating anything. "
         "Check what you know before deciding what to do.\n"
@@ -77,6 +86,63 @@ mcp = FastMCP(
         "Future sessions depend on this memory."
     ),
 )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MIDDLEWARE — Architectural enforcement of retrieve-before-act
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Tools that count as "retrieval" — calling any of these unlocks write tools
+RETRIEVAL_TOOLS = frozenset({
+    "retrieve", "get_concept", "traverse", "why_exists",
+    "search_docs", "list_docs", "get_doc",
+    "inspect_schemas", "stats",
+})
+
+# Tools that require prior retrieval — the "act" side
+GUARDED_TOOLS = frozenset({
+    "expand", "link", "auto_link", "ensure_bidirectional",
+    "set_aliases", "batch_set_aliases",
+    "execute_schema_change",
+    "save_doc", "crawl_docs", "research_topic",
+    "generate_prompt", "refine_prompt",
+    "generate_diagram", "save_diagram",
+})
+
+# Tools that are always allowed (logging, read-only, proposals, fetching)
+# fetch_url is allowed because it IS retrieval (from the web)
+# propose_schema_change is allowed because it doesn't execute anything
+# log_* are always allowed — you should always be able to log
+# list_diagrams, get_diagram, audit_prompt are read-only
+
+
+class RetrieveBeforeActMiddleware(Middleware):
+    """Architectural enforcement: reject write tools if no retrieval happened first.
+
+    This is NOT a prompt bias — it's a hard gate. The server refuses to execute
+    guarded tools unless at least one retrieval tool has been called in the session.
+    """
+
+    def __init__(self):
+        self._retrieved = False
+
+    async def on_call_tool(self, context: MiddlewareContext, call_next):
+        tool_name = context.message.name
+
+        if tool_name in RETRIEVAL_TOOLS:
+            self._retrieved = True
+
+        if tool_name in GUARDED_TOOLS and not self._retrieved:
+            raise ToolError(
+                f"BLOCKED: '{tool_name}' requires prior retrieval. "
+                f"Call one of {sorted(RETRIEVAL_TOOLS)} first. "
+                f"The thesis says: retrieve before act."
+            )
+
+        return await call_next(context)
+
+
+mcp.add_middleware(RetrieveBeforeActMiddleware())
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -157,6 +223,31 @@ def why_exists(name: str) -> str:
         name: Concept name
     """
     return ontology.why_exists(name)
+
+
+@mcp.tool()
+def set_aliases(name: str, aliases: list[str]) -> str:
+    """Set English aliases for a concept. Enables cross-language search.
+
+    Use this to add English translations to Portuguese concept names so that
+    queries in either language find the same concept.
+
+    Args:
+        name: Exact concept name (e.g. 'Determinismo')
+        aliases: List of English aliases (e.g. ['Determinism'])
+    """
+    return ontology.set_aliases(name, aliases)
+
+
+@mcp.tool()
+def batch_set_aliases(mappings: list[dict]) -> str:
+    """Set aliases for multiple concepts at once.
+
+    Args:
+        mappings: List of dicts with 'name' and 'aliases' keys
+                  e.g. [{"name": "Determinismo", "aliases": ["Determinism"]}]
+    """
+    return ontology.batch_set_aliases(mappings)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -245,6 +336,7 @@ def expand(
     content: str = "",
     relate_to: str = "",
     reasoning: str = "",
+    relation_type: str = "RELATES_TO",
 ) -> str:
     """Add a new concept or relation to the knowledge graph.
 
@@ -254,14 +346,17 @@ def expand(
         concept_name: Concept to create or connect from
         summary: One-line summary
         content: Full description
-        relate_to: Target concept for a RELATES_TO edge
+        relate_to: Target concept for an edge
         reasoning: Why this relation exists
+        relation_type: Edge type — one of RELATES_TO, IMPLEMENTS, PROVES, REQUIRES,
+            TRANSLATES_TO, EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
+            EVOLVES_FROM. Defaults to RELATES_TO.
     """
-    return ontology.expand(concept_name, summary, content, relate_to, reasoning)
+    return ontology.expand(concept_name, summary, content, relate_to, reasoning, relation_type)
 
 
 @mcp.tool()
-def link(source: str, target: str, reasoning: str) -> str:
+def link(source: str, target: str, reasoning: str, relation_type: str = "RELATES_TO") -> str:
     """Create a direct relation between two existing concepts.
 
     For non-linear, cross-cutting connections discovered during operation.
@@ -270,8 +365,11 @@ def link(source: str, target: str, reasoning: str) -> str:
         source: Source concept name
         target: Target concept name
         reasoning: Why this relation exists
+        relation_type: Edge type — one of RELATES_TO, IMPLEMENTS, PROVES, REQUIRES,
+            TRANSLATES_TO, EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
+            EVOLVES_FROM. Defaults to RELATES_TO.
     """
-    return ontology.expand(source, relate_to=target, reasoning=reasoning)
+    return ontology.expand(source, relate_to=target, reasoning=reasoning, relation_type=relation_type)
 
 
 @mcp.tool()
@@ -405,6 +503,27 @@ def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
     return web_to_docs_backend.crawl_docs(url, max_pages, path_prefix)
 
 
+@mcp.tool()
+def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
+    """Fetch multiple URLs, merge into a single consolidated doc with bibliography.
+
+    New web-to-docs flow:
+      1. Fetch all URLs → in-memory markdown per page
+      2. Merge into a single document with sections per source
+      3. Compare with existing doc (if any) — report what's new
+      4. Save final consolidated document with bibliography
+
+    Use this instead of save_doc/crawl_docs when you need to research a topic
+    from multiple sources and produce a single reference document.
+
+    Args:
+        urls: List of URLs to fetch and consolidate
+        topic: Topic name (used as document title and for finding existing docs)
+        save_as: Filename to save as (default: slugified topic)
+    """
+    return web_to_docs_backend.research_topic(urls, topic, save_as)
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # PROMPT ENGINEERING
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -524,6 +643,10 @@ def stats() -> str:
     ]
     for vault, n in s["vaults"]:
         lines.append(f"    {vault}: {n}")
+    if s.get("edge_types"):
+        lines.append(f"  Edge types:")
+        for rel_type, n in s["edge_types"]:
+            lines.append(f"    {rel_type}: {n}")
 
     from pymilvus import Collection as MilvusCollection
     memory._ensure_connected()

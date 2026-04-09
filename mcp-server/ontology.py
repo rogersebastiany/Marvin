@@ -17,6 +17,34 @@ NEO4J_AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautolo
 
 _driver = None
 
+# All semantic relationship types in the graph
+RELATION_TYPES = [
+    "RELATES_TO",
+    "IMPLEMENTS",
+    "PROVES",
+    "REQUIRES",
+    "TRANSLATES_TO",
+    "EXTENDS",
+    "CONTRADICTS",
+    "ENABLES",
+    "EXEMPLIFIES",
+    "COMPOSES",
+    "EVOLVES_FROM",
+]
+
+# Symmetric types: A→B implies B→A with the same type
+SYMMETRIC_TYPES = frozenset({
+    "RELATES_TO",
+    "TRANSLATES_TO",
+    "CONTRADICTS",
+})
+
+# Directional types: A→B does NOT imply B→A
+# IMPLEMENTS, PROVES, REQUIRES, EXTENDS, ENABLES, EXEMPLIFIES, COMPOSES, EVOLVES_FROM
+
+# Cypher fragment for matching any relationship type
+_ANY_REL = "|".join(RELATION_TYPES)  # "RELATES_TO|IMPLEMENTS|PROVES|..."
+
 
 def _get_driver():
     global _driver
@@ -26,7 +54,7 @@ def _get_driver():
 
 
 def query(text: str, limit: int = 10) -> str:
-    """Search concepts by name, summary, or content."""
+    """Search concepts by name, summary, content, or aliases."""
     driver = _get_driver()
     with driver.session() as s:
         result = s.run(
@@ -34,10 +62,13 @@ def query(text: str, limit: int = 10) -> str:
             "WHERE toLower(c.name) CONTAINS toLower($text) "
             "   OR toLower(c.summary) CONTAINS toLower($text) "
             "   OR toLower(c.content) CONTAINS toLower($text) "
+            "   OR (c.aliases IS NOT NULL AND any(a IN c.aliases WHERE toLower(a) CONTAINS toLower($text))) "
             "RETURN c.name AS name, c.vault AS vault, c.summary AS summary, "
-            "  c.ghost AS ghost "
-            "ORDER BY CASE WHEN toLower(c.name) CONTAINS toLower($text) "
-            "  THEN 0 ELSE 1 END, name "
+            "  c.ghost AS ghost, c.aliases AS aliases "
+            "ORDER BY CASE "
+            "  WHEN toLower(c.name) CONTAINS toLower($text) THEN 0 "
+            "  WHEN c.aliases IS NOT NULL AND any(a IN c.aliases WHERE toLower(a) CONTAINS toLower($text)) THEN 1 "
+            "  ELSE 2 END, name "
             "LIMIT $limit",
             text=text,
             limit=limit,
@@ -51,8 +82,53 @@ def query(text: str, limit: int = 10) -> str:
     for r in records:
         ghost = " (ghost)" if r["ghost"] else ""
         summary = f" — {r['summary']}" if r["summary"] else ""
-        lines.append(f"- [{r['vault']}] {r['name']}{ghost}{summary}")
+        aliases = f" (aka: {', '.join(r['aliases'])})" if r["aliases"] else ""
+        lines.append(f"- [{r['vault']}] {r['name']}{ghost}{aliases}{summary}")
     return "\n".join(lines)
+
+
+def set_aliases(name: str, aliases: list[str]) -> str:
+    """Set English aliases for a concept. Enables cross-language search."""
+    driver = _get_driver()
+    with driver.session() as s:
+        node = s.run(
+            "MATCH (c:Concept {name: $name}) RETURN c", name=name
+        ).single()
+        if not node:
+            return f"Concept '{name}' not found."
+        s.run(
+            "MATCH (c:Concept {name: $name}) SET c.aliases = $aliases",
+            name=name,
+            aliases=aliases,
+        )
+    return f"Set aliases for '{name}': {', '.join(aliases)}"
+
+
+def batch_set_aliases(mappings: list[dict]) -> str:
+    """Set aliases for multiple concepts at once.
+
+    Args:
+        mappings: List of dicts with 'name' and 'aliases' keys.
+    """
+    driver = _get_driver()
+    results = []
+    with driver.session() as s:
+        for m in mappings:
+            name = m["name"]
+            aliases = m["aliases"]
+            node = s.run(
+                "MATCH (c:Concept {name: $name}) RETURN c", name=name
+            ).single()
+            if not node:
+                results.append(f"  ✗ '{name}' not found")
+                continue
+            s.run(
+                "MATCH (c:Concept {name: $name}) SET c.aliases = $aliases",
+                name=name,
+                aliases=aliases,
+            )
+            results.append(f"  ✓ '{name}' → {', '.join(aliases)}")
+    return f"Processed {len(mappings)} concept(s):\n" + "\n".join(results)
 
 
 def get_concept(name: str) -> str:
@@ -91,10 +167,11 @@ def get_concept(name: str) -> str:
             lines.append("")
 
         out = list(s.run(
-            "MATCH (c:Concept {name: $name})-[r:RELATES_TO]->(t:Concept) "
-            "RETURN t.name AS target, r.reasoning AS reasoning, "
-            "  r.weight AS weight, r.discovered_by AS by "
-            "ORDER BY target",
+            "MATCH (c:Concept {name: $name})-[r]->(t:Concept) "
+            "RETURN t.name AS target, type(r) AS rel_type, "
+            "  r.reasoning AS reasoning, r.weight AS weight, "
+            "  r.discovered_by AS by "
+            "ORDER BY rel_type, target",
             name=name,
         ))
         if out:
@@ -102,13 +179,14 @@ def get_concept(name: str) -> str:
             for r in out:
                 w = f" (w={r['weight']})" if r["weight"] else ""
                 by = f" [{r['by']}]" if r["by"] else ""
-                lines.append(f"  → {r['target']}{w}{by}")
+                lines.append(f"  —[{r['rel_type']}]→ {r['target']}{w}{by}")
 
         inc = list(s.run(
-            "MATCH (c:Concept {name: $name})<-[r:RELATES_TO]-(s:Concept) "
-            "RETURN s.name AS source, r.reasoning AS reasoning, "
-            "  r.weight AS weight, r.discovered_by AS by "
-            "ORDER BY source",
+            "MATCH (c:Concept {name: $name})<-[r]-(s:Concept) "
+            "RETURN s.name AS source, type(r) AS rel_type, "
+            "  r.reasoning AS reasoning, r.weight AS weight, "
+            "  r.discovered_by AS by "
+            "ORDER BY rel_type, source",
             name=name,
         ))
         if inc:
@@ -116,7 +194,7 @@ def get_concept(name: str) -> str:
             for r in inc:
                 w = f" (w={r['weight']})" if r["weight"] else ""
                 by = f" [{r['by']}]" if r["by"] else ""
-                lines.append(f"  ← {r['source']}{w}{by}")
+                lines.append(f"  ←[{r['rel_type']}]— {r['source']}{w}{by}")
 
         return "\n".join(lines)
 
@@ -133,10 +211,10 @@ def traverse(name: str, hops: int = 2) -> str:
             return f"Concept '{name}' not found."
 
         result = list(s.run(
-            f"MATCH path = (c:Concept {{name: $name}})-[:RELATES_TO*1..{hops}]-(n:Concept) "
+            f"MATCH path = (c:Concept {{name: $name}})-[:{_ANY_REL}*1..{hops}]-(n:Concept) "
             "WHERE c <> n "
             "RETURN DISTINCT n.name AS name, n.vault AS vault, n.ghost AS ghost, "
-            "  length(shortestPath((c)-[:RELATES_TO*]-(n))) AS distance "
+            f"  length(shortestPath((c)-[:{_ANY_REL}*]-(n))) AS distance "
             "ORDER BY distance, vault, name",
             name=name,
         ))
@@ -179,11 +257,12 @@ def why_exists(name: str) -> str:
             lines.append("")
 
         edges = list(s.run(
-            "MATCH (c:Concept {name: $name})-[r:RELATES_TO]-(other:Concept) "
-            "RETURN other.name AS other, r.reasoning AS reasoning, "
-            "  r.discovered_by AS by, r.weight AS weight, "
+            "MATCH (c:Concept {name: $name})-[r]-(other:Concept) "
+            "RETURN other.name AS other, type(r) AS rel_type, "
+            "  r.reasoning AS reasoning, r.discovered_by AS by, "
+            "  r.weight AS weight, "
             "  CASE WHEN startNode(r) = c THEN '→' ELSE '←' END AS dir "
-            "ORDER BY dir, other",
+            "ORDER BY rel_type, dir, other",
             name=name,
         ))
 
@@ -194,7 +273,7 @@ def why_exists(name: str) -> str:
             for e in edges:
                 reasoning = e["reasoning"] or "(no reasoning recorded)"
                 by = f" [{e['by']}]" if e["by"] else ""
-                lines.append(f"  {e['dir']} {e['other']}{by}")
+                lines.append(f"  {e['dir']}[{e['rel_type']}] {e['other']}{by}")
                 lines.append(f"    {reasoning}")
 
         return "\n".join(lines)
@@ -206,6 +285,7 @@ def expand(
     content: str = "",
     relate_to: str = "",
     reasoning: str = "",
+    relation_type: str = "RELATES_TO",
 ) -> str:
     """Add a new concept or relation to the knowledge graph."""
     driver = _get_driver()
@@ -247,6 +327,11 @@ def expand(
             actions.append(f"Created concept '{concept_name}' (vault: agent)")
 
         if relate_to:
+            # Validate relation type
+            rel = relation_type.upper() if relation_type else "RELATES_TO"
+            if rel not in RELATION_TYPES:
+                rel = "RELATES_TO"
+
             target = s.run(
                 "MATCH (c:Concept {name: $name}) RETURN c", name=relate_to
             ).single()
@@ -259,17 +344,20 @@ def expand(
                 )
                 actions.append(f"Created ghost node '{relate_to}'")
 
+            # Dynamic relationship type via APOC-free pattern:
+            # Neo4j MERGE doesn't support parameterized rel types,
+            # so we use f-string with validated rel (from RELATION_TYPES whitelist)
             s.run(
-                "MATCH (a:Concept {name: $source}) "
-                "MATCH (b:Concept {name: $target}) "
-                "MERGE (a)-[r:RELATES_TO]->(b) "
-                "SET r.discovered_by = 'agent', r.weight = 1.0, "
-                "  r.reasoning = $reasoning",
+                f"MATCH (a:Concept {{name: $source}}) "
+                f"MATCH (b:Concept {{name: $target}}) "
+                f"MERGE (a)-[r:{rel}]->(b) "
+                f"SET r.discovered_by = 'agent', r.weight = 1.0, "
+                f"  r.reasoning = $reasoning",
                 source=concept_name,
                 target=relate_to,
-                reasoning=reasoning or f"Agent-discovered relation: {concept_name} → {relate_to}",
+                reasoning=reasoning or f"Agent-discovered relation: {concept_name} —[{rel}]→ {relate_to}",
             )
-            actions.append(f"Created relation: {concept_name} → {relate_to}")
+            actions.append(f"Created relation: {concept_name} —[{rel}]→ {relate_to}")
 
     return "\n".join(actions)
 
@@ -353,55 +441,61 @@ def auto_link(name: str = "") -> str:
 
 
 def ensure_bidirectional(name: str = "") -> str:
-    """For every A→B edge, ensure B→A also exists.
+    """For every A→B symmetric edge, ensure B→A also exists (same type).
+
+    Only processes symmetric relationship types (RELATES_TO, TRANSLATES_TO,
+    CONTRADICTS). Directional types (IMPLEMENTS, REQUIRES, COMPOSES, etc.)
+    are left as-is — A IMPLEMENTS B does not mean B IMPLEMENTS A.
 
     If name is given, only process edges involving that concept.
     Otherwise, process the entire graph.
     """
     driver = _get_driver()
+    sym_cypher = "|".join(SYMMETRIC_TYPES)
 
     with driver.session() as s:
         if name:
-            # Check concept exists
             exists = s.run(
                 "MATCH (c:Concept {name: $name}) RETURN c", name=name
             ).single()
             if not exists:
                 return f"Concept '{name}' not found."
 
-            # Find unidirectional edges involving this concept
             missing = list(s.run(
-                "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
+                f"MATCH (a:Concept)-[r:{sym_cypher}]->(b:Concept) "
                 "WHERE (a.name = $name OR b.name = $name) "
-                "  AND NOT (b)-[:RELATES_TO]->(a) "
                 "  AND a <> b "
-                "RETURN a.name AS src, b.name AS tgt",
+                "WITH a, b, type(r) AS rel_type "
+                "WHERE NOT EXISTS { MATCH (b)-[r2]->(a) WHERE type(r2) = rel_type } "
+                "RETURN a.name AS src, b.name AS tgt, rel_type",
                 name=name,
             ))
         else:
             missing = list(s.run(
-                "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
-                "WHERE NOT (b)-[:RELATES_TO]->(a) "
-                "  AND a <> b "
-                "RETURN a.name AS src, b.name AS tgt"
+                f"MATCH (a:Concept)-[r:{sym_cypher}]->(b:Concept) "
+                "WHERE a <> b "
+                "WITH a, b, type(r) AS rel_type "
+                "WHERE NOT EXISTS { MATCH (b)-[r2]->(a) WHERE type(r2) = rel_type } "
+                "RETURN a.name AS src, b.name AS tgt, rel_type"
             ))
 
         if not missing:
-            return "All edges are already bidirectional."
+            return "All symmetric edges are already bidirectional."
 
         created = 0
         for m in missing:
+            rel = m["rel_type"]
             s.run(
-                "MATCH (a:Concept {name: $src}) "
-                "MATCH (b:Concept {name: $tgt}) "
-                "CREATE (b)-[r:RELATES_TO {discovered_by: 'bidirectional', "
-                "  weight: 1.0, reasoning: $reasoning}]->(a)",
+                f"MATCH (a:Concept {{name: $src}}) "
+                f"MATCH (b:Concept {{name: $tgt}}) "
+                f"CREATE (b)-[r:{rel} {{discovered_by: 'bidirectional', "
+                f"  weight: 1.0, reasoning: $reasoning}}]->(a)",
                 src=m["src"], tgt=m["tgt"],
-                reasoning=f"Bidirectional completion: {m['src']} → {m['tgt']} existed, so {m['tgt']} → {m['src']}",
+                reasoning=f"Bidirectional completion: {m['src']} —[{rel}]→ {m['tgt']} existed",
             )
             created += 1
 
-        return f"Created {created} reverse edges. All processed edges are now bidirectional."
+        return f"Created {created} reverse edges (symmetric types only)."
 
 
 def run_cypher(cypher: str) -> str:
@@ -421,24 +515,28 @@ def run_cypher(cypher: str) -> str:
 
 
 def get_stats() -> dict:
-    """Return ontology stats as a dict (nodes, edges, ghosts, vaults, agent_edges)."""
+    """Return ontology stats as a dict (nodes, edges, ghosts, vaults, agent_edges, edge_types)."""
     driver = _get_driver()
     with driver.session() as s:
         nodes = s.run("MATCH (c:Concept) RETURN count(c) AS n").single()["n"]
-        edges = s.run("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS n").single()["n"]
+        edges = s.run("MATCH ()-[r]->() RETURN count(r) AS n").single()["n"]
         ghosts = s.run("MATCH (c:Concept {ghost: true}) RETURN count(c) AS n").single()["n"]
         vaults = list(s.run(
             "MATCH (c:Concept) RETURN c.vault AS vault, count(*) AS n ORDER BY n DESC"
         ))
         agent_edges = s.run(
-            "MATCH ()-[r:RELATES_TO {discovered_by: 'agent'}]->() RETURN count(r) AS n"
+            "MATCH ()-[r {discovered_by: 'agent'}]->() RETURN count(r) AS n"
         ).single()["n"]
+        edge_types = list(s.run(
+            "MATCH ()-[r]->() RETURN type(r) AS rel_type, count(r) AS n ORDER BY n DESC"
+        ))
     return {
         "nodes": nodes,
         "edges": edges,
         "ghosts": ghosts,
         "vaults": [(r["vault"], r["n"]) for r in vaults],
         "agent_edges": agent_edges,
+        "edge_types": [(r["rel_type"], r["n"]) for r in edge_types],
     }
 
 
