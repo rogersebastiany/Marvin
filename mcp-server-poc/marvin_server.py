@@ -28,7 +28,7 @@ import system_design_backend
 MARVIN_TOOLS = [
     "retrieve", "get_concept", "traverse", "why_exists",
     "log_tool_call", "log_decision", "log_session",
-    "expand", "link",
+    "expand", "link", "auto_link",
     "propose_schema_change", "execute_schema_change",
     "search_docs", "list_docs", "get_doc",
     "fetch_url", "save_doc", "crawl_docs",
@@ -272,6 +272,19 @@ def link(source: str, target: str, reasoning: str) -> str:
         reasoning: Why this relation exists
     """
     return ontology.expand(source, relate_to=target, reasoning=reasoning)
+
+
+@mcp.tool()
+def auto_link(name: str = "") -> str:
+    """Scan concept content for references to other concepts and auto-create links.
+
+    Tautological: if concept name X appears in concept Y's content, create Y→X.
+    No probabilistic matching — found or not found.
+
+    Args:
+        name: Concept to process (empty = all isolated nodes)
+    """
+    return ontology.auto_link(name)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -274,6 +274,84 @@ def expand(
     return "\n".join(actions)
 
 
+def auto_link(name: str = "") -> str:
+    """Scan concept content for references to other concepts and create links.
+
+    If name is given, only process that concept. Otherwise, process all
+    concepts that have zero outgoing edges (isolated nodes).
+    """
+    driver = _get_driver()
+    now = datetime.now(timezone.utc).isoformat()
+
+    with driver.session() as s:
+        # Get all concept names for matching
+        all_names = [
+            r["name"] for r in s.run("MATCH (c:Concept) RETURN c.name AS name")
+        ]
+        name_set = set(all_names)
+
+        # Get target concepts to process
+        if name:
+            targets = list(s.run(
+                "MATCH (c:Concept {name: $name}) RETURN c.name AS name, c.content AS content",
+                name=name,
+            ))
+            if not targets:
+                return f"Concept '{name}' not found."
+        else:
+            # All concepts with no outgoing edges
+            targets = list(s.run(
+                "MATCH (c:Concept) "
+                "WHERE NOT (c)-[:RELATES_TO]->() "
+                "RETURN c.name AS name, c.content AS content"
+            ))
+
+        if not targets:
+            return "No isolated concepts to process."
+
+        total_links = 0
+        results = []
+
+        for t in targets:
+            concept_name = t["name"]
+            content = (t["content"] or "").lower()
+            if not content:
+                continue
+
+            links_created = []
+            for candidate in all_names:
+                if candidate == concept_name:
+                    continue
+                # Case-insensitive search for concept name in content
+                if candidate.lower() in content:
+                    # Check edge doesn't already exist
+                    existing = s.run(
+                        "MATCH (a:Concept {name: $src})-[:RELATES_TO]->(b:Concept {name: $tgt}) "
+                        "RETURN count(*) AS n",
+                        src=concept_name, tgt=candidate,
+                    ).single()["n"]
+                    if existing == 0:
+                        s.run(
+                            "MATCH (a:Concept {name: $src}) "
+                            "MATCH (b:Concept {name: $tgt}) "
+                            "CREATE (a)-[r:RELATES_TO {discovered_by: 'auto_link', "
+                            "  weight: 1.0, reasoning: $reasoning}]->(b)",
+                            src=concept_name, tgt=candidate,
+                            reasoning=f"Concept '{candidate}' found in content of '{concept_name}'",
+                        )
+                        links_created.append(candidate)
+
+            if links_created:
+                total_links += len(links_created)
+                results.append(f"  {concept_name} → {', '.join(links_created)} ({len(links_created)})")
+
+        if not results:
+            return f"Processed {len(targets)} concept(s), no new links found."
+
+        header = f"Created {total_links} links from {len(results)} concept(s):\n"
+        return header + "\n".join(results)
+
+
 def run_cypher(cypher: str) -> str:
     """Run arbitrary Cypher query. Used by Marvin for schema evolution."""
     driver = _get_driver()
