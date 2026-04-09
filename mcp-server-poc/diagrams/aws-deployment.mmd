@@ -1,0 +1,55 @@
+flowchart TB
+    subgraph internet["Internet"]
+        cursor["Cursor IDE Clients"]
+        entra["Microsoft Entra ID
+(Auth + 2FA)"]
+    end
+
+    subgraph aws["AWS Account"]
+        subgraph public_subnet["Public Subnet"]
+            waf["AWS WAF
+Rate limiting, IP filtering"]
+            alb["Application Load Balancer
+TLS termination, HTTPS only"]
+        end
+
+        subgraph private_subnet["Private Subnet"]
+            subgraph ecs["ECS Fargate Cluster"]
+                gw["MCP Gateway
+JWT validation, routing, audit"]
+                docs["Docs Server"]
+                web["Web-to-Docs"]
+                prompt["Prompt Engineer"]
+                design["System Design"]
+            end
+        end
+
+        subgraph data["Data Layer (VPC Endpoints)"]
+            s3[("S3 + KMS
+Encrypted docs & diagrams")]
+            sm["Secrets Manager
+API keys, creds"]
+            cw["CloudWatch Logs
+Audit trail, metrics"]
+        end
+
+        ecr["ECR
+Container images"]
+    end
+
+    cursor -->|"HTTPS/SSE"| waf
+    waf --> alb
+    alb -->|"Target group"| gw
+    gw -->|"Validates JWT with"| entra
+    gw --> docs
+    gw --> web
+    gw --> prompt
+    gw --> design
+    docs -->|"S3 API"| s3
+    web -->|"S3 API"| s3
+    design -->|"S3 API"| s3
+    web -->|"HTTPS"| internet
+    gw -->|"Append-only"| cw
+    gw -->|"Fetch secrets"| sm
+    docs -->|"Fetch keys"| sm
+    ecr -.->|"Pull images"| ecs

@@ -1,0 +1,48 @@
+C4Container
+    title Secure MCP Platform - Container Diagram
+
+    Person(dev, "Developer", "Uses Cursor IDE with MCP client")
+    Person(admin, "Admin", "Manages tenants and audit logs")
+
+    Enterprise_Boundary(platform, "MCP Platform") {
+
+        Boundary(public_zone, "Public Zone") {
+            Container(proxy, "Reverse Proxy", "Traefik", "TLS termination, rate limiting")
+        }
+
+        Boundary(dmz, "DMZ") {
+            Container(auth, "Auth Service", "Keycloak", "OAuth2/OIDC, JWT, RBAC")
+            Container(gateway, "MCP Gateway", "Python FastMCP", "JWT validation, routing, tenant isolation")
+        }
+
+        Boundary(private_zone, "Private Zone") {
+            Container(docs_srv, "Docs Server", "FastMCP", "search_docs, list_docs, get_doc_summary")
+            Container(web_srv, "Web-to-Docs", "FastMCP", "convert_url, crawl_docs, save_as_doc")
+            Container(prompt_srv, "Prompt Engineer", "FastMCP", "generate_prompt, audit_prompt")
+            Container(design_srv, "System Design", "FastMCP", "generate_diagram, judge_diagram")
+            ContainerDb(docstore, "Document Store", "S3 SSE-KMS", "AES-256 encrypted, tenant-isolated")
+            ContainerDb(diagrams_store, "Diagrams Store", "S3 SSE-KMS", "Mermaid files per tenant")
+            ContainerDb(audit_log, "Audit Log", "CloudWatch", "Append-only, immutable")
+        }
+
+        Container(secrets, "Secrets Manager", "AWS SM / Vault", "API keys, encryption keys")
+    }
+
+    System_Ext(idp, "Corporate IdP", "Company SSO provider")
+    System_Ext(internet, "External Websites", "Docs sites crawled by web-to-docs")
+
+    Rel(dev, proxy, "Connects via", "HTTPS/SSE")
+    Rel(admin, proxy, "Manages via", "HTTPS")
+    Rel(proxy, auth, "Forwards auth", "HTTPS")
+    Rel(proxy, gateway, "Routes MCP traffic", "HTTPS")
+    Rel(auth, idp, "Delegates SSO", "OIDC")
+    Rel(gateway, docs_srv, "Routes calls", "gRPC")
+    Rel(gateway, web_srv, "Routes calls", "gRPC")
+    Rel(gateway, prompt_srv, "Routes calls", "gRPC")
+    Rel(gateway, design_srv, "Routes calls", "gRPC")
+    Rel(docs_srv, docstore, "Reads", "S3 API")
+    Rel(web_srv, docstore, "Writes", "S3 API")
+    Rel(web_srv, internet, "Fetches pages", "HTTPS")
+    Rel(design_srv, diagrams_store, "Reads/Writes", "S3 API")
+    Rel(gateway, audit_log, "Logs all calls", "Append-only")
+    Rel(gateway, secrets, "Fetches creds", "HTTPS")

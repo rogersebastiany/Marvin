@@ -1,0 +1,58 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"        # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External service ports
+    environment:
+      - SERVICES=s3,kms,secretsmanager,logs,ecr,ecs,elbv2,ec2,iam,sts,wafv2,cognito-idp
+      - DEBUG=0
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_HOST=localstack
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  docs-server:
+    build: .
+    environment:
+      - MCP_SERVER=server.py
+    depends_on:
+      localstack:
+        condition: service_healthy
+    stdin_open: true
+
+  web-to-docs:
+    build: .
+    environment:
+      - MCP_SERVER=web_to_docs_server.py
+    depends_on:
+      localstack:
+        condition: service_healthy
+    stdin_open: true
+
+  prompt-engineer:
+    build: .
+    environment:
+      - MCP_SERVER=prompt_engineer_server.py
+    depends_on:
+      localstack:
+        condition: service_healthy
+    stdin_open: true
+
+  system-design:
+    build: .
+    environment:
+      - MCP_SERVER=system_design_server.py
+    depends_on:
+      localstack:
+        condition: service_healthy
+    stdin_open: true
+
+volumes:
+  localstack-data:

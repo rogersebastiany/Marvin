@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mcp-marvin": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "python", "marvin_server.py"]
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "main": {
+    "id": "642d9a491c931ade",
+    "type": "split",
+    "children": [
+      {
+        "id": "a967b3421266ea3a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f5c63f641490bbdb",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Tautologia Ontológica — Tese e Prova.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Tautologia Ontológica — Tese e Prova"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "ffd3bacb46db7f82",
+    "type": "split",
+    "children": [
+      {
+        "id": "227a6386ebd7c197",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6c19939f9fa722c1",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "52904fefa3ef7a43",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "61deb113858c0cd8",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "8612f1f1355a1efa",
+    "type": "split",
+    "children": [
+      {
+        "id": "6b1e7ebb216c7ebb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fb56122bea07e60e",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Tautologia Ontológica — Tese e Prova.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Tautologia Ontológica — Tese e Prova"
+            }
+          },
+          {
+            "id": "67d7edbd531a5e6b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Tautologia Ontológica — Tese e Prova.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Tautologia Ontológica — Tese e Prova"
+            }
+          },
+          {
+            "id": "5387a6d04b87dfdf",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "5c21110fcda92c13",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "1e5e1b27dc452c46",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Tautologia Ontológica — Tese e Prova.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Tautologia Ontológica — Tese e Prova"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "command-palette:Open command palette": false,
+      "markdown-importer:Open format converter": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "f5c63f641490bbdb",
+  "lastOpenFiles": [
+    "Agente na POC.md.tmp.440987.1775750606506",
+    "Anti-Alucinação.md.tmp.440987.1775750594632",
+    "Enforcement Arquitetural.md",
+    "Enforcement Arquitetural.md.tmp.440987.1775750578393",
+    "Tool Tautológica.md",
+    "Tool Tautológica.md.tmp.440987.1775750410081",
+    "Tool como Bias.md.tmp.440987.1775750384223",
+    "Anti-Alucinação.md.tmp.440987.1775750369169",
+    "Anti-Alucinação.md.tmp.440987.1775750362629",
+    "Determinismo Mensurável.md.tmp.440987.1775750349803",
+    "Determinismo Mensurável.md.tmp.440987.1775750342451",
+    "Agente na POC.md.tmp.440987.1775749581925",
+    "RAG Implícito.md.tmp.440987.1775749574438",
+    "Acumulação Cognitiva.md",
+    "Loop de Auto-Melhoria.md",
+    "mcp-memory-server.md",
+    "mcp-ontology-server.md",
+    "Milvus.md",
+    "Neo4j.md"
+  ]
+}
