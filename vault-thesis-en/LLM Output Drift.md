@@ -57,4 +57,4 @@ It complements the [[DFAH]]: while the DFAH shows what happens with context (89%
 
 ---
 
-Related to: [[Drift]], [[Determinismo]], [[DFAH]], [[Contexto]], [[Ontologia]], [[Tautologia Ontológica]], [[Matriz M]], [[Espaço Amostral]], [[RAG]], [[MCP]], [[Agente]]
+Related to: [[Drift]], [[Determinismo]], [[DFAH]], [[Contexto]], [[Ontologia]], [[Ontological Tautology]], [[Matriz M]], [[Espaço Amostral]], [[RAG]], [[MCP]], [[Agente]]

@@ -12,7 +12,7 @@ Inference is the phase of using an already-trained model ([[Matriz M]] frozen). 
 
 Inference in LLMs is inherently probabilistic -- the model computes P(token|context) and chooses (or samples) the most probable one. This introduces variability ([[Drift]]).
 
-[[Dedução]] is deterministic -- the conclusion is necessary given the premises. In the [[Tautologia Ontológica]] thesis, complete [[Contexto]] transforms probabilistic inference into something that approaches deduction: when P(correct token|context) -> 1, the probabilistic "choice" has only one viable candidate.
+[[Dedução]] is deterministic -- the conclusion is necessary given the premises. In the [[Ontological Tautology]] thesis, complete [[Contexto]] transforms probabilistic inference into something that approaches deduction: when P(correct token|context) -> 1, the probabilistic "choice" has only one viable candidate.
 
 ---
 

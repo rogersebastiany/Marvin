@@ -21,7 +21,7 @@ The [[DFAH]] reveals that [[Determinismo]] and accuracy have a null correlation 
 
 But this finding applies to tools whose output is ambiguous. When tools are tautological, [[Determinismo]] **implies** accuracy. If the tool can only return the correct answer or "I don't know," and the system is deterministic, the system is deterministically correct.
 
-The null correlation from DFAH measures agents with generic tools. The [[Tautologia Ontológica]] thesis operates with tautological tools -- a universe where r = -0.11 does not apply.
+The null correlation from DFAH measures agents with generic tools. The [[Ontological Tautology]] thesis operates with tautological tools -- a universe where r = -0.11 does not apply.
 
 ## Criteria
 
@@ -57,4 +57,4 @@ If every tool is tautological and every action in the domain is covered by a too
 
 ---
 
-Related to: [[Tool]], [[Tautologia]], [[Determinismo]], [[DFAH]], [[Ontologia]], [[Tautologia Ontológica]], [[MCP]], [[Contexto]], [[Espaço Amostral]]
+Related to: [[Tool]], [[Tautologia]], [[Determinismo]], [[DFAH]], [[Ontologia]], [[Ontological Tautology]], [[MCP]], [[Contexto]], [[Espaço Amostral]]

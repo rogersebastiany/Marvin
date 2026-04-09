@@ -18,7 +18,7 @@ The paper [[LLM Output Drift]] formalizes this phenomenon: without rigid [[Conte
 
 ## How to Achieve Determinism
 
-The [[Tautologia Ontológica]] thesis proposes that determinism in LLMs is not a model problem -- it is a [[Contexto]] problem. The model is probabilistic, but if the effective [[Espaço Amostral]] is reduced to a point (via complete [[Ontologia]]), the probability of the correct token approaches 1.
+The [[Ontological Tautology]] thesis proposes that determinism in LLMs is not a model problem -- it is a [[Contexto]] problem. The model is probabilistic, but if the effective [[Espaço Amostral]] is reduced to a point (via complete [[Ontologia]]), the probability of the correct token approaches 1.
 
 The paper [[DFAH]] demonstrates empirically: structured context (specs, harness, typed tools) produces 89-90%+ trajectory determinism. Specifically, it is **schema-first architecture** -- tool definitions with explicit types and formatted returns -- that produces this number. Three formal metrics capture different granularities: ActDet (actions), SigDet (signatures), DecDet (decisions).
 
@@ -36,7 +36,7 @@ In the general case: determinism without complete [[Ontologia]] is merely consis
 
 When tools are [[Tool Tautológica|tautological]] -- complete I/O contract, finite output, explicit failure -- determinism **implies** accuracy. The tool can only return the correct answer or "I don't know." If the system is deterministic with tautological tools, it is deterministically correct.
 
-The r = -0.11 from DFAH measures the general case. The [[Tautologia Ontológica]] thesis operates in the specific case: complete [[Ontologia]] (total coverage) with tautological tools (complete contracts). In this case, the correlation between determinism and accuracy is positive by construction.
+The r = -0.11 from DFAH measures the general case. The [[Ontological Tautology]] thesis operates in the specific case: complete [[Ontologia]] (total coverage) with tautological tools (complete contracts). In this case, the correlation between determinism and accuracy is positive by construction.
 
 ## Determinism vs Convergence
 
@@ -54,4 +54,4 @@ The correct metric for regulated domains is **pass^k** (all k attempts must succ
 
 ---
 
-Related to: [[Tautologia]], [[Ontologia]], [[Drift]], [[Convergência]], [[Contexto]], [[Espaço Amostral]], [[DFAH]], [[LLM Output Drift]], [[Ultra-Long-Horizon Agentic Science]], [[Acumulação Cognitiva]], [[Tautologia Ontológica]], [[Tool Tautológica]]
+Related to: [[Tautologia]], [[Ontologia]], [[Drift]], [[Convergência]], [[Contexto]], [[Espaço Amostral]], [[DFAH]], [[LLM Output Drift]], [[Ultra-Long-Horizon Agentic Science]], [[Acumulação Cognitiva]], [[Ontological Tautology]], [[Tool Tautológica]]

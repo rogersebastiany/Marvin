@@ -60,7 +60,7 @@ Three trust zones:
 
 ## Gateway to the Thesis
 
-The [[Arquitetura de Produção]] is what makes the [[Tautologia Ontológica]] thesis viable at enterprise scale. The [[Ontologia como Código|ontology]] is encrypted, isolated per tenant, auditable, and accessible in O(1) via [[MCP]] over SSE. The "open gate" of [[stdio]] becomes a gate with [[Três Camadas de Segurança|three security layers]] -- but the [[MCP]] protocol is the same.
+The [[Arquitetura de Produção]] is what makes the [[Ontological Tautology]] thesis viable at enterprise scale. The [[Ontologia como Código|ontology]] is encrypted, isolated per tenant, auditable, and accessible in O(1) via [[MCP]] over SSE. The "open gate" of [[stdio]] becomes a gate with [[Três Camadas de Segurança|three security layers]] -- but the [[MCP]] protocol is the same.
 
 ---
 

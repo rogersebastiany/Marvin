@@ -33,10 +33,10 @@ The agent's action space IS the agent's [[Ontologia]]. The available tools defin
 
 Removing a tool = removing a possibility = reducing S. Adding a tool = expanding the action space = expanding the ontology.
 
-The [[Tautologia Ontológica]] applies recursively: the agent's ontology (its tools) must itself be tautological. Every available tool must be [[Tool Tautológica|tautological]]. No unnecessary tool should exist.
+The [[Ontological Tautology]] applies recursively: the agent's ontology (its tools) must itself be tautological. Every available tool must be [[Tool Tautológica|tautological]]. No unnecessary tool should exist.
 
 The ontologically tautological agent has **exactly** the tools it needs -- no more, no less.
 
 ---
 
-Related to: [[Tool]], [[Tool Tautológica]], [[Agente]], [[MCP]], [[Ontologia]], [[Bias]], [[Espaço Amostral]], [[Tautologia Ontológica]]
+Related to: [[Tool]], [[Tool Tautológica]], [[Agente]], [[MCP]], [[Ontologia]], [[Bias]], [[Espaço Amostral]], [[Ontological Tautology]]

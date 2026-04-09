@@ -21,7 +21,7 @@ Examples:
 
 ## Ontology as Complete Context
 
-In the [[Tautologia Ontológica]] thesis, ontology is synonymous with complete [[Contexto]]. When all entities, relations, behaviors, and constraints of a domain are defined and accessible to the model via [[Tool|tools]] and [[MCP]], the model has the complete ontology of that domain.
+In the [[Ontological Tautology]] thesis, ontology is synonymous with complete [[Contexto]]. When all entities, relations, behaviors, and constraints of a domain are defined and accessible to the model via [[Tool|tools]] and [[MCP]], the model has the complete ontology of that domain.
 
 The direct consequence: if the ontology is complete, [[Inferência]] transforms into [[Dedução]], and the result is [[Tautologia|tautological]].
 
@@ -52,4 +52,4 @@ Completeness is not abstract -- it is a concrete checklist.
 
 ---
 
-Related to: [[Tautologia]], [[Contexto]], [[Espaço Amostral]], [[Teoria dos Conjuntos]], [[Tool]], [[Tool Tautológica]], [[MCP]], [[Determinismo]], [[Alucinação]], [[Tautologia Ontológica]]
+Related to: [[Tautologia]], [[Contexto]], [[Espaço Amostral]], [[Teoria dos Conjuntos]], [[Tool]], [[Tool Tautológica]], [[MCP]], [[Determinismo]], [[Alucinação]], [[Ontological Tautology]]

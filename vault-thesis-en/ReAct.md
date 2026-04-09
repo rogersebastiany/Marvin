@@ -18,7 +18,7 @@ Each cycle enriches the context. It is the Deterministic Feedback Loop in action
 
 ## Relationship with the Thesis
 
-ReAct is the practical mechanism of [[Tautologia Ontológica]]. At each cycle, the agent accumulates more [[Contexto]] (reason -> observation), reduces the [[Espaço Amostral]], and approaches the [[Tautologia|tautological]] answer.
+ReAct is the practical mechanism of [[Ontological Tautology]]. At each cycle, the agent accumulates more [[Contexto]] (reason -> observation), reduces the [[Espaço Amostral]], and approaches the [[Tautologia|tautological]] answer.
 
 With [[RAG]] in the loop, the agent also queries past decisions -- accumulation of structured knowledge as described in the paper [[Ultra-Long-Horizon Agentic Science]].
 

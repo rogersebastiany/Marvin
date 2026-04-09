@@ -12,7 +12,7 @@ Fundamental concepts: membership (∈), subset (⊂), union (∪), intersection 
 
 ## Application in the Thesis
 
-In [[Tautologia Ontológica]], Set Theory formalizes the mechanics of [[Contexto]]:
+In [[Ontological Tautology]], Set Theory formalizes the mechanics of [[Contexto]]:
 
 - **S** (universe set) = complete [[Espaço Amostral]] of the [[Matriz M]]
 - **A ⊂ S** (subset) = region defined by [[Contexto]] (prompt)

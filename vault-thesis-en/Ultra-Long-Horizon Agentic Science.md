@@ -63,4 +63,4 @@ The central insight: **[[Acumulação Cognitiva]] is not linear aggregation of c
 
 ---
 
-Related to: [[Determinismo]], [[RAG]], [[Agente]], [[ReAct]], [[DFAH]], [[Contexto]], [[Tautologia Ontológica]], [[Acumulação Cognitiva]], [[Embedding]]
+Related to: [[Determinismo]], [[RAG]], [[Agente]], [[ReAct]], [[DFAH]], [[Contexto]], [[Ontological Tautology]], [[Acumulação Cognitiva]], [[Embedding]]

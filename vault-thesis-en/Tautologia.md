@@ -22,7 +22,7 @@ The difference between probabilistic inference and [[Dedução|tautological dedu
 
 [[Ontologia]] defines the domain. Tautology is what emerges when the domain is completely defined. They are complementary concepts -- the ontology is the cause, the tautology is the effect.
 
-When the [[Ontologia]] is incomplete, the system operates by probability. When it is complete, it operates by deduction. The transition point is what the [[Tautologia Ontológica]] thesis formalizes.
+When the [[Ontologia]] is incomplete, the system operates by probability. When it is complete, it operates by deduction. The transition point is what the [[Ontological Tautology]] thesis formalizes.
 
 ## Relationship with Determinism
 
@@ -38,4 +38,4 @@ When all tools in a domain are tautological and cover all methods of the domain,
 
 ---
 
-Related to: [[Ontologia]], [[Determinismo]], [[Dedução]], [[Espaço Amostral]], [[Contexto]], [[DFAH]], [[Tautologia Ontológica]], [[Tool Tautológica]], [[Tool]]
+Related to: [[Ontologia]], [[Determinismo]], [[Dedução]], [[Espaço Amostral]], [[Contexto]], [[DFAH]], [[Ontological Tautology]], [[Tool Tautológica]], [[Tool]]

@@ -21,7 +21,7 @@ It is the same relationship that exists between [[Divergência]] and [[Convergê
 
 ## Drift as Absence of Tautology
 
-In the [[Tautologia Ontológica]] thesis, drift is what happens when [[Tautologia]] is not established. If [[Contexto]] is incomplete, multiple responses are "plausible" within the [[Espaço Amostral]] -- the model chooses one, but could have chosen another. There is no logical necessity in the result.
+In the [[Ontological Tautology]] thesis, drift is what happens when [[Tautologia]] is not established. If [[Contexto]] is incomplete, multiple responses are "plausible" within the [[Espaço Amostral]] -- the model chooses one, but could have chosen another. There is no logical necessity in the result.
 
 Drift is the symptom. Incomplete [[Ontologia]] is the cause.
 
@@ -50,4 +50,4 @@ In the thesis practice: [[Tool|tools]] via [[MCP]], specs, BDD, TDD, ADR, observ
 
 ---
 
-Related to: [[Determinismo]], [[Contexto]], [[Ontologia]], [[Divergência]], [[Convergência]], [[Espaço Amostral]], [[Alucinação]], [[LLM Output Drift]], [[DFAH]], [[Tautologia Ontológica]], [[Matriz M]], [[RAG]], [[MCP]]
+Related to: [[Determinismo]], [[Contexto]], [[Ontologia]], [[Divergência]], [[Convergência]], [[Espaço Amostral]], [[Alucinação]], [[LLM Output Drift]], [[DFAH]], [[Ontological Tautology]], [[Matriz M]], [[RAG]], [[MCP]]

@@ -1,6 +1,5 @@
 
-# Tautologia Ontológica
-## *Ontological Tautology*
+# Ontological Tautology
 
 ### Optimal control for LLM models reasoning
 

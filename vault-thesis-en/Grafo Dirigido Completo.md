@@ -12,7 +12,7 @@ If for all members of the set "nodes" the property "has a directional edge to ev
 
 ## Relationship with the Thesis
 
-The concept of a complete directed graph was the starting point of the [[Tautologia Ontológica]] thesis. The original question: "if all nodes have directional edges to every other node, it is a fully discoverable directed graph, you know? By tautology."
+The concept of a complete directed graph was the starting point of the [[Ontological Tautology]] thesis. The original question: "if all nodes have directional edges to every other node, it is a fully discoverable directed graph, you know? By tautology."
 
 The [[Ontologia]] of the graph (definition of nodes, edges, direction) enables the [[Tautologia|tautological]] conclusion that the graph is complete. The ontology is the cause, the tautology is the effect.
 
@@ -24,4 +24,4 @@ In the thesis: a system with complete [[Ontologia]] is like a strongly connected
 
 ---
 
-Related to: [[Tautologia]], [[Ontologia]], [[Tautologia Ontológica]]
+Related to: [[Tautologia]], [[Ontologia]], [[Ontological Tautology]]

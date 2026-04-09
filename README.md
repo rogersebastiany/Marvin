@@ -1,6 +1,6 @@
 # Marvin
 
-A self-improving AI agent system that proves the **Tautologia Ontológica** thesis: when an agent operates exclusively through tautological tools over a complete ontology, its behavior becomes deterministic by construction.
+A self-improving AI agent system that proves the **Ontological Tautology** thesis: when an agent operates exclusively through tautological tools over a complete ontology, its behavior becomes deterministic by construction.
 
 Named after Marvin the Paranoid Android — because when you know everything, existence is predictably depressing.
 
@@ -8,7 +8,7 @@ Named after Marvin the Paranoid Android — because when you know everything, ex
 
 ## The Thesis
 
-**Tautologia Ontológica** argues that LLM non-determinism is not an intrinsic property of the model — it's a consequence of incomplete context. When:
+**Ontological Tautology** argues that LLM non-determinism is not an intrinsic property of the model — it's a consequence of incomplete context. When:
 
 1. The **ontology** is complete (every domain concept is defined and connected)
 2. The **tools** are tautological (given valid input, exactly one correct output exists)
@@ -190,7 +190,7 @@ The ablation study in the paper validates this design: without L1, performance d
 
 ### Vault Sources
 
-- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — 45 concepts covering the mathematical and theoretical foundations: Tautologia Ontológica, Determinismo, Álgebra Linear, Teoria dos Conjuntos, Espaço Amostral, Convergência, DFAH, LLM Output Drift, HCC, etc. Available in Portuguese (original) and English (`vault-thesis-en/`).
+- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — 45 concepts covering the mathematical and theoretical foundations: Ontological Tautology, Determinism, Linear Algebra, Set Theory, Sample Space, Convergence, DFAH, LLM Output Drift, HCC, etc. Available in Portuguese (original) and English (`vault-thesis-en/`).
 
 - **Implementation vault** (`vault/`) — 38 concepts covering the practical architecture: Agente na POC, Cadeia de Servers, FastMCP, Neo4j, Milvus, mcp-ontology-server, mcp-memory-server, Loop de Auto-Melhoria, Enforcement Arquitetural, etc. Available in Portuguese (original) and English (`vault-implementation-en/`).
 

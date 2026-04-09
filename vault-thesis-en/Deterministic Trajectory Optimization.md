@@ -49,7 +49,7 @@ Tested on inverted pendulum and cart-pole -- non-linear systems. SP-BSC achieves
 
 ## Connection to the Thesis
 
-The concept is identical to [[Tautologia Ontológica]], only the domain and the computation change:
+The concept is identical to [[Ontological Tautology]], only the domain and the computation change:
 
 - **This paper**: dynamical system + model + EM -> deterministic trajectory
 - **The thesis**: LLM + complete [[Ontologia]] + [[Tool|tools]] -> deterministic output
@@ -60,4 +60,4 @@ The pattern: structured information + iterative refinement -> [[Convergência]] 
 
 ---
 
-Related to: [[Determinismo]], [[Convergência]], [[Ontologia]], [[Tautologia Ontológica]], [[Espaço Amostral]], [[Drift]], [[Feedback Loop Determinístico]], [[Tool]]
+Related to: [[Determinismo]], [[Convergência]], [[Ontologia]], [[Ontological Tautology]], [[Espaço Amostral]], [[Drift]], [[Feedback Loop Determinístico]], [[Tool]]

@@ -22,7 +22,7 @@ Context migration moves information between layers: prefetching (L3->context), c
 
 ## In the Thesis
 
-The [[Tautologia Ontológica]] equation -- Spec + BDD + TDD + ADR + Observability + [[MCP]] + [[RAG]] -- is a cognitive accumulation framework. Each layer adds structured [[Contexto]] that persists and accumulates:
+The [[Ontological Tautology]] equation -- Spec + BDD + TDD + ADR + Observability + [[MCP]] + [[RAG]] -- is a cognitive accumulation framework. Each layer adds structured [[Contexto]] that persists and accumulates:
 
 - Specs and BDD/TDD = validated knowledge (L2)
 - ADR = wisdom from architectural decisions (L3)
@@ -39,4 +39,4 @@ In the [[Redução de Dimensionalidade|same logic]]: more information is not mor
 
 ---
 
-Related to: [[Ultra-Long-Horizon Agentic Science]], [[Determinismo]], [[Contexto]], [[Agente]], [[RAG]], [[MCP]], [[Embedding]], [[Tautologia Ontológica]], [[Feedback Loop Determinístico]]
+Related to: [[Ultra-Long-Horizon Agentic Science]], [[Determinismo]], [[Contexto]], [[Agente]], [[RAG]], [[MCP]], [[Embedding]], [[Ontological Tautology]], [[Feedback Loop Determinístico]]

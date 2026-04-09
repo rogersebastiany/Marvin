@@ -14,7 +14,7 @@ https://arxiv.org/abs/2601.15322
 
 The paper introduces a "replayable" harness -- it records agent trajectories (sequences of tool calls) and re-executes them to measure divergence. With structured [[Contexto]] (typed schemas, specs, defined tools), trajectory determinism rises to 89-90%+.
 
-It is the central empirical proof of the [[Tautologia Ontológica]] thesis: [[Ontologia]] (structured context) -> [[Tautologia]] (predictable result) -> [[Determinismo]] (89%+).
+It is the central empirical proof of the [[Ontological Tautology]] thesis: [[Ontologia]] (structured context) -> [[Tautologia]] (predictable result) -> [[Determinismo]] (89%+).
 
 ## Three Formal Metrics
 
@@ -41,7 +41,7 @@ The correlation between determinism and accuracy is **null (r = -0.11)**. Small 
 
 **However**: this null correlation applies to agents with generic tools -- tools whose output is ambiguous or open-ended. When tools are [[Tool Tautológica|tautological]] (complete I/O contract, finite output, explicit failure), determinism **implies** accuracy. If the tool can only return the correct answer or "I don't know," a deterministic system is deterministically correct.
 
-The [[Tautologia Ontológica]] thesis operates in this restricted universe: tautological tools served via [[MCP]]. The r = -0.11 measures the general case; the thesis operates in the specific case where the correlation is positive by construction.
+The [[Ontological Tautology]] thesis operates in this restricted universe: tautological tools served via [[MCP]]. The r = -0.11 measures the general case; the thesis operates in the specific case where the correlation is positive by construction.
 
 ## Schema-First Architecture
 
@@ -66,4 +66,4 @@ The paper [[Ultra-Long-Horizon Agentic Science]] shows that the number can grow 
 
 ---
 
-Related to: [[Determinismo]], [[Ontologia]], [[Tautologia]], [[LLM Output Drift]], [[Ultra-Long-Horizon Agentic Science]], [[Contexto]], [[Tautologia Ontológica]], [[Acumulação Cognitiva]], [[FastMCP]], [[Tool Tautológica]]
+Related to: [[Determinismo]], [[Ontologia]], [[Tautologia]], [[LLM Output Drift]], [[Ultra-Long-Horizon Agentic Science]], [[Contexto]], [[Ontological Tautology]], [[Acumulação Cognitiva]], [[FastMCP]], [[Tool Tautológica]]

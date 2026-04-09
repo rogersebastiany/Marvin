@@ -32,7 +32,7 @@ The [[Transformer-Driven Prompt Architect]] (6 mandatory sections) and [[Scoring
 
 The [[DFAH]] shows null correlation (r = -0.11) between [[Determinismo]] and accuracy in agents with generic tools. But with tautological tools, determinism **implies** accuracy -- the tool can only return truth or "I don't know".
 
-This is the thesis defense against the DFAH's most provocative finding. The r = -0.11 measures the general case. The [[Tautologia Ontológica]] operates in the case where tools are tautological and the [[Ontologia como Código|ontology]] is complete.
+This is the thesis defense against the DFAH's most provocative finding. The r = -0.11 measures the general case. The [[Ontological Tautology]] operates in the case where tools are tautological and the [[Ontologia como Código|ontology]] is complete.
 
 ## Completeness = Coverage
 
@@ -45,4 +45,4 @@ If yes for all -> [[Tautologia]] by construction.
 
 ---
 
-Related to: [[Tool como Bias]], [[DFAH]], [[Determinismo Mensurável]], [[Anti-Alucinação]], [[Ontologia como Código]], [[Transformer-Driven Prompt Architect]], [[Scoring de Diagramas]], [[Tautologia Ontológica — Tese e Prova]], [[Catálogo de Tools]]
+Related to: [[Tool como Bias]], [[DFAH]], [[Determinismo Mensurável]], [[Anti-Alucinação]], [[Ontologia como Código]], [[Transformer-Driven Prompt Architect]], [[Scoring de Diagramas]], [[Ontological Tautology — Thesis and Proof]], [[Catálogo de Tools]]

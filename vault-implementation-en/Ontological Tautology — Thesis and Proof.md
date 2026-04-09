@@ -6,7 +6,7 @@ This vault maps the bridge between the theoretical thesis and its concrete imple
 
 ## The Thesis
 
-[[Tautologia Ontológica]]: when the [[Ontologia]] of a domain is completely defined and accessible, the behavior of an AI system becomes [[Determinismo|deterministic]]. The correct answer is deducible by construction, not by probability.
+[[Ontological Tautology]]: when the [[Ontologia]] of a domain is completely defined and accessible, the behavior of an AI system becomes [[Determinismo|deterministic]]. The correct answer is deducible by construction, not by probability.
 
 The equation: complete [[Ontologia]] -> [[Tautologia]] -> [[Determinismo]].
 

@@ -58,8 +58,8 @@ The enforcement is at the infrastructure level, not at the prompt level.
 
 The agent's action space IS the agent's ontology. The available tools define what it can do. Remove tool = reduce S. Add tool = expand S.
 
-The [[Tautologia Ontológica — Tese e Prova|thesis]] applies recursively: the agent's ontology (its tools) must itself be tautological. Every available tool must be [[Tool Tautológica|tautological]]. No unnecessary tool should exist. The agent has **exactly** the tools it needs -- no more, no less.
+The [[Ontological Tautology — Thesis and Proof|thesis]] applies recursively: the agent's ontology (its tools) must itself be tautological. Every available tool must be [[Tool Tautológica|tautological]]. No unnecessary tool should exist. The agent has **exactly** the tools it needs -- no more, no less.
 
 ---
 
-Related to: [[Tool Tautológica]], [[Tool como Bias]], [[Agente na POC]], [[Cadeia de Servers]], [[MCP Gateway]], [[Feedback Loop Determinístico]], [[Ontologia como Código]], [[Neo4j]], [[Milvus]], [[mcp-ontology-server]], [[mcp-memory-server]], [[Tautologia Ontológica — Tese e Prova]]
+Related to: [[Tool Tautológica]], [[Tool como Bias]], [[Agente na POC]], [[Cadeia de Servers]], [[MCP Gateway]], [[Feedback Loop Determinístico]], [[Ontologia como Código]], [[Neo4j]], [[Milvus]], [[mcp-ontology-server]], [[mcp-memory-server]], [[Ontological Tautology — Thesis and Proof]]

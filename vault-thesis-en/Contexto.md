@@ -1,6 +1,6 @@
 # Context
 
-The input that reduces the [[Espaço Amostral]]. Composed of prompt, [[Tool|tools]], history, and any information that conditions the model's response. It is the central mechanism of the [[Tautologia Ontológica]].
+The input that reduces the [[Espaço Amostral]]. Composed of prompt, [[Tool|tools]], history, and any information that conditions the model's response. It is the central mechanism of the [[Ontological Tautology]].
 
 ---
 
@@ -36,4 +36,4 @@ Cumulatively, all these forms build the [[Ontologia]].
 
 ---
 
-Related to: [[Espaço Amostral]], [[Subconjunto]], [[Vetor]], [[Ontologia]], [[Determinismo]], [[Drift]], [[Tool]], [[MCP]], [[RAG]], [[Agente]], [[Probabilidade Condicional]], [[DFAH]], [[Tautologia Ontológica]]
+Related to: [[Espaço Amostral]], [[Subconjunto]], [[Vetor]], [[Ontologia]], [[Determinismo]], [[Drift]], [[Tool]], [[MCP]], [[RAG]], [[Agente]], [[Probabilidade Condicional]], [[DFAH]], [[Ontological Tautology]]

@@ -56,10 +56,10 @@ It is not model fine-tuning. It is enrichment of [[Contexto Programático|contex
 
 ## In the Thesis
 
-This loop is the complete materialization of [[Tautologia Ontológica]]: the [[Ontologia]] becomes increasingly complete with use -> the [[Tautologia]] establishes itself progressively -> [[Determinismo]] grows monotonically.
+This loop is the complete materialization of [[Ontological Tautology]]: the [[Ontologia]] becomes increasingly complete with use -> the [[Tautologia]] establishes itself progressively -> [[Determinismo]] grows monotonically.
 
 It is [[Deterministic Trajectory Optimization]] in action: starts probabilistic (little ontology), iterates (each cycle adds context), converges to deterministic (complete ontology).
 
 ---
 
-Related to: [[Neo4j]], [[Milvus]], [[mcp-ontology-server]], [[mcp-memory-server]], [[Feedback Loop Determinístico]], [[Acumulação Cognitiva]], [[Determinismo Mensurável]], [[Ontologia como Código]], [[Contexto Programático]], [[MCP]], [[Tautologia Ontológica]]
+Related to: [[Neo4j]], [[Milvus]], [[mcp-ontology-server]], [[mcp-memory-server]], [[Feedback Loop Determinístico]], [[Acumulação Cognitiva]], [[Determinismo Mensurável]], [[Ontologia como Código]], [[Contexto Programático]], [[MCP]], [[Ontological Tautology]]

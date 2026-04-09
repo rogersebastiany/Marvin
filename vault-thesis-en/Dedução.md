@@ -14,7 +14,7 @@ Classic example: "All men are mortal. Socrates is a man. Therefore, Socrates is 
 
 LLMs operate by probabilistic inference -- they compute the most probable token. Deduction operates by logical necessity -- the conclusion cannot be otherwise.
 
-The [[Tautologia Ontológica]] thesis proposes that, when [[Contexto]] is complete (total [[Ontologia]]), probabilistic inference approaches deduction: the probability of the correct token -> 1, and the result becomes [[Tautologia|tautological]].
+The [[Ontological Tautology]] thesis proposes that, when [[Contexto]] is complete (total [[Ontologia]]), probabilistic inference approaches deduction: the probability of the correct token -> 1, and the result becomes [[Tautologia|tautological]].
 
 ## Deduction as Convergence
 

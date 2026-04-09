@@ -1,6 +1,6 @@
 # Marvin — MCP Server
 
-Unified [Model Context Protocol](https://modelcontextprotocol.io/) server implementing the Tautologia Ontologica thesis. Single server, 29 tools, 6 backends. The agent's sole interface to all knowledge and memory.
+Unified [Model Context Protocol](https://modelcontextprotocol.io/) server implementing the Ontological Tautology thesis. Single server, 29 tools, 6 backends. The agent's sole interface to all knowledge and memory.
 
 ## Quick Start
 
