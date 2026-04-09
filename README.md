@@ -322,7 +322,7 @@ Documented in `mcp-server-poc/infra/` (Terraform):
 - Secrets Manager for credentials
 - MCP Gateway for auth (Entra ID JWT)
 - Tenant isolation
-- CloudWatch monitoring
+- CloudWatch (container logs only — audit via Milvus episodic memory)
 
 ---
 
