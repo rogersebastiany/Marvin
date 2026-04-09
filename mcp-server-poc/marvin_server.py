@@ -513,27 +513,17 @@ def inspect_schemas() -> str:
 @mcp.tool()
 def stats() -> str:
     """Quick overview of the entire knowledge system."""
-    driver = ontology._get_driver()
-    with driver.session() as s:
-        nodes = s.run("MATCH (c:Concept) RETURN count(c) AS n").single()["n"]
-        edges = s.run("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS n").single()["n"]
-        ghosts = s.run("MATCH (c:Concept {ghost: true}) RETURN count(c) AS n").single()["n"]
-        vaults = list(s.run(
-            "MATCH (c:Concept) RETURN c.vault AS vault, count(*) AS n ORDER BY n DESC"
-        ))
-        agent_edges = s.run(
-            "MATCH ()-[r:RELATES_TO {discovered_by: 'agent'}]->() RETURN count(r) AS n"
-        ).single()["n"]
+    s = ontology.get_stats()
 
     lines = [
         "# System Stats\n",
         "## Ontology (Neo4j)",
-        f"  Concepts: {nodes} ({ghosts} ghosts)",
-        f"  Relations: {edges} ({agent_edges} agent-discovered)",
+        f"  Concepts: {s['nodes']} ({s['ghosts']} ghosts)",
+        f"  Relations: {s['edges']} ({s['agent_edges']} agent-discovered)",
         f"  Vaults:",
     ]
-    for r in vaults:
-        lines.append(f"    {r['vault']}: {r['n']}")
+    for vault, n in s["vaults"]:
+        lines.append(f"    {vault}: {n}")
 
     from pymilvus import Collection as MilvusCollection
     memory._ensure_connected()

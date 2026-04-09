@@ -27,8 +27,13 @@ def _slugify(text: str) -> str:
     return re.sub(r"[\s_]+", "-", text).strip("-")[:80]
 
 
+_HEADERS = {
+    "User-Agent": "Marvin/1.0 (knowledge-graph-builder; +https://github.com/rogersebastiany/Marvin)",
+}
+
+
 def _fetch(url: str) -> httpx.Response:
-    resp = httpx.get(url, follow_redirects=True, timeout=30)
+    resp = httpx.get(url, headers=_HEADERS, follow_redirects=True, timeout=30)
     resp.raise_for_status()
     return resp
 

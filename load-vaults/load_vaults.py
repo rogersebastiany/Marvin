@@ -36,6 +36,8 @@ ROOT = Path(__file__).parent.parent
 VAULTS = {
     "thesis": ROOT / "obsidian-vault-tautologia-ontologica" / "obsidian-vault",
     "implementation": ROOT / "vault",
+    "thesis-en": ROOT / "vault-thesis-en",
+    "implementation-en": ROOT / "vault-implementation-en",
 }
 
 DOCS_DIR = ROOT / "mcp-server-poc" / "docs"
@@ -157,18 +159,31 @@ def load_diagrams(diagrams_dir: Path) -> list[dict]:
 
 
 def merge_concepts(all_concepts: list[dict]) -> list[dict]:
-    """Merge concepts that appear in multiple vaults."""
+    """Merge concepts that appear in multiple vaults.
+
+    English vaults (thesis-en, implementation-en) merge INTO the original
+    vault's concept — they add content but don't change the vault attribution.
+    """
     by_name: dict[str, dict] = {}
 
     for c in all_concepts:
         name = c["name"]
+        vault = c["vault"]
         if name in by_name:
             existing = by_name[name]
-            existing["vault"] = "both"
-            existing["content"] += f"\n\n---\n\n<!-- From {c['vault']} vault -->\n\n{c['content']}"
+            # English vaults merge silently — don't change vault to "both"
+            if vault.endswith("-en"):
+                existing["content"] += f"\n\n---\n\n<!-- English translation -->\n\n{c['content']}"
+            else:
+                existing["vault"] = "both"
+                existing["content"] += f"\n\n---\n\n<!-- From {vault} vault -->\n\n{c['content']}"
             if not existing["summary"]:
                 existing["summary"] = c["summary"]
         else:
+            # English-only concepts get the base vault name
+            if vault.endswith("-en"):
+                c = c.copy()
+                c["vault"] = vault.removesuffix("-en")
             by_name[name] = c.copy()
 
     return list(by_name.values())
@@ -194,51 +209,66 @@ def _get_driver():
 
 
 def auto_link_all(driver):
-    """Scan all concept content for references to other concept names and create edges."""
+    """Scan ALL concept content for references to other concept names and create edges.
+
+    Unlike the MCP tool version (which only processes isolated nodes),
+    this processes every concept to maximize cross-vault connectivity.
+    """
     with driver.session() as s:
         all_names = [
             r["name"] for r in s.run("MATCH (c:Concept) RETURN c.name AS name")
         ]
+        # Pre-filter: skip very short names (≤2 chars) to avoid false positives
+        linkable_names = [n for n in all_names if len(n) > 2]
 
-        # All concepts with no outgoing edges
+        # Get ALL concepts with content
         targets = list(s.run(
             "MATCH (c:Concept) "
-            "WHERE NOT (c)-[:RELATES_TO]->() "
+            "WHERE c.content IS NOT NULL AND size(c.content) > 10 "
             "RETURN c.name AS name, c.content AS content"
         ))
 
         if not targets:
-            print("Auto-link: no isolated concepts to process.")
+            print("Auto-link: no concepts with content to process.")
             return
 
+        # Pre-fetch all existing edges to avoid N queries
+        existing_edges = set()
+        for r in s.run(
+            "MATCH (a:Concept)-[:RELATES_TO]->(b:Concept) "
+            "RETURN a.name AS src, b.name AS tgt"
+        ):
+            existing_edges.add((r["src"], r["tgt"]))
+
         total_links = 0
+        new_edges = []
         for t in targets:
             concept_name = t["name"]
             content = (t["content"] or "").lower()
-            if not content:
-                continue
 
-            for candidate in all_names:
+            for candidate in linkable_names:
                 if candidate == concept_name:
                     continue
+                if (concept_name, candidate) in existing_edges:
+                    continue
                 if candidate.lower() in content:
-                    existing = s.run(
-                        "MATCH (a:Concept {name: $src})-[:RELATES_TO]->(b:Concept {name: $tgt}) "
-                        "RETURN count(*) AS n",
-                        src=concept_name, tgt=candidate,
-                    ).single()["n"]
-                    if existing == 0:
-                        s.run(
-                            "MATCH (a:Concept {name: $src}) "
-                            "MATCH (b:Concept {name: $tgt}) "
-                            "CREATE (a)-[r:RELATES_TO {discovered_by: 'auto_link', "
-                            "  weight: 1.0, reasoning: $reasoning}]->(b)",
-                            src=concept_name, tgt=candidate,
-                            reasoning=f"Concept '{candidate}' found in content of '{concept_name}'",
-                        )
-                        total_links += 1
+                    new_edges.append((concept_name, candidate))
+                    existing_edges.add((concept_name, candidate))
 
-        print(f"Auto-link: created {total_links} links from {len(targets)} isolated concept(s)")
+        # Batch create edges
+        if new_edges:
+            for src, tgt in new_edges:
+                s.run(
+                    "MATCH (a:Concept {name: $src}) "
+                    "MATCH (b:Concept {name: $tgt}) "
+                    "CREATE (a)-[r:RELATES_TO {discovered_by: 'auto_link', "
+                    "  weight: 1.0, reasoning: $reasoning}]->(b)",
+                    src=src, tgt=tgt,
+                    reasoning=f"Concept '{tgt}' found in content of '{src}'",
+                )
+            total_links = len(new_edges)
+
+        print(f"Auto-link: created {total_links} links from {len(targets)} concept(s)")
 
 
 def ensure_bidirectional_all(driver):

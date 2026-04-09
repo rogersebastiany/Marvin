@@ -420,6 +420,28 @@ def run_cypher(cypher: str) -> str:
         return "\n".join(lines)
 
 
+def get_stats() -> dict:
+    """Return ontology stats as a dict (nodes, edges, ghosts, vaults, agent_edges)."""
+    driver = _get_driver()
+    with driver.session() as s:
+        nodes = s.run("MATCH (c:Concept) RETURN count(c) AS n").single()["n"]
+        edges = s.run("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS n").single()["n"]
+        ghosts = s.run("MATCH (c:Concept {ghost: true}) RETURN count(c) AS n").single()["n"]
+        vaults = list(s.run(
+            "MATCH (c:Concept) RETURN c.vault AS vault, count(*) AS n ORDER BY n DESC"
+        ))
+        agent_edges = s.run(
+            "MATCH ()-[r:RELATES_TO {discovered_by: 'agent'}]->() RETURN count(r) AS n"
+        ).single()["n"]
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "ghosts": ghosts,
+        "vaults": [(r["vault"], r["n"]) for r in vaults],
+        "agent_edges": agent_edges,
+    }
+
+
 def get_schema() -> str:
     """Return current Neo4j schema (labels, relationships, constraints, indexes)."""
     driver = _get_driver()

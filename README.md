@@ -55,10 +55,10 @@ Marvin implements the hard version. The agent's `mcp.json` contains exactly one 
 ```
 Agent (Claude Code / any MCP client)
   │
-  └── mcp-marvin (sole MCP server — 27 tools)
+  └── mcp-marvin (sole MCP server — 29 tools)
         ├── Neo4j (knowledge graph — ontology)
-        │     84 concepts, 984 relations
-        │     Thesis + Implementation + Agent vaults
+        │     320+ concepts, 3000+ relations
+        │     Thesis + Implementation + Agent + Docs vaults
         │
         ├── Milvus (vector DB — episodic memory)
         │     tool_calls   (L1 Experience)
@@ -101,7 +101,7 @@ The ablation study in the paper validates this design: without L1, performance d
 
 ---
 
-## Marvin's Tools (27 total)
+## Marvin's Tools (29 total)
 
 ### Retrieval (4 tools)
 | Tool | What It Does |
@@ -118,11 +118,13 @@ The ablation study in the paper validates this design: without L1, performance d
 | `log_decision` | Record a decision with reasoning (L2 Knowledge) |
 | `log_session` | Record a session summary (L3 Wisdom) |
 
-### Enrichment (2 tools)
+### Enrichment (4 tools)
 | Tool | What It Does |
 |---|---|
 | `expand` | Add a new concept or relation to the knowledge graph |
 | `link` | Create a direct non-linear relation between two existing concepts |
+| `auto_link` | Scan concept content for references to other concepts, auto-create edges |
+| `ensure_bidirectional` | For every A→B edge, ensure B→A also exists |
 
 ### Evolution — Human-in-the-Loop (2 tools)
 | Tool | What It Does |
@@ -182,19 +184,21 @@ The ablation study in the paper validates this design: without L1, performance d
 -[:RELATES_TO {
   weight: float,
   reasoning: string,
-  discovered_by: "vault_import" | "agent"
+  discovered_by: "vault_import" | "agent" | "auto_link" | "bidirectional"
 }]->
 ```
 
 ### Vault Sources
 
-- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — 42 concepts covering the mathematical and theoretical foundations: Tautologia Ontológica, Determinismo, Álgebra Linear, Teoria dos Conjuntos, Espaço Amostral, Convergência, DFAH, LLM Output Drift, HCC, etc.
+- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — 45 concepts covering the mathematical and theoretical foundations: Tautologia Ontológica, Determinismo, Álgebra Linear, Teoria dos Conjuntos, Espaço Amostral, Convergência, DFAH, LLM Output Drift, HCC, etc. Available in Portuguese (original) and English (`vault-thesis-en/`).
 
-- **Implementation vault** (`vault/`) — 35 concepts covering the practical architecture: Agente na POC, Cadeia de Servers, FastMCP, Neo4j, Milvus, mcp-ontology-server, mcp-memory-server, Loop de Auto-Melhoria, Enforcement Arquitetural, etc.
+- **Implementation vault** (`vault/`) — 38 concepts covering the practical architecture: Agente na POC, Cadeia de Servers, FastMCP, Neo4j, Milvus, mcp-ontology-server, mcp-memory-server, Loop de Auto-Melhoria, Enforcement Arquitetural, etc. Available in Portuguese (original) and English (`vault-implementation-en/`).
 
 - **Both vaults** — 3 concepts that bridge theory and implementation: Acumulação Cognitiva, Tool Tautológica, Enforcement Arquitetural.
 
-- **Agent vault** — 4 concepts discovered by Marvin's self-improvement loop: Marvin, Self-Referential Proof, Traverse Self-Loop Bug, Marvin System Prompt Gap. These are auto-classified as `agent` — distinguishable from human-authored knowledge.
+- **Docs vault** — 210+ fetched documentation files covering Python, AWS, Kotlin, Neo4j, Milvus, Docker, MCP, Mermaid.js, SE patterns, CI/CD, OWASP, OpenTelemetry, and more.
+
+- **Agent vault** — 20+ concepts discovered by Marvin's self-improvement loop, including Python, AWS Infrastructure, Kotlin, and cross-domain bridge concepts. Auto-classified as `agent` — distinguishable from human-authored knowledge.
 
 ### Determinism Report
 
@@ -204,14 +208,13 @@ The `load-vaults/determinism_report.py` script measures how close the graph is t
 |---|---|---|
 | Ghost Coverage (defined/referenced) | 100% | 0.20 |
 | Content Coverage (has substance) | 100% | 0.15 |
-| Summary Coverage (has summary) | 100% | 0.05 |
-| Connectivity (no orphans, min 3 edges) | 100% | 0.20 |
-| Bidirectionality (A→B and B→A) | 48.7% | 0.10 |
-| Vault Bridging (theory↔implementation) | 83.8% | 0.15 |
-| Tool Tautology (tautological tools) | 83.3% | 0.15 |
-| **Composite Score** | **89.9%** | |
+| Summary Coverage (has summary) | 98%+ | 0.05 |
+| Connectivity (no orphans, min 3 edges) | 82%+ | 0.20 |
+| Bidirectionality (A→B and B→A) | 100% | 0.10 |
+| Vault Bridging (theory↔implementation) | Improving | 0.15 |
+| Tool Tautology (29 tools classified) | 90%+ | 0.15 |
 
-The composite score of 89.9% aligns almost exactly with DFAH's finding of 89%+ determinism achievable with schema-first architecture.
+Run `cd load-vaults && uv run python determinism_report.py` for current metrics.
 
 ---
 
@@ -253,31 +256,30 @@ Marvin/
 │   ├── web_to_docs_backend.py       ← Web → markdown fetcher
 │   ├── prompt_engineer_backend.py   ← Prompt Architect framework
 │   ├── system_design_backend.py     ← Mermaid.js diagrams
-│   ├── docs/                        ← Local documentation (7 files)
+│   ├── docs/                        ← Local documentation (210+ files)
 │   ├── diagrams/                    ← Saved Mermaid diagrams (3 files)
 │   ├── .cursor/mcp.json             ← MCP config (only mcp-marvin)
 │   ├── pyproject.toml               ← Python deps (uv)
 │   ├── Dockerfile
 │   └── Makefile
 │
-├── obsidian-vault-tautologia-ontologica/  ← Thesis vault (42 concepts)
+├── obsidian-vault-tautologia-ontologica/  ← Thesis vault (45 concepts, Portuguese)
 │   └── obsidian-vault/
 │       ├── Tautologia Ontológica.md
 │       ├── Determinismo.md
-│       ├── DFAH.md
-│       ├── Tool Tautológica.md
-│       ├── Enforcement Arquitetural.md
-│       ├── ... (42 interconnected notes)
+│       ├── ... (45 interconnected notes)
 │       └── poc docs/
 │
-├── vault/                           ← Implementation vault (35 concepts)
+├── vault-thesis-en/                 ← Thesis vault (English translation)
+│   └── ... (45 translated notes)
+│
+├── vault/                           ← Implementation vault (38 concepts, Portuguese)
 │   ├── Agente na POC.md
 │   ├── Neo4j.md
-│   ├── Milvus.md
-│   ├── mcp-ontology-server.md
-│   ├── mcp-memory-server.md
-│   ├── Loop de Auto-Melhoria.md
-│   ├── ... (35 interconnected notes)
+│   ├── ... (38 interconnected notes)
+│
+├── vault-implementation-en/         ← Implementation vault (English translation)
+│   └── ... (38 translated notes)
 │
 ├── load-vaults/                     ← Disposable ETL scripts
 │   ├── load_vaults.py               ← Vault → Neo4j loader

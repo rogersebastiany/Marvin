@@ -19,10 +19,15 @@ Usage:
     uv run python determinism_report.py
 """
 
+import os
+
+from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
-URI = "bolt://localhost:7687"
-AUTH = ("neo4j", "tautologia")
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautologia"))
 
 
 def report(session):
@@ -111,30 +116,26 @@ def report(session):
     metrics["vault_bridging"] = vault_bridging
 
     # 7. Tool Tautology
-    # Check concepts that represent tools (server names + tool-related concepts)
-    tool_concepts = session.run(
-        "MATCH (c:Concept) "
-        "WHERE c.name IN ['docs-server', 'web-to-docs', 'prompt-engineer', 'system-design', "
-        "  'mcp-ontology-server', 'mcp-memory-server'] "
-        "RETURN count(c) AS total"
-    ).single()["total"]
-
-    tautological_tools = session.run(
-        "MATCH (c:Concept) "
-        "WHERE c.name IN ['docs-server', 'web-to-docs', 'mcp-ontology-server', 'mcp-memory-server'] "
-        "RETURN count(c) AS n"
-    ).single()["n"]
-
-    # prompt-engineer and system-design are partially tautological
-    partial_tools = session.run(
-        "MATCH (c:Concept) "
-        "WHERE c.name IN ['prompt-engineer', 'system-design'] "
-        "RETURN count(c) AS n"
-    ).single()["n"]
-
-    tool_tautology = 0
-    if tool_concepts > 0:
-        tool_tautology = (tautological_tools + partial_tools * 0.5) / tool_concepts * 100
+    # Marvin's 29 tools — classify by tautological completeness
+    # Tautological: given valid input, exactly one correct output exists
+    tautological = [
+        "retrieve", "get_concept", "traverse", "why_exists",  # retrieval — found or not found
+        "log_tool_call", "log_decision", "log_session",       # logging — append-only, always succeeds
+        "expand", "link", "auto_link", "ensure_bidirectional", # enrichment — deterministic graph ops
+        "execute_schema_change",                                # evolution — runs cypher, returns result
+        "search_docs", "list_docs", "get_doc",                 # docs — file search, read
+        "fetch_url", "save_doc", "crawl_docs",                 # web — fetch or fail, no ambiguity
+        "save_diagram", "list_diagrams", "get_diagram",         # diagrams — file ops
+        "inspect_schemas", "stats",                             # introspection — read-only state
+    ]
+    # Partially tautological: constrained output but not fully closed
+    partial = [
+        "generate_prompt", "refine_prompt", "audit_prompt",    # prompt eng — framework-constrained generation
+        "generate_diagram", "judge_diagram",                    # diagram gen — syntax-constrained generation
+        "propose_schema_change",                                # returns proposal text, not deterministic
+    ]
+    total_tools = len(tautological) + len(partial)
+    tool_tautology = (len(tautological) + len(partial) * 0.5) / total_tools * 100
     metrics["tool_tautology"] = tool_tautology
 
     # --- Composite Score ---
@@ -248,8 +249,8 @@ def report(session):
 
     if tool_tautology < 100:
         print(f"  ⚠ Tool tautology at {tool_tautology:.0f}%")
-        print(f"      prompt-engineer and system-design are partially tautological")
-        print(f"      (generation tools — output is constrained but not closed)")
+        print(f"      {len(partial)} partially tautological: {', '.join(partial)}")
+        print(f"      (generation tools — output is constrained but not fully closed)")
 
     if composite >= 95:
         print("\n  ✓ Graph is approaching ontological completeness.")
