@@ -106,7 +106,7 @@ The ablation study in the paper validates this design: without L1, performance d
 ### Retrieval (4 tools)
 | Tool | What It Does |
 |---|---|
-| `retrieve` | **The primary tool.** Unified search across Neo4j + Milvus + docs. One call gets everything. |
+| `retrieve` | Unified search across Neo4j + Milvus + docs. One call gets everything. |
 | `get_concept` | Full concept with content and all relations from the ontology |
 | `traverse` | Walk N hops from a concept, return neighborhood graph |
 | `why_exists` | Explain why a concept exists — all edge reasoning |

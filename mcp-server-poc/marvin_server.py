@@ -45,8 +45,6 @@ mcp = FastMCP(
 def retrieve(query: str, include_memory: bool = True, include_docs: bool = True, limit: int = 10) -> str:
     """Unified retrieval across ontology, episodic memory, and docs.
 
-    The primary tool. One call gets everything relevant.
-
     Args:
         query: What you're looking for
         include_memory: Also search episodic memory (default True)
