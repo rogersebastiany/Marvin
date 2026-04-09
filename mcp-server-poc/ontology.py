@@ -352,6 +352,58 @@ def auto_link(name: str = "") -> str:
         return header + "\n".join(results)
 
 
+def ensure_bidirectional(name: str = "") -> str:
+    """For every A→B edge, ensure B→A also exists.
+
+    If name is given, only process edges involving that concept.
+    Otherwise, process the entire graph.
+    """
+    driver = _get_driver()
+
+    with driver.session() as s:
+        if name:
+            # Check concept exists
+            exists = s.run(
+                "MATCH (c:Concept {name: $name}) RETURN c", name=name
+            ).single()
+            if not exists:
+                return f"Concept '{name}' not found."
+
+            # Find unidirectional edges involving this concept
+            missing = list(s.run(
+                "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
+                "WHERE (a.name = $name OR b.name = $name) "
+                "  AND NOT (b)-[:RELATES_TO]->(a) "
+                "  AND a <> b "
+                "RETURN a.name AS src, b.name AS tgt",
+                name=name,
+            ))
+        else:
+            missing = list(s.run(
+                "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
+                "WHERE NOT (b)-[:RELATES_TO]->(a) "
+                "  AND a <> b "
+                "RETURN a.name AS src, b.name AS tgt"
+            ))
+
+        if not missing:
+            return "All edges are already bidirectional."
+
+        created = 0
+        for m in missing:
+            s.run(
+                "MATCH (a:Concept {name: $src}) "
+                "MATCH (b:Concept {name: $tgt}) "
+                "CREATE (b)-[r:RELATES_TO {discovered_by: 'bidirectional', "
+                "  weight: 1.0, reasoning: $reasoning}]->(a)",
+                src=m["src"], tgt=m["tgt"],
+                reasoning=f"Bidirectional completion: {m['src']} → {m['tgt']} existed, so {m['tgt']} → {m['src']}",
+            )
+            created += 1
+
+        return f"Created {created} reverse edges. All processed edges are now bidirectional."
+
+
 def run_cypher(cypher: str) -> str:
     """Run arbitrary Cypher query. Used by Marvin for schema evolution."""
     driver = _get_driver()

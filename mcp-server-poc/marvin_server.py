@@ -28,7 +28,7 @@ import system_design_backend
 MARVIN_TOOLS = [
     "retrieve", "get_concept", "traverse", "why_exists",
     "log_tool_call", "log_decision", "log_session",
-    "expand", "link", "auto_link",
+    "expand", "link", "auto_link", "ensure_bidirectional",
     "propose_schema_change", "execute_schema_change",
     "search_docs", "list_docs", "get_doc",
     "fetch_url", "save_doc", "crawl_docs",
@@ -285,6 +285,19 @@ def auto_link(name: str = "") -> str:
         name: Concept to process (empty = all isolated nodes)
     """
     return ontology.auto_link(name)
+
+
+@mcp.tool()
+def ensure_bidirectional(name: str = "") -> str:
+    """For every A→B edge, ensure B→A also exists.
+
+    Bidirectionality = deterministic traversal from any direction.
+    If A relates to B, then B relates to A.
+
+    Args:
+        name: Concept to process (empty = entire graph)
+    """
+    return ontology.ensure_bidirectional(name)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
