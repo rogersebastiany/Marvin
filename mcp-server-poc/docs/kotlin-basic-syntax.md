@@ -1,0 +1,595 @@
+(function (w, d, s, l, i) {
+w[l] = w[l] || [];
+w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&amp;l=' + l : '';
+j.async = true;
+j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+f.parentNode.insertBefore(j, f);
+})(window, document, 'script', 'dataLayer', 'GTM-5P98');
+
+Basic syntax overview | Kotlin Documentation[{"id":"package-definition-and-imports","level":0,"title":"Package definition and imports","anchor":"#package-definition-and-imports"},{"id":"program-entry-point","level":0,"title":"Program entry point","anchor":"#program-entry-point"},{"id":"print-to-the-standard-output","level":0,"title":"Print to the standard output","anchor":"#print-to-the-standard-output"},{"id":"read-from-the-standard-input","level":0,"title":"Read from the standard input","anchor":"#read-from-the-standard-input"},{"id":"functions","level":0,"title":"Functions","anchor":"#functions"},{"id":"variables","level":0,"title":"Variables","anchor":"#variables"},{"id":"creating-classes-and-instances","level":0,"title":"Creating classes and instances","anchor":"#creating-classes-and-instances"},{"id":"comments","level":0,"title":"Comments","anchor":"#comments"},{"id":"string-templates","level":0,"title":"String templates","anchor":"#string-templates"},{"id":"conditional-expressions","level":0,"title":"Conditional expressions","anchor":"#conditional-expressions"},{"id":"for-loop","level":0,"title":"for loop","anchor":"#for-loop"},{"id":"while-loop","level":0,"title":"while loop","anchor":"#while-loop"},{"id":"when-expression","level":0,"title":"when expression","anchor":"#when-expression"},{"id":"ranges","level":0,"title":"Ranges","anchor":"#ranges"},{"id":"collections","level":0,"title":"Collections","anchor":"#collections"},{"id":"nullable-values-and-null-checks","level":0,"title":"Nullable values and null checks","anchor":"#nullable-values-and-null-checks"},{"id":"type-checks-and-automatic-casts","level":0,"title":"Type checks and automatic casts","anchor":"#type-checks-and-automatic-casts"}]{
+"@context": "http://schema.org",
+"@type": "WebPage",
+"@id": "https://kotlinlang.org/docs/basic-syntax.html#webpage",
+"url": "https://kotlinlang.org/docs/basic-syntax.html",
+"name": "Basic syntax overview | Kotlin",
+"description": "",
+"image": "https://kotlinlang.org/assets/images/open-graph/docs.png",
+"inLanguage":"en-US"
+}{
+"@type": "WebSite",
+"@id": "https://kotlinlang.org/docs/#website",
+"url": "https://kotlinlang.org/docs/",
+"name": "Kotlin Help"
+}a[href="test-page.html"] { visibility: hidden; }
+
+### Kotlin Help
+
+# Basic syntax overview
+
+This is a collection of basic syntax elements with examples. At the end of every section, you'll find a link to a detailed description of the related topic.
+
+You can also learn all the Kotlin essentials with the free [Kotlin Core track](https://hyperskill.org/tracks?category=4&utm_source=jbkotlin_hs&utm_medium=referral&utm_campaign=kotlinlang-docs&utm_content=button_1&utm_term=22.03.23) by JetBrains Academy.
+
+## Package definition and imports
+
+Package specification should be at the top of the source file:
+
+package my.demo
+import kotlin.text.\*
+// ...
+
+It is not required to match directories and packages: source files can be placed arbitrarily in the file system.
+
+See [Packages](packages.html).
+
+## Program entry point
+
+An entry point of a Kotlin application is the `main` function:
+
+fun main() {
+println("Hello world!")
+}
+
+Another form of `main` accepts a variable number of `String` arguments:
+
+fun main(args: Array<String>) {
+println(args.contentToString())
+}
+
+## Print to the standard output
+
+`print` prints its argument to the standard output:
+
+fun main() {
+//sampleStart
+print("Hello ")
+print("world!")
+//sampleEnd
+}
+
+`println` prints its arguments and adds a line break, so that the next thing you print appears on the next line:
+
+fun main() {
+//sampleStart
+println("Hello world!")
+println(42)
+//sampleEnd
+}
+
+## Read from the standard input
+
+The `readln()` function reads from the standard input. This function reads the entire line the user enters as a string.
+
+You can use the `println()`, `readln()`, and `print()` functions together to print messages requesting and showing user input:
+
+// Prints a message to request input
+println("Enter any word: ")
+// Reads and stores the user input. For example: Happiness
+val yourWord = readln()
+// Prints a message with the input
+print("You entered the word: ")
+print(yourWord)
+// You entered the word: Happiness
+
+For more information, see [Read standard input](read-standard-input.html).
+
+## Functions
+
+A function with two `Int` parameters and `Int` return type:
+
+//sampleStart
+fun sum(a: Int, b: Int): Int {
+return a + b
+}
+//sampleEnd
+fun main() {
+print("sum of 3 and 5 is ")
+println(sum(3, 5))
+}
+
+A function body can be an expression. Its return type is inferred:
+
+//sampleStart
+fun sum(a: Int, b: Int) = a + b
+//sampleEnd
+fun main() {
+println("sum of 19 and 23 is ${sum(19, 23)}")
+}
+
+A function that returns no meaningful value:
+
+//sampleStart
+fun printSum(a: Int, b: Int): Unit {
+println("sum of $a and $b is ${a + b}")
+}
+//sampleEnd
+fun main() {
+printSum(-1, 8)
+}
+
+`Unit` return type can be omitted:
+
+//sampleStart
+fun printSum(a: Int, b: Int) {
+println("sum of $a and $b is ${a + b}")
+}
+//sampleEnd
+fun main() {
+printSum(-1, 8)
+}
+
+See [Functions](functions.html).
+
+## Variables
+
+In Kotlin, you declare a variable starting with a keyword, `val` or `var`, followed by the name of the variable.
+
+Use the `val` keyword to declare variables that are assigned a value only once. These are immutable, read-only local variables that can't be reassigned a different value after initialization:
+
+fun main() {
+//sampleStart
+// Declares the variable x and initializes it with the value of 5
+val x: Int = 5
+// 5
+//sampleEnd
+println(x)
+}
+
+Use the `var` keyword to declare variables that can be reassigned. These are mutable variables, and you can change their values after initialization:
+
+fun main() {
+//sampleStart
+// Declares the variable x and initializes it with the value of 5
+var x: Int = 5
+// Reassigns a new value of 6 to the variable x
+x += 1
+// 6
+//sampleEnd
+println(x)
+}
+
+Kotlin supports type inference and automatically identifies the data type of a declared variable. When declaring a variable, you can omit the type after the variable name:
+
+fun main() {
+//sampleStart
+// Declares the variable x with the value of 5;`Int` type is inferred
+val x = 5
+// 5
+//sampleEnd
+println(x)
+}
+
+You can use variables only after initializing them. You can either initialize a variable at the moment of declaration or declare a variable first and initialize it later. In the second case, you must specify the data type:
+
+fun main() {
+//sampleStart
+// Initializes the variable x at the moment of declaration; type is not required
+val x = 5
+// Declares the variable c without initialization; type is required
+val c: Int
+// Initializes the variable c after declaration
+c = 3
+// 5
+// 3
+//sampleEnd
+println(x)
+println(c)
+}
+
+You can declare variables at the top level:
+
+//sampleStart
+val PI = 3.14
+var x = 0
+fun incrementX() {
+x += 1
+}
+// x = 0; PI = 3.14
+// incrementX()
+// x = 1; PI = 3.14
+//sampleEnd
+fun main() {
+println("x = $x; PI = $PI")
+incrementX()
+println("incrementX()")
+println("x = $x; PI = $PI")
+}
+
+For information about declaring properties, see [Properties](properties.html).
+
+## Creating classes and instances
+
+To define a class, use the `class` keyword:
+
+class Shape
+
+Properties of a class can be listed in its declaration or body:
+
+class Rectangle(val height: Double, val length: Double) {
+val perimeter = (height + length) \* 2
+}
+
+The default constructor with parameters listed in the class declaration is available automatically:
+
+class Rectangle(val height: Double, val length: Double) {
+val perimeter = (height + length) \* 2
+}
+fun main() {
+val rectangle = Rectangle(5.0, 2.0)
+println("The perimeter is ${rectangle.perimeter}")
+}
+
+Inheritance between classes is declared by a colon (`:`). Classes are `final` by default; to make a class inheritable, mark it as `open`:
+
+open class Shape
+class Rectangle(val height: Double, val length: Double): Shape() {
+val perimeter = (height + length) \* 2
+}
+
+For more information about constructors and inheritance, see [Classes](classes.html) and [Objects and instances](object-declarations.html).
+
+## Comments
+
+Just like most modern languages, Kotlin supports single-line (or end-of-line) and multi-line (block) comments:
+
+// This is an end-of-line comment
+/\* This is a block comment
+on multiple lines. \*/
+
+Block comments in Kotlin can be nested:
+
+/\* The comment starts here
+/\* contains a nested comment \*​/
+and ends here. \*/
+
+See [Documenting Kotlin Code](kotlin-doc.html) for information on the documentation comment syntax.
+
+## String templates
+
+fun main() {
+//sampleStart
+var a = 1
+// simple name in template:
+val s1 = "a is $a"
+a = 2
+// arbitrary expression in template:
+val s2 = "${s1.replace("is", "was")}, but now is $a"
+//sampleEnd
+println(s2)
+}
+
+See [String templates](strings.html#string-templates) for details.
+
+## Conditional expressions
+
+//sampleStart
+fun maxOf(a: Int, b: Int): Int {
+if (a > b) {
+return a
+} else {
+return b
+}
+}
+//sampleEnd
+fun main() {
+println("max of 0 and 42 is ${maxOf(0, 42)}")
+}
+
+In Kotlin, `if` can also be used as an expression:
+
+//sampleStart
+fun maxOf(a: Int, b: Int) = if (a > b) a else b
+//sampleEnd
+fun main() {
+println("max of 0 and 42 is ${maxOf(0, 42)}")
+}
+
+See [`if`-expressions](control-flow.html#if-expression).
+
+## for loop
+
+fun main() {
+//sampleStart
+val items = listOf("apple", "banana", "kiwifruit")
+for (item in items) {
+println(item)
+}
+//sampleEnd
+}
+
+or:
+
+fun main() {
+//sampleStart
+val items = listOf("apple", "banana", "kiwifruit")
+for (index in items.indices) {
+println("item at $index is ${items[index]}")
+}
+//sampleEnd
+}
+
+See [for loop](control-flow.html#for-loops).
+
+## while loop
+
+fun main() {
+//sampleStart
+val items = listOf("apple", "banana", "kiwifruit")
+var index = 0
+while (index < items.size) {
+println("item at $index is ${items[index]}")
+index++
+}
+//sampleEnd
+}
+
+See [while loop](control-flow.html#while-loops).
+
+## when expression
+
+//sampleStart
+fun describe(obj: Any): String =
+when (obj) {
+1 -> "One"
+"Hello" -> "Greeting"
+is Long -> "Long"
+!is String -> "Not a string"
+else -> "Unknown"
+}
+//sampleEnd
+fun main() {
+println(describe(1))
+println(describe("Hello"))
+println(describe(1000L))
+println(describe(2))
+println(describe("other"))
+}
+
+See [when expressions and statements](control-flow.html#when-expressions-and-statements).
+
+## Ranges
+
+Check if a number is within a range using `in` operator:
+
+fun main() {
+//sampleStart
+val x = 10
+val y = 9
+if (x in 1..y+1) {
+println("fits in range")
+}
+//sampleEnd
+}
+
+Check if a number is out of range:
+
+fun main() {
+//sampleStart
+val list = listOf("a", "b", "c")
+if (-1 !in 0..list.lastIndex) {
+println("-1 is out of range")
+}
+if (list.size !in list.indices) {
+println("list size is out of valid list indices range, too")
+}
+//sampleEnd
+}
+
+Iterate over a range:
+
+fun main() {
+//sampleStart
+for (x in 1..5) {
+print(x)
+}
+//sampleEnd
+}
+
+Or over a progression:
+
+fun main() {
+//sampleStart
+for (x in 1..10 step 2) {
+print(x)
+}
+println()
+for (x in 9 downTo 0 step 3) {
+print(x)
+}
+//sampleEnd
+}
+
+See [Ranges and progressions](ranges.html).
+
+## Collections
+
+Iterate over a collection:
+
+fun main() {
+val items = listOf("apple", "banana", "kiwifruit")
+//sampleStart
+for (item in items) {
+println(item)
+}
+//sampleEnd
+}
+
+Check if a collection contains an object using `in` operator:
+
+fun main() {
+val items = setOf("apple", "banana", "kiwifruit")
+//sampleStart
+when {
+"orange" in items -> println("juicy")
+"apple" in items -> println("apple is fine too")
+}
+//sampleEnd
+}
+
+Use [lambda expressions](lambdas.html) to filter and map collections:
+
+fun main() {
+//sampleStart
+val fruits = listOf("banana", "avocado", "apple", "kiwifruit")
+fruits
+.filter { it.startsWith("a") }
+.sortedBy { it }
+.map { it.uppercase() }
+.forEach { println(it) }
+//sampleEnd
+}
+
+See [Collections overview](collections-overview.html).
+
+## Nullable values and null checks
+
+A reference must be explicitly marked as nullable when a `null` value is possible. Nullable type names have `?` at the end. For example, `Int?`.
+
+Return `null` if `str` does not hold an integer:
+
+fun parseInt(str: String): Int? {
+return str.toIntOrNull()
+}
+
+Use a function returning nullable value:
+
+fun parseInt(str: String): Int? {
+return str.toIntOrNull()
+}
+//sampleStart
+fun printProduct(arg1: String, arg2: String) {
+val x = parseInt(arg1)
+val y = parseInt(arg2)
+// Using `x \* y` yields error because they may hold nulls.
+if (x != null && y != null) {
+// x and y are automatically cast to non-nullable after null check
+println(x \* y)
+}
+else {
+println("'$arg1' or '$arg2' is not a number")
+}
+}
+//sampleEnd
+fun main() {
+printProduct("6", "7")
+printProduct("a", "7")
+printProduct("a", "b")
+}
+
+or:
+
+fun parseInt(str: String): Int? {
+return str.toIntOrNull()
+}
+fun printProduct(arg1: String, arg2: String) {
+val x = parseInt(arg1)
+val y = parseInt(arg2)
+//sampleStart
+// ...
+if (x == null) {
+println("Wrong number format in arg1: '$arg1'")
+return
+}
+if (y == null) {
+println("Wrong number format in arg2: '$arg2'")
+return
+}
+// x and y are automatically cast to non-nullable after null check
+println(x \* y)
+//sampleEnd
+}
+fun main() {
+printProduct("6", "7")
+printProduct("a", "7")
+printProduct("99", "b")
+}
+
+See [Null-safety](null-safety.html).
+
+## Type checks and automatic casts
+
+The `is` operator checks if an expression is an instance of a type. If an immutable local variable or property is checked for a specific type, there's no need to cast it explicitly:
+
+//sampleStart
+fun getStringLength(obj: Any): Int? {
+if (obj is String) {
+// `obj` is automatically cast to `String` in this branch
+return obj.length
+}
+// `obj` is still of type `Any` outside of the type-checked branch
+return null
+}
+//sampleEnd
+fun main() {
+fun printLength(obj: Any) {
+println("Getting the length of '$obj'. Result: ${getStringLength(obj) ?: "Error: The object is not a string"} ")
+}
+printLength("Incomprehensibilities")
+printLength(1000)
+printLength(listOf(Any()))
+}
+
+or:
+
+//sampleStart
+fun getStringLength(obj: Any): Int? {
+if (obj !is String) return null
+// `obj` is automatically cast to `String` in this branch
+return obj.length
+}
+//sampleEnd
+fun main() {
+fun printLength(obj: Any) {
+println("Getting the length of '$obj'. Result: ${getStringLength(obj) ?: "Error: The object is not a string"} ")
+}
+printLength("Incomprehensibilities")
+printLength(1000)
+printLength(listOf(Any()))
+}
+
+or even:
+
+//sampleStart
+fun getStringLength(obj: Any): Int? {
+// `obj` is automatically cast to `String` on the right-hand side of `&&`
+if (obj is String && obj.length >= 0) {
+return obj.length
+}
+return null
+}
+//sampleEnd
+fun main() {
+fun printLength(obj: Any) {
+println("Getting the length of '$obj'. Result: ${getStringLength(obj) ?: "Error: The object is not a string"} ")
+}
+printLength("Incomprehensibilities")
+printLength("")
+printLength(1000)
+}
+
+See [Classes](classes.html) and [Type casts](typecasts.html).
+
+01 April 2026
+
+[Compatibility guide for Kotlin 2.3.x](compatibility-guide-23.html)[Keywords and operators](keyword-reference.html)

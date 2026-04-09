@@ -97,9 +97,13 @@ def load_vault(vault_name: str, vault_path: Path) -> tuple[list[dict], list[dict
     return concepts, edges
 
 
-def load_docs(docs_dir: Path) -> list[dict]:
-    """Parse docs/ markdown files into concepts (no wikilinks)."""
+def load_docs(docs_dir: Path, min_chars: int = 200) -> list[dict]:
+    """Parse docs/ markdown files into concepts (no wikilinks).
+
+    Skips files smaller than min_chars (likely JS redirects or empty fetches).
+    """
     concepts = []
+    skipped = []
 
     if not docs_dir.exists():
         print(f"  WARNING: docs path does not exist: {docs_dir}")
@@ -108,6 +112,11 @@ def load_docs(docs_dir: Path) -> list[dict]:
     for md_file in sorted(docs_dir.glob("*.md")):
         name = md_file.stem
         content = md_file.read_text(encoding="utf-8")
+
+        if len(content) < min_chars:
+            skipped.append(f"{name} ({len(content)} chars)")
+            continue
+
         summary = extract_summary(content)
 
         concepts.append({
@@ -117,6 +126,9 @@ def load_docs(docs_dir: Path) -> list[dict]:
             "content": content,
             "ghost": False,
         })
+
+    if skipped:
+        print(f"  Skipped {len(skipped)} too-small files: {', '.join(skipped)}")
 
     return concepts
 
