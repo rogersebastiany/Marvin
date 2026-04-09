@@ -475,6 +475,94 @@ Each level compresses and abstracts from the one below. The agent doesn't just a
 
 ---
 
+## Cost Estimate
+
+### Local Development
+
+| Component | Cost |
+|---|---|
+| Docker (Neo4j + Milvus stack) | Free (runs on your machine) |
+| OpenAI Embeddings (`text-embedding-3-small`) | ~$0.02 / 1M tokens |
+| LLM (Claude via Claude Code / API) | Per your plan |
+| **Total** | **~$0 + LLM costs** |
+
+Embedding costs are negligible — each tool call/decision/session log is ~100-500 tokens to embed. At $0.02/1M tokens, you'd need ~50,000 log entries to spend $1.
+
+### AWS Production — Single-Tenant (Minimal)
+
+One environment, one user, always-on. The cheapest viable deployment.
+
+| Component | Service | Sizing | Monthly Cost |
+|---|---|---|---|
+| Marvin (MCP server) | ECS Fargate | 0.25 vCPU, 512 MB | ~$9 |
+| Neo4j | ECS Fargate | 1 vCPU, 4 GB | ~$73 |
+| Milvus (standalone) | ECS Fargate | 1 vCPU, 4 GB | ~$73 |
+| etcd | ECS Fargate | 0.25 vCPU, 512 MB | ~$9 |
+| MinIO → **S3** | S3 Standard | <1 GB | ~$0.02 |
+| Load Balancer | ALB | 1 ALB + rules | ~$22 |
+| WAF | AWS WAF | Basic rules | ~$6 |
+| Secrets | Secrets Manager | 2 secrets | ~$1 |
+| Logs | CloudWatch | 5 GB/mo | ~$3 |
+| Networking | VPC + NAT Gateway | 1 NAT | ~$33 |
+| ECR | ECR | <1 GB images | ~$0.10 |
+| OpenAI Embeddings | External API | ~100K tokens/mo | ~$0.002 |
+| **Total** | | | **~$229/mo** |
+
+**Cost reduction options:**
+- Replace NAT Gateway with VPC endpoints → saves ~$30/mo
+- Use Neo4j AuraDB Free Tier (limited) → saves ~$73/mo
+- Use Zilliz Cloud Serverless (Milvus managed) → saves ~$73/mo (pay per query)
+- Schedule Fargate tasks to stop at night → saves ~40%
+- Run on a single EC2 `t3.medium` with Docker → **~$30/mo total** (least cost, most ops)
+
+### AWS Production — Multi-Tenant
+
+Multiple users, high availability, the full architecture from `infra/`.
+
+| Component | Service | Sizing | Monthly Cost |
+|---|---|---|---|
+| Marvin (MCP server) | ECS Fargate (2 tasks) | 0.5 vCPU, 1 GB each | ~$36 |
+| Neo4j | ECS Fargate (or AuraDB Pro) | 2 vCPU, 8 GB | ~$146 |
+| Milvus | ECS Fargate (or Zilliz) | 2 vCPU, 8 GB | ~$146 |
+| etcd | ECS Fargate | 0.5 vCPU, 1 GB | ~$18 |
+| MinIO → **S3** | S3 Standard | <10 GB | ~$0.23 |
+| Load Balancer | ALB | 1 ALB + rules | ~$22 |
+| WAF | AWS WAF | Managed rules | ~$15 |
+| MCP Gateway (auth proxy) | ECS Fargate | 0.5 vCPU, 1 GB | ~$18 |
+| Cognito / Entra ID | Cognito | <1000 MAU free | ~$0 |
+| Secrets | Secrets Manager | 5 secrets | ~$2 |
+| Logs + Monitoring | CloudWatch | 20 GB/mo + dashboards | ~$15 |
+| Networking | VPC + NAT Gateway (2 AZs) | 2 NATs | ~$66 |
+| ECR | ECR | <2 GB images | ~$0.20 |
+| KMS | KMS | 1 key + usage | ~$1 |
+| OpenAI Embeddings | External API | ~1M tokens/mo | ~$0.02 |
+| **Total** | | | **~$485/mo** |
+
+### Cost per Query (steady state)
+
+| Operation | Cost Components | Estimated Cost |
+|---|---|---|
+| `retrieve()` | Neo4j query + Milvus search + OpenAI embed | ~$0.00003 |
+| `log_tool_call()` | OpenAI embed + Milvus insert | ~$0.00001 |
+| `expand()` | Neo4j write | ~$0.000001 |
+| Full agent session (50 tool calls) | ~50 retrieves + 50 logs + LLM | ~$0.003 + LLM cost |
+
+The infrastructure cost dominates. Per-query costs are negligible — the system is designed for high-frequency, low-cost operations. The LLM (Claude/GPT) API calls are the expensive part, not Marvin.
+
+### Managed Services Alternative
+
+Replace self-hosted databases with managed services for less ops overhead:
+
+| Self-Hosted | Managed Alternative | Monthly Cost | Trade-off |
+|---|---|---|---|
+| Neo4j on Fargate | Neo4j AuraDB Pro | ~$65/mo | Less control, zero ops |
+| Milvus on Fargate | Zilliz Cloud Serverless | Pay per query | No idle cost, cold starts |
+| etcd + MinIO | (included in managed) | $0 | Abstracted away |
+
+With fully managed DBs: **~$150-200/mo** for single-tenant, less ops burden.
+
+---
+
 ## Contributing
 
 This is a research project proving a specific thesis. The code is the proof.
