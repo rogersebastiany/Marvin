@@ -130,6 +130,7 @@ def traverse(name: str, hops: int = 2) -> str:
 
         result = list(s.run(
             f"MATCH path = (c:Concept {{name: $name}})-[:RELATES_TO*1..{hops}]-(n:Concept) "
+            "WHERE c <> n "
             "RETURN DISTINCT n.name AS name, n.vault AS vault, n.ghost AS ghost, "
             "  length(shortestPath((c)-[:RELATES_TO*]-(n))) AS distance "
             "ORDER BY distance, vault, name",

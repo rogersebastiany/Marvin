@@ -1,0 +1,51 @@
+flowchart TB
+    subgraph Agent["🤖 Marvin Agent"]
+        direction TB
+        OBJ[/"Receive Objective"/]
+        REASON{"Reason\n(Plan next action)"}
+        ACT["Act\n(Call MCP tool)"]
+        OBSERVE["Observe\n(Incorporate result)"]
+    end
+
+    subgraph Neo4j["📊 Neo4j — Ontology"]
+        direction TB
+        GET["get_concept\ntraverse\nwhy_exists"]
+        WRITE_NEO["expand\nlink"]
+    end
+
+    subgraph Milvus["🧠 Milvus — Episodic Memory"]
+        direction TB
+        SEARCH["search tool_calls\nsearch decisions\nsearch sessions"]
+        LOG["log_tool_call\nlog_decision\nlog_session"]
+    end
+
+    subgraph Docs["📁 docs/ — Knowledge Base"]
+        direction TB
+        READ_DOCS["search_docs\nget_doc\nlist_docs"]
+        WRITE_DOCS["save_doc\ncrawl_docs\nfetch_url"]
+    end
+
+    OBJ --> REASON
+    REASON -->|"query ontology"| GET
+    REASON -->|"recall past actions"| SEARCH
+    REASON -->|"search knowledge"| READ_DOCS
+    GET -->|"concepts + relations"| OBSERVE
+    SEARCH -->|"similar experiences"| OBSERVE
+    READ_DOCS -->|"doc content"| OBSERVE
+    OBSERVE --> REASON
+    REASON -->|"decide action"| ACT
+    ACT -->|"log action"| LOG
+    ACT -->|"new concept found"| WRITE_NEO
+    ACT -->|"save new knowledge"| WRITE_DOCS
+    LOG -.->|"richer memory\nnext cycle"| SEARCH
+    WRITE_NEO -.->|"richer ontology\nnext cycle"| GET
+    WRITE_DOCS -.->|"richer docs\nnext cycle"| READ_DOCS
+
+    classDef agentStyle fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    classDef neo4jStyle fill:#68b846,stroke:#3d7a28,color:#fff
+    classDef milvusStyle fill:#e6a23c,stroke:#b47d2e,color:#fff
+    classDef docsStyle fill:#9b59b6,stroke:#6c3483,color:#fff
+    class OBJ,REASON,ACT,OBSERVE agentStyle
+    class GET,WRITE_NEO neo4jStyle
+    class SEARCH,LOG milvusStyle
+    class READ_DOCS,WRITE_DOCS docsStyle

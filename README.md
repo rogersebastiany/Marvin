@@ -55,10 +55,10 @@ Marvin implements the hard version. The agent's `mcp.json` contains exactly one 
 ```
 Agent (Claude Code / any MCP client)
   │
-  └── mcp-marvin (sole MCP server — 30 tools)
+  └── mcp-marvin (sole MCP server — 27 tools)
         ├── Neo4j (knowledge graph — ontology)
-        │     80 concepts, 972 relations
-        │     Thesis vault + Implementation vault merged
+        │     84 concepts, 984 relations
+        │     Thesis + Implementation + Agent vaults
         │
         ├── Milvus (vector DB — episodic memory)
         │     tool_calls   (L1 Experience)
@@ -101,7 +101,7 @@ The ablation study in the paper validates this design: without L1, performance d
 
 ---
 
-## Marvin's Tools (30 total)
+## Marvin's Tools (27 total)
 
 ### Retrieval (4 tools)
 | Tool | What It Does |
@@ -171,7 +171,7 @@ The ablation study in the paper validates this design: without L1, performance d
 ```
 (:Concept {
   name: string (unique),
-  vault: "thesis" | "implementation" | "both" | "agent" | "ghost",
+  vault: "thesis" | "implementation" | "both" | "agent",
   summary: string,
   content: string,
   ghost: boolean,
@@ -193,6 +193,8 @@ The ablation study in the paper validates this design: without L1, performance d
 - **Implementation vault** (`vault/`) — 35 concepts covering the practical architecture: Agente na POC, Cadeia de Servers, FastMCP, Neo4j, Milvus, mcp-ontology-server, mcp-memory-server, Loop de Auto-Melhoria, Enforcement Arquitetural, etc.
 
 - **Both vaults** — 3 concepts that bridge theory and implementation: Acumulação Cognitiva, Tool Tautológica, Enforcement Arquitetural.
+
+- **Agent vault** — 4 concepts discovered by Marvin's self-improvement loop: Marvin, Self-Referential Proof, Traverse Self-Loop Bug, Marvin System Prompt Gap. These are auto-classified as `agent` — distinguishable from human-authored knowledge.
 
 ### Determinism Report
 
@@ -244,7 +246,7 @@ Memory is append-only — the agent accumulates experience monotonically. Search
 ```
 Marvin/
 ├── mcp-server-poc/                  ← Marvin + all backends
-│   ├── marvin_server.py             ← THE server (30 tools, 8 categories)
+│   ├── marvin_server.py             ← THE server (27 tools, 8 categories)
 │   ├── ontology.py                  ← Neo4j backend
 │   ├── memory.py                    ← Milvus backend
 │   ├── docs_backend.py              ← Local docs search/browse
@@ -252,7 +254,7 @@ Marvin/
 │   ├── prompt_engineer_backend.py   ← Prompt Architect framework
 │   ├── system_design_backend.py     ← Mermaid.js diagrams
 │   ├── docs/                        ← Local documentation (7 files)
-│   ├── diagrams/                    ← Saved Mermaid diagrams (2 files)
+│   ├── diagrams/                    ← Saved Mermaid diagrams (3 files)
 │   ├── infra/                       ← Terraform (AWS production path)
 │   ├── .cursor/mcp.json             ← MCP config (only mcp-marvin)
 │   ├── pyproject.toml               ← Python deps (uv)
