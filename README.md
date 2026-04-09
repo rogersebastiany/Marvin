@@ -248,7 +248,7 @@ Memory is append-only — the agent accumulates experience monotonically. Search
 
 ```
 Marvin/
-├── mcp-server-poc/                  ← Marvin + all backends
+├── mcp-server/                  ← Marvin + all backends
 │   ├── marvin_server.py             ← THE server (27 tools, 8 categories)
 │   ├── ontology.py                  ← Neo4j backend
 │   ├── memory.py                    ← Milvus backend
@@ -353,7 +353,7 @@ uv run python setup_milvus.py
 ### 4. Run Marvin
 
 ```bash
-cd ../mcp-server-poc
+cd ../mcp-server
 uv sync
 # Set your OpenAI key
 echo "OPENAI_API_KEY=sk-..." > ../.env
@@ -389,7 +389,7 @@ Add to your Claude Code MCP config:
       "type": "stdio",
       "command": "uv",
       "args": ["run", "python", "marvin_server.py"],
-      "cwd": "/path/to/Marvin/mcp-server-poc"
+      "cwd": "/path/to/Marvin/mcp-server"
     }
   }
 }

@@ -4,7 +4,7 @@
       "type": "stdio",
       "command": "uv",
       "args": ["run", "python", "marvin_server.py"],
-      "cwd": "mcp-server-poc"
+      "cwd": "mcp-server"
     }
   }
 }

@@ -40,8 +40,8 @@ VAULTS = {
     "implementation-en": ROOT / "vault-implementation-en",
 }
 
-DOCS_DIR = ROOT / "mcp-server-poc" / "docs"
-DIAGRAMS_DIR = ROOT / "mcp-server-poc" / "diagrams"
+DOCS_DIR = ROOT / "mcp-server" / "docs"
+DIAGRAMS_DIR = ROOT / "mcp-server" / "diagrams"
 
 # Skip non-concept directories inside vaults
 SKIP_DIRS = {".obsidian", "poc docs", "diagrams", "docs"}
