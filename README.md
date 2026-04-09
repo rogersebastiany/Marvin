@@ -255,7 +255,6 @@ Marvin/
 │   ├── system_design_backend.py     ← Mermaid.js diagrams
 │   ├── docs/                        ← Local documentation (7 files)
 │   ├── diagrams/                    ← Saved Mermaid diagrams (3 files)
-│   ├── infra/                       ← Terraform (AWS production path)
 │   ├── .cursor/mcp.json             ← MCP config (only mcp-marvin)
 │   ├── pyproject.toml               ← Python deps (uv)
 │   ├── Dockerfile
@@ -314,14 +313,13 @@ Marvin/
 - **Milvus**: localhost:19530 (no auth)
 - **OpenAI**: API key in `.env` (not committed)
 
-### Production Path
+### Production Path (planned)
 
-Documented in `mcp-server-poc/infra/` (Terraform):
-- ECS Fargate + ALB + WAF
+- ECS Fargate (Marvin + Neo4j + Milvus)
+- ALB + WAF
 - S3/KMS for ontology persistence
 - Secrets Manager for credentials
-- MCP Gateway for auth (Entra ID JWT)
-- Tenant isolation
+- MCP Gateway for auth
 - CloudWatch (container logs only — audit via Milvus episodic memory)
 
 ---
@@ -519,7 +517,7 @@ One environment, one user, always-on. The cheapest viable deployment.
 
 ### AWS Production — Multi-Tenant
 
-Multiple users, high availability, the full architecture from `infra/`.
+Multiple users, high availability.
 
 | Component | Service | Sizing | Monthly Cost |
 |---|---|---|---|
