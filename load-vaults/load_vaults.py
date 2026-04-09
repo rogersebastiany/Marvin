@@ -189,9 +189,88 @@ def find_ghost_nodes(concepts: list[dict], edges: list[dict]) -> list[dict]:
     ]
 
 
+def _get_driver():
+    return GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
+
+
+def auto_link_all(driver):
+    """Scan all concept content for references to other concept names and create edges."""
+    with driver.session() as s:
+        all_names = [
+            r["name"] for r in s.run("MATCH (c:Concept) RETURN c.name AS name")
+        ]
+
+        # All concepts with no outgoing edges
+        targets = list(s.run(
+            "MATCH (c:Concept) "
+            "WHERE NOT (c)-[:RELATES_TO]->() "
+            "RETURN c.name AS name, c.content AS content"
+        ))
+
+        if not targets:
+            print("Auto-link: no isolated concepts to process.")
+            return
+
+        total_links = 0
+        for t in targets:
+            concept_name = t["name"]
+            content = (t["content"] or "").lower()
+            if not content:
+                continue
+
+            for candidate in all_names:
+                if candidate == concept_name:
+                    continue
+                if candidate.lower() in content:
+                    existing = s.run(
+                        "MATCH (a:Concept {name: $src})-[:RELATES_TO]->(b:Concept {name: $tgt}) "
+                        "RETURN count(*) AS n",
+                        src=concept_name, tgt=candidate,
+                    ).single()["n"]
+                    if existing == 0:
+                        s.run(
+                            "MATCH (a:Concept {name: $src}) "
+                            "MATCH (b:Concept {name: $tgt}) "
+                            "CREATE (a)-[r:RELATES_TO {discovered_by: 'auto_link', "
+                            "  weight: 1.0, reasoning: $reasoning}]->(b)",
+                            src=concept_name, tgt=candidate,
+                            reasoning=f"Concept '{candidate}' found in content of '{concept_name}'",
+                        )
+                        total_links += 1
+
+        print(f"Auto-link: created {total_links} links from {len(targets)} isolated concept(s)")
+
+
+def ensure_bidirectional_all(driver):
+    """For every A→B edge, ensure B→A also exists."""
+    with driver.session() as s:
+        missing = list(s.run(
+            "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
+            "WHERE NOT (b)-[:RELATES_TO]->(a) "
+            "  AND a <> b "
+            "RETURN a.name AS src, b.name AS tgt"
+        ))
+
+        if not missing:
+            print("Bidirectional: all edges already bidirectional.")
+            return
+
+        for m in missing:
+            s.run(
+                "MATCH (a:Concept {name: $src}) "
+                "MATCH (b:Concept {name: $tgt}) "
+                "CREATE (b)-[r:RELATES_TO {discovered_by: 'bidirectional', "
+                "  weight: 1.0, reasoning: $reasoning}]->(a)",
+                src=m["src"], tgt=m["tgt"],
+                reasoning=f"Bidirectional completion: {m['src']} → {m['tgt']} existed",
+            )
+
+        print(f"Bidirectional: created {len(missing)} reverse edges.")
+
+
 def load_to_neo4j(concepts: list[dict], edges: list[dict]):
     """Load everything into Neo4j using MERGE (non-destructive)."""
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
+    driver = _get_driver()
     now = datetime.now(timezone.utc).isoformat()
 
     with driver.session() as session:
@@ -337,6 +416,16 @@ def main():
     # Load into Neo4j
     print(f"\nLoading into Neo4j at {NEO4J_URI}...")
     load_to_neo4j(merged, all_edges)
+
+    # Auto-link isolated concepts by scanning content
+    print("\nAuto-linking isolated concepts...")
+    driver = _get_driver()
+    auto_link_all(driver)
+
+    # Ensure all edges are bidirectional
+    print("Ensuring bidirectionality...")
+    ensure_bidirectional_all(driver)
+    driver.close()
 
 
 if __name__ == "__main__":
