@@ -48,6 +48,65 @@ VAULTS = {
 DOCS_DIR = ROOT / "mcp-server" / "docs"
 DIAGRAMS_DIR = ROOT / "mcp-server" / "diagrams"
 
+# English → Portuguese name mapping for cross-language vault merging.
+# English vault concepts get merged INTO the Portuguese concept (same node).
+# The English name becomes an alias on the Portuguese node — one concept, two names.
+EN_TO_PT: dict[str, str] = {
+    # thesis vault
+    "Agent": "Agente",
+    "Architectural Enforcement": "Enforcement Arquitetural",
+    "Cognitive Accumulation": "Acumulação Cognitiva",
+    "Complete Directed Graph": "Grafo Dirigido Completo",
+    "Conditional Probability": "Probabilidade Condicional",
+    "Context": "Contexto",
+    "Convergence": "Convergência",
+    "Deduction": "Dedução",
+    "Determinism": "Determinismo",
+    "Dimensionality Reduction": "Redução de Dimensionalidade",
+    "Divergence": "Divergência",
+    "Hallucination": "Alucinação",
+    "Inference": "Inferência",
+    "Linear Algebra": "Álgebra Linear",
+    "Linear Relationship": "Relação Linear",
+    "Matrix M": "Matriz M",
+    "Neural Network": "Rede Neural",
+    "Non-Linear Relationship": "Relação Não-Linear",
+    "Ontological Tautology": "Tautologia Ontológica",
+    "Ontology": "Ontologia",
+    "Sample Space": "Espaço Amostral",
+    "Set": "Conjunto",
+    "Set Theory": "Teoria dos Conjuntos",
+    "Subset": "Subconjunto",
+    "Tautological Tool": "Tool Tautológica",
+    "Tautology": "Tautologia",
+    "Tokenization": "Tokenização",
+    "Vector": "Vetor",
+    # implementation vault
+    "Agent in POC": "Agente na POC",
+    "Anti-Hallucination": "Anti-Alucinação",
+    "Deterministic Feedback Loop": "Feedback Loop Determinístico",
+    "Diagram Scoring": "Scoring de Diagramas",
+    "HTML to Markdown": "HTML para Markdown",
+    "Implicit RAG": "RAG Implícito",
+    "MCP Primitives": "Primitivas MCP",
+    "Measurable Determinism": "Determinismo Mensurável",
+    "Ontological Tautology — Thesis and Proof": "Tautologia Ontológica — Tese e Prova",
+    "Ontology as Code": "Ontologia como Código",
+    "Production Architecture": "Arquitetura de Produção",
+    "Programmatic Context": "Contexto Programático",
+    "ReAct in POC": "ReAct na POC",
+    "S3 as Persistent Ontology": "S3 como Ontologia Persistente",
+    "Self-Improvement Loop": "Loop de Auto-Melhoria",
+    "Server Chain": "Cadeia de Servers",
+    "Space Reduction in Practice": "Redução de Espaço na Prática",
+    "Three Security Layers": "Três Camadas de Segurança",
+    "Tool as Bias": "Tool como Bias",
+    "Tool Catalog": "Catálogo de Tools",
+}
+
+# Reverse: Portuguese name → English alias
+PT_TO_EN: dict[str, str] = {v: k for k, v in EN_TO_PT.items()}
+
 # Skip non-concept directories inside vaults
 SKIP_DIRS = {".obsidian", "poc docs", "diagrams", "docs"}
 
@@ -166,17 +225,23 @@ def load_diagrams(diagrams_dir: Path) -> list[dict]:
 def merge_concepts(all_concepts: list[dict]) -> list[dict]:
     """Merge concepts that appear in multiple vaults.
 
-    English vaults (thesis-en, implementation-en) merge INTO the original
-    vault's concept — they add content but don't change the vault attribution.
+    English vaults (thesis-en, implementation-en) merge INTO the Portuguese
+    concept using EN_TO_PT mapping. If no mapping exists, falls back to
+    exact name match. English content is appended with a separator.
     """
     by_name: dict[str, dict] = {}
 
     for c in all_concepts:
         name = c["name"]
         vault = c["vault"]
-        if name in by_name:
-            existing = by_name[name]
-            # English vaults merge silently — don't change vault to "both"
+
+        # For English vault concepts, resolve to the Portuguese name
+        merge_key = name
+        if vault.endswith("-en"):
+            merge_key = EN_TO_PT.get(name, name)
+
+        if merge_key in by_name:
+            existing = by_name[merge_key]
             if vault.endswith("-en"):
                 existing["content"] += f"\n\n---\n\n<!-- English translation -->\n\n{c['content']}"
             else:
@@ -185,11 +250,12 @@ def merge_concepts(all_concepts: list[dict]) -> list[dict]:
             if not existing["summary"]:
                 existing["summary"] = c["summary"]
         else:
-            # English-only concepts get the base vault name
+            c = c.copy()
             if vault.endswith("-en"):
-                c = c.copy()
                 c["vault"] = vault.removesuffix("-en")
-            by_name[name] = c.copy()
+                # Store under the Portuguese name so future merges find it
+                c["name"] = merge_key
+            by_name[merge_key] = c
 
     return list(by_name.values())
 
@@ -381,6 +447,17 @@ def load_to_neo4j(concepts: list[dict], edges: list[dict]):
         print(f"Concepts: {created} created, {updated} updated, {skipped} skipped (agent-owned)")
         print(f"  {real} real + {ghost} ghost = {len(concepts)} total from sources")
 
+        # Set English aliases on Portuguese concepts
+        alias_count = 0
+        for pt_name, en_name in PT_TO_EN.items():
+            session.run(
+                "MATCH (c:Concept {name: $name}) SET c.aliases = [$alias]",
+                name=pt_name,
+                alias=en_name,
+            )
+            alias_count += 1
+        print(f"Aliases: set {alias_count} EN aliases on PT concepts")
+
         # MERGE edges — only for vault-sourced edges (don't touch agent edges)
         edge_count = 0
         for e in edges:
@@ -453,6 +530,17 @@ def main():
     diagrams = load_diagrams(DIAGRAMS_DIR)
     print(f"  {len(diagrams)} diagrams")
     all_concepts.extend(diagrams)
+
+    # Remap English edges to Portuguese concept names
+    remapped = 0
+    for e in all_edges:
+        if e["vault"].endswith("-en"):
+            old_src, old_tgt = e["source"], e["target"]
+            e["source"] = EN_TO_PT.get(e["source"], e["source"])
+            e["target"] = EN_TO_PT.get(e["target"], e["target"])
+            if e["source"] != old_src or e["target"] != old_tgt:
+                remapped += 1
+    print(f"Remapped {remapped} English edges to Portuguese concept names")
 
     # Merge duplicates across vaults
     merged = merge_concepts(all_concepts)

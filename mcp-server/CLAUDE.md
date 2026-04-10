@@ -23,12 +23,12 @@ Single server (`marvin_server.py`) wrapping 6 backend modules:
 | `prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework |
 | `system_design_backend.py` | Filesystem | Mermaid.js diagram generation/review (`diagrams/`) |
 
-## 32 Tools (8 categories)
+## 31 Tools (8 categories)
 
 | Category | Tools | Tautological? |
 |----------|-------|--------------|
 | Retrieval | `retrieve`, `get_concept`, `traverse`, `why_exists` | Yes |
-| Logging | `log_tool_call`, `log_decision`, `log_session` | Yes |
+| Logging | `log_decision` (async fire-and-forget), `log_session` | Yes |
 | Enrichment | `expand`, `link`, `auto_link`, `ensure_bidirectional` | Yes |
 | Evolution | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
 | Documentation | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `crawl_docs`, `research_topic` | Yes |
@@ -60,7 +60,7 @@ EMBEDDING_MODEL=text-embedding-3-small
 - **Non-destructive graph ops**: MERGE not DELETE. Agent-owned concepts (vault="agent") never overwritten.
 - **Bidirectional edges**: Every A→B has B→A. Deterministic traversal from any direction.
 - **Auto-linking**: Scans concept content for references to other concept names. Tautological — found or not found.
-- **Three-tier memory**: Maps to HCC (Hierarchical Cognitive Caching) — L1 Experience, L2 Knowledge, L3 Wisdom.
+- **Two-tier episodic memory**: L2 Knowledge (decisions) + L3 Wisdom (sessions) in Milvus. L1 Experience (tool traces) is transient working memory in the context window — not persisted per HCC design.
 - **Path traversal protection**: `_safe_path()` / `_safe_diagram_path()` on all file ops.
 - **User-Agent on HTTP**: Polite fetching with identifying header.
 

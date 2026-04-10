@@ -23,7 +23,7 @@ The MCP server architecturally enforces this for Marvin tool calls via `Retrieve
 
 This workspace contains two projects:
 
-- **`mcp-server/`** — Marvin, a single unified MCP server (32 tools) wrapping Neo4j (ontology), Milvus (episodic memory), local docs, prompt engineering, and system design diagrams. Built with FastMCP 3.x.
+- **`mcp-server/`** — Marvin, a single unified MCP server (31 tools) wrapping Neo4j (ontology), Milvus (episodic memory), local docs, prompt engineering, and system design diagrams. Built with FastMCP 3.x.
 - **`obsidian-vault-tautologia-ontologica/`** — An Obsidian knowledge vault (Portuguese) with 45 concept notes on "Tautologia Ontológica" — the thesis that complete ontological context yields deterministic LLM behavior. Loaded into Neo4j as the `thesis` vault.
 
 ## MCP Server
@@ -44,7 +44,7 @@ Single MCP server (`marvin_server.py`) with 6 backend modules:
 | Module | Backend | What It Does |
 |--------|---------|-------------|
 | `ontology.py` | Neo4j | Knowledge graph — concepts, relations, traversal, auto-link, bidirectionality |
-| `memory.py` | Milvus + OpenAI | Episodic memory — tool calls (L1), decisions (L2), sessions (L3) |
+| `memory.py` | Milvus + OpenAI | Episodic memory — decisions (L2), sessions (L3). L1 tool traces are transient context-window memory per HCC |
 | `docs_backend.py` | Filesystem | Search/browse local markdown docs (`docs/`) |
 | `web_to_docs_backend.py` | httpx + BS4 | Fetch web → markdown → save to `docs/`. Includes `research_topic` (multi-URL → consolidated doc with bibliography) |
 | `prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework (6 mandatory sections) |
@@ -62,6 +62,27 @@ Single MCP server (`marvin_server.py`) with 6 backend modules:
 - Filesystem writes confined to `docs/` and `diagrams/` via `_safe_path()` / `_safe_diagram_path()`
 - Non-destructive graph ops: MERGE not DELETE. Agent-owned concepts (vault="agent") never overwritten
 - Bidirectional edges: every A→B has B→A. Deterministic traversal from any direction
+- `log_decision` is async fire-and-forget (daemon thread) — no latency hit. `log_tool_call` removed: L1 is transient working memory per HCC
+
+### Knowledge Graph — Relationship Types
+
+The ontology supports 11 semantic edge types. Use `relation_type` param in `link` and `expand`.
+
+| Type | Direction | Meaning | Example |
+|------|-----------|---------|---------|
+| `RELATES_TO` | Symmetric | General association (default) | MCP ↔ Marvin |
+| `TRANSLATES_TO` | Symmetric | Same concept, different language | Ontologia ↔ Ontology |
+| `CONTRADICTS` | Symmetric | Mutual opposition | Alucinação ↔ Determinismo |
+| `IMPLEMENTS` | Directional | Concrete realization of abstract concept | Marvin → Tautologia Ontológica |
+| `PROVES` | Directional | Evidence or demonstration | Self-Referential Proof → TO |
+| `REQUIRES` | Directional | Dependency / precondition | Determinismo → Ontologia |
+| `EXTENDS` | Directional | Specialization or enhancement | Enforcement Arquitetural → Bias |
+| `ENABLES` | Directional | Makes possible | Neo4j → Marvin |
+| `EXEMPLIFIES` | Directional | Instance or illustration | Tool Tautológica → TO |
+| `COMPOSES` | Directional | Part-of / building block | Ontologia → TO |
+| `EVOLVES_FROM` | Directional | Historical lineage | Marvin → Cadeia de Servers |
+
+**Symmetric** types: A→B auto-creates B→A with same type. **Directional** types: A→B does NOT imply B→A — a generic `RELATES_TO` reverse is created instead for traversability.
 
 ### Session Start — Mandatory KG Load
 

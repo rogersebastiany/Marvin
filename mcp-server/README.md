@@ -30,7 +30,7 @@ The agent never talks to Neo4j, Milvus, or the filesystem directly — only thro
 | Category | Tools | Tautological |
 |----------|-------|:------------:|
 | **Retrieval** | `retrieve`, `get_concept`, `traverse`, `why_exists` | Yes |
-| **Logging** | `log_tool_call`, `log_decision`, `log_session` | Yes |
+| **Logging** | `log_decision` (async), `log_session` | Yes |
 | **Enrichment** | `expand`, `link`, `auto_link`, `ensure_bidirectional` | Yes |
 | **Evolution** | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
 | **Documentation** | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `crawl_docs` | Yes |
@@ -81,7 +81,7 @@ Add to `.mcp.json` at your project root:
 - **Non-destructive graph ops** — MERGE, not DELETE. Agent-owned concepts never overwritten.
 - **Bidirectional edges** — Every A→B gets a B→A. Deterministic traversal from any direction.
 - **Auto-linking** — Scans concept content for references to other concept names. Tautological — found or not found.
-- **Three-tier memory** — L1 tool calls (experience), L2 decisions (knowledge), L3 sessions (wisdom). Maps to HCC.
+- **Two-tier episodic memory** — L2 decisions (knowledge) + L3 sessions (wisdom) in Milvus. L1 tool traces are transient working memory in the context window per HCC design. `log_decision` is async fire-and-forget.
 - **Path traversal protection** — `_safe_path()` / `_safe_diagram_path()` on all file operations.
 - **Polite HTTP** — Identifying User-Agent on all web fetches.
 
