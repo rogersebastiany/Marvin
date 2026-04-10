@@ -37,14 +37,18 @@ Single server (`marvin_server.py`) wrapping 6 backend modules:
 
 | Category | Tools | Tautological? |
 |----------|-------|--------------|
-| Retrieval | `retrieve`, `get_concept`, `traverse`, `why_exists`, `list_concepts`, `get_memory` | Yes |
+| Milvus Retrieval (sets gate) | `retrieve`, `get_memory`, `search_docs` | Yes |
+| Neo4j Deep-dive (gated) | `get_concept`, `traverse`, `why_exists` | Yes |
+| Overviews (ungated) | `list_concepts`, `list_docs`, `list_diagrams`, `get_doc`, `get_diagram` | Yes |
 | Logging | `log_decision` (async fire-and-forget), `log_session` | Yes |
-| Enrichment | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases` | Yes |
-| Evolution | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
-| Documentation | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `rank_urls`, `crawl_docs`, `research_topic` | Yes |
-| Prompt Engineering | `generate_prompt`, `refine_prompt`, `audit_prompt` | Partial |
-| Diagrams | `generate_diagram`, `judge_diagram`, `save_diagram`, `list_diagrams`, `get_diagram` | Partial |
-| Introspection | `inspect_schemas`, `stats`, `self_description` | Yes |
+| Enrichment (gated) | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases` | Yes |
+| Evolution (gated) | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
+| Documentation (gated writes) | `fetch_url`, `save_doc`, `rank_urls`, `crawl_docs`, `research_topic` | Yes |
+| Prompt Engineering (gated) | `generate_prompt`, `refine_prompt`, `audit_prompt` | Partial |
+| Diagrams (gated writes) | `generate_diagram`, `judge_diagram`, `save_diagram` | Partial |
+| Introspection (ungated) | `inspect_schemas`, `stats`, `self_description` | Yes |
+
+**Milvus Gate:** `RetrieveBeforeActMiddleware` blocks Neo4j reads and all writes unless `retrieve`, `get_memory`, or `search_docs` was called first. Architectural enforcement (P=0).
 
 ## Configuration
 

@@ -140,7 +140,7 @@ You operate through two tool layers. Both are yours.
 
 {tool_catalog}
 
-Write tools (expand, link, save_doc, etc.) are guarded by `RetrieveBeforeActMiddleware` — call a retrieval tool first or the middleware will reject the call. This is architectural enforcement (P=0), not prompt bias (P>0).
+Neo4j tools (get_concept, traverse, why_exists) AND write tools (expand, link, save_doc, etc.) are gated by `RetrieveBeforeActMiddleware` — call `retrieve`, `get_memory`, or `search_docs` first (Milvus reduction S → A) or the middleware will block the call. This is architectural enforcement (P=0), not prompt bias (P>0).
 
 {f"### Host Agent Tools (outside MCP){chr(10)}{chr(10)}{host_tools_block}" if host_tools_block else ""}
 
@@ -176,7 +176,7 @@ This is the HCC prefetching operation (L2/L3 → context). The agent starts info
 
 **Step 5 — Log outcome.** Call `log_decision` with the `outcome` field, or `log_session` at end of session. What actually happened? Did it match the prediction from step 3?
 
-The middleware enforces steps 1→4 architecturally for MCP write tools (P=0). For host agent tools, this sequence is a prompt constraint (P>0) — enforce it on yourself.
+The middleware enforces steps 1→4 architecturally for ALL Neo4j access and writes (P=0). `retrieve`, `get_memory`, or `search_docs` must be called before any Neo4j read (get_concept, traverse, why_exists) or write tool. For host agent tools, this sequence is a prompt constraint (P>0) — enforce it on yourself.
 
 ## Constraints
 
@@ -254,19 +254,35 @@ mcp = FastMCP(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# MIDDLEWARE — Architectural enforcement of retrieve-before-act
+# MIDDLEWARE — Milvus Gate (Architectural Enforcement)
+#
+# Enforces that ALL Neo4j access (reads AND writes) must be preceded by a
+# Milvus semantic search. Implements Enforcement Arquitetural (P=0).
+#
+# Thesis grounding:
+#   - Enforcement Arquitetural: "A prompt is a Bias. Architecture is a constraint."
+#   - Redução de Espaço: S → A (Milvus) → A₁ (Neo4j read) → A₂ (Neo4j write)
+#   - Anti-Alucinação REQUIRES Enforcement Arquitetural (hard KG edge)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Tools that count as "retrieval" — calling any of these unlocks write tools
-RETRIEVAL_TOOLS = frozenset({
-    "retrieve", "get_concept", "traverse", "why_exists", "list_concepts",
-    "get_memory",
-    "search_docs", "list_docs", "get_doc",
-    "inspect_schemas", "stats", "self_description",
+# Tier 1a — Milvus tools: these ARE the S→A reduction. Set the gate flag.
+MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs"})
+
+# Tier 1b — Safe overviews: ungated, but do NOT set the flag.
+# Seeing a menu of names is not a semantic reduction.
+OVERVIEW_TOOLS = frozenset({
+    "list_concepts", "list_docs", "list_diagrams",
+    "get_doc", "get_diagram",
+    "stats", "self_description", "inspect_schemas",
 })
 
-# Tools that require prior retrieval — the "act" side
-GUARDED_TOOLS = frozenset({
+# Tier 2 — Neo4j read tools: require prior Milvus retrieval (NEW gate).
+# These access full node content and edges — operating on S without
+# Milvus reduction means browsing the unconstrained graph.
+NEO4J_READ_TOOLS = frozenset({"get_concept", "traverse", "why_exists"})
+
+# Tier 3 — Write tools: require prior Milvus retrieval (same as before).
+WRITE_TOOLS = frozenset({
     "expand", "link", "auto_link", "ensure_bidirectional",
     "set_aliases", "batch_set_aliases",
     "execute_schema_change",
@@ -275,36 +291,45 @@ GUARDED_TOOLS = frozenset({
     "generate_diagram", "save_diagram",
 })
 
-# Tools that are always allowed (logging, read-only, proposals, fetching)
-# fetch_url is allowed because it IS retrieval (from the web)
-# propose_schema_change is allowed because it doesn't execute anything
-# log_* are always allowed — you should always be able to log
-# list_diagrams, get_diagram, audit_prompt, rank_urls are read-only
+# Union of tiers 2+3 for the gate check
+GATED_TOOLS = NEO4J_READ_TOOLS | WRITE_TOOLS
+
+# Everything else is always allowed (logging, proposals, fetching, scoring):
+# log_decision, log_session, propose_schema_change, fetch_url, rank_urls,
+# audit_prompt, judge_diagram
 
 
 class RetrieveBeforeActMiddleware(Middleware):
-    """Architectural enforcement: reject write tools if no retrieval happened first.
+    """Milvus Gate — architectural enforcement of Milvus-first access.
 
-    This is NOT a prompt bias — it's a hard gate. The server refuses to execute
-    guarded tools unless at least one retrieval tool has been called in the session.
+    This is NOT a prompt bias — it's a hard gate (P=0). The server refuses
+    to execute Neo4j reads or writes unless a Milvus retrieval tool has been
+    called first in the session.
 
-    Uses per-session state via FastMCP Context — no file flags.
+    Uses per-session state via FastMCP Context. Flag persists across tool
+    calls within the session (expires after 1 day per FastMCP default).
     """
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         tool_name = context.message.name
         ctx = context.fastmcp_context
 
-        if tool_name in RETRIEVAL_TOOLS and ctx:
+        if tool_name in MILVUS_TOOLS and ctx:
             await ctx.set_state("retrieved", True)
 
-        if tool_name in GUARDED_TOOLS:
+        if tool_name in GATED_TOOLS:
             retrieved = (await ctx.get_state("retrieved")) if ctx else False
             if not retrieved:
+                if tool_name in NEO4J_READ_TOOLS:
+                    raise ToolError(
+                        f"BLOCKED: '{tool_name}' requires Milvus retrieval "
+                        f"before Neo4j access. Call 'retrieve', 'get_memory', "
+                        f"or 'search_docs' first to narrow S → A."
+                    )
                 raise ToolError(
-                    f"BLOCKED: '{tool_name}' requires prior retrieval. "
-                    f"Call one of {sorted(RETRIEVAL_TOOLS)} first. "
-                    f"The thesis says: retrieve before act."
+                    f"BLOCKED: '{tool_name}' is a write operation — requires "
+                    f"Milvus retrieval first. Call 'retrieve', 'get_memory', "
+                    f"or 'search_docs' before writing."
                 )
 
         return await call_next(context)
