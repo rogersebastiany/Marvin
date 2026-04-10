@@ -89,9 +89,15 @@ def _now() -> str:
 def cmd_sync(reporter: Reporter) -> bool:
     """Load vaults → Neo4j → auto-link → bidirectional → Milvus index."""
     import load_vaults
+    import memory
 
     reporter.step("sync", "Starting vault sync")
     t0 = time.time()
+
+    # Ensure Milvus collections exist (idempotent)
+    created = memory.ensure_collections()
+    if created:
+        reporter.step("sync", f"Created Milvus collections: {', '.join(created)}")
 
     all_concepts = []
     all_edges = []

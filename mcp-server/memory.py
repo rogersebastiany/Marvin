@@ -10,7 +10,10 @@ from datetime import datetime, timezone
 
 import openai
 from dotenv import load_dotenv
-from pymilvus import Collection, connections, utility
+from pymilvus import (
+    Collection, CollectionSchema, DataType, FieldSchema,
+    connections, utility,
+)
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -386,6 +389,93 @@ def index_concepts(concepts: list[dict]) -> str:
 
 
 ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts"]
+
+EMBEDDING_DIM = 1536  # text-embedding-3-small
+
+_COLLECTION_DEFS = {
+    "tool_calls": {
+        "description": "L1 Experience — tool call episodic memory",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=64),
+            FieldSchema("tool_name", DataType.VARCHAR, max_length=100),
+            FieldSchema("parameters", DataType.VARCHAR, max_length=8000),
+            FieldSchema("result_summary", DataType.VARCHAR, max_length=8000),
+            FieldSchema("context", DataType.VARCHAR, max_length=8000),
+            FieldSchema("session_id", DataType.VARCHAR, max_length=64),
+            FieldSchema("timestamp", DataType.VARCHAR, max_length=64),
+            FieldSchema("success", DataType.BOOL),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+    "decisions": {
+        "description": "L2 Knowledge — decision episodic memory",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=64),
+            FieldSchema("objective", DataType.VARCHAR, max_length=8000),
+            FieldSchema("options_considered", DataType.VARCHAR, max_length=8000),
+            FieldSchema("chosen_option", DataType.VARCHAR, max_length=8000),
+            FieldSchema("reasoning", DataType.VARCHAR, max_length=8000),
+            FieldSchema("outcome", DataType.VARCHAR, max_length=8000),
+            FieldSchema("session_id", DataType.VARCHAR, max_length=64),
+            FieldSchema("timestamp", DataType.VARCHAR, max_length=64),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+    "sessions": {
+        "description": "L3 Wisdom — session episodic memory",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=64),
+            FieldSchema("objective", DataType.VARCHAR, max_length=8000),
+            FieldSchema("approach", DataType.VARCHAR, max_length=8000),
+            FieldSchema("result", DataType.VARCHAR, max_length=8000),
+            FieldSchema("lessons_learned", DataType.VARCHAR, max_length=8000),
+            FieldSchema("tools_used", DataType.VARCHAR, max_length=2000),
+            FieldSchema("decision_count", DataType.INT64),
+            FieldSchema("tool_call_count", DataType.INT64),
+            FieldSchema("timestamp", DataType.VARCHAR, max_length=64),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+    "doc_chunks": {
+        "description": "Semantic index — doc chunks",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=256),
+            FieldSchema("doc_name", DataType.VARCHAR, max_length=256),
+            FieldSchema("chunk_index", DataType.INT64),
+            FieldSchema("heading", DataType.VARCHAR, max_length=500),
+            FieldSchema("content", DataType.VARCHAR, max_length=8000),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+    "concepts": {
+        "description": "Semantic index — KG concepts",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=256),
+            FieldSchema("name", DataType.VARCHAR, max_length=250),
+            FieldSchema("vault", DataType.VARCHAR, max_length=60),
+            FieldSchema("summary", DataType.VARCHAR, max_length=1000),
+            FieldSchema("content", DataType.VARCHAR, max_length=8000),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+}
+
+
+def ensure_collections():
+    """Create all Milvus collections if they don't exist. Idempotent."""
+    _ensure_connected()
+    created = []
+    for name, defn in _COLLECTION_DEFS.items():
+        if utility.has_collection(name):
+            continue
+        schema = CollectionSchema(fields=defn["fields"], description=defn["description"])
+        col = Collection(name, schema=schema)
+        col.create_index(
+            "embedding",
+            {"metric_type": "COSINE", "index_type": "IVF_FLAT", "params": {"nlist": 128}},
+        )
+        created.append(name)
+    return created
 
 
 def get_schema() -> str:
