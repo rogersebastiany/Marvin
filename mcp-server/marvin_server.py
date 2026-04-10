@@ -17,7 +17,6 @@ Capabilities:
 
 import threading
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -29,6 +28,29 @@ import docs_backend
 import web_to_docs_backend
 import prompt_engineer_backend
 import system_design_backend
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LIFESPAN — proper init/teardown of Neo4j and Milvus connections
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@asynccontextmanager
+async def marvin_lifespan(server: FastMCP):
+    """Initialize backend connections on startup, close on shutdown."""
+    # Eagerly connect instead of lazy singletons
+    ontology._get_driver()
+    memory._ensure_connected()
+    memory._get_openai()
+    try:
+        yield {}
+    finally:
+        if ontology._driver is not None:
+            ontology._driver.close()
+            ontology._driver = None
+        from pymilvus import connections
+        connections.disconnect("default")
+        memory._connected = False
+
 
 # Canonical tool list — update when adding/removing tools
 MARVIN_TOOLS = [
@@ -46,6 +68,7 @@ MARVIN_TOOLS = [
 
 mcp = FastMCP(
     "mcp-marvin",
+    lifespan=marvin_lifespan,
     instructions=(
         "You are Marvin, the paranoid android. "
         "You are the ONLY server the agent talks to.\n\n"
@@ -161,7 +184,7 @@ mcp.add_middleware(RetrieveBeforeActMiddleware())
     annotations={"readOnlyHint": True},
     tags={"retrieval"},
 )
-def retrieve(query: str, include_memory: bool = True, include_docs: bool = True, limit: int = 10) -> str:
+async def retrieve(query: str, include_memory: bool = True, include_docs: bool = True, limit: int = 10, ctx: Context = None) -> str:
     """Unified retrieval across ontology, episodic memory, and docs.
 
     Args:
@@ -173,11 +196,15 @@ def retrieve(query: str, include_memory: bool = True, include_docs: bool = True,
     sections = []
 
     # Ontology (Neo4j)
+    if ctx:
+        await ctx.info("Searching ontology...")
     onto_results = ontology.query(query, limit=limit)
     sections.append(f"## Ontology\n{onto_results}")
 
     # Episodic memory (Milvus)
     if include_memory:
+        if ctx:
+            await ctx.info("Searching episodic memory...")
         tc = memory.search_tool_calls(query, limit=3)
         dec = memory.search_decisions(query, limit=3)
         sess = memory.search_sessions(query, limit=2)
@@ -197,6 +224,8 @@ def retrieve(query: str, include_memory: bool = True, include_docs: bool = True,
 
     # Local docs
     if include_docs:
+        if ctx:
+            await ctx.info("Searching docs...")
         doc_results = docs_backend.search_docs(query)
         if "No results" not in doc_results:
             sections.append(f"## Documentation\n{doc_results}")
@@ -561,7 +590,7 @@ def rank_urls(urls: list[str]) -> str:
     annotations={"readOnlyHint": False, "openWorldHint": True},
     tags={"documentation"},
 )
-def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
+async def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "", ctx: Context = None) -> str:
     """Crawl a documentation site and save pages as local docs.
 
     Args:
@@ -569,6 +598,8 @@ def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
         max_pages: Max pages to crawl (default 20, max 100)
         path_prefix: Only follow links under this prefix
     """
+    if ctx:
+        await ctx.info(f"Crawling {url} (max {max_pages} pages)...")
     return web_to_docs_backend.crawl_docs(url, max_pages, path_prefix)
 
 
@@ -576,7 +607,7 @@ def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
     annotations={"readOnlyHint": False, "openWorldHint": True},
     tags={"documentation"},
 )
-def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
+async def research_topic(urls: list[str], topic: str, save_as: str = "", ctx: Context = None) -> str:
     """Fetch multiple URLs, merge into a single consolidated doc with bibliography.
 
     New web-to-docs flow:
@@ -593,6 +624,8 @@ def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
         topic: Topic name (used as document title and for finding existing docs)
         save_as: Filename to save as (default: slugified topic)
     """
+    if ctx:
+        await ctx.info(f"Researching '{topic}' from {len(urls)} URLs...")
     return web_to_docs_backend.research_topic(urls, topic, save_as)
 
 
