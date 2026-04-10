@@ -123,7 +123,14 @@ def _strip_noise(container) -> None:
     for tag in container.find_all(attrs={"hidden": True}):
         tag.decompose()
 
-    # Phase 5: Unwrap <details>/<summary> to surface collapsed content
+    # Phase 5: Remove toggle buttons and labels (e.g. "Show nav", "Toggle menu")
+    for tag in container.find_all("button"):
+        tag.decompose()
+    for tag in container.find_all("label"):
+        if len(tag.get_text(strip=True)) < 30:
+            tag.decompose()
+
+    # Phase 6: Unwrap <details>/<summary> to surface collapsed content
     for tag in container.find_all("summary"):
         tag.unwrap()
     for tag in container.find_all("details"):
@@ -183,8 +190,8 @@ def _clean_markdown(md: str) -> str:
     md = re.sub(r"^[⌘⌃]K\s*$", "", md, flags=re.MULTILINE)
     # Remove empty markdown links []() and image refs
     md = re.sub(r"\[]\([^)]*\)", "", md)
-    # Remove lines that are just "Navigation" or "Documentation"
-    md = re.sub(r"^(Navigation|Documentation)\s*$", "", md, flags=re.MULTILINE)
+    # Remove lines that are just UI chrome text
+    md = re.sub(r"^(Navigation|Documentation|Table of contents|Show nav|Toggle.*)\s*$", "", md, flags=re.MULTILINE)
     # Remove paragraph-link-only lines (leftover nav: "* [Text](/path)")
     md = re.sub(r"^\* \[.{1,50}\]\(/[^)]*\)\s*$", "", md, flags=re.MULTILINE)
     # Collapse excessive blank lines

@@ -1,65 +1,11 @@
-contextlib — Utilities for with-statement contexts — Python 3.12.13 documentation
+# Python contextlib
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
+## 1. `contextlib` — Utilities for `with`-statement contexts
 
-* [`contextlib` — Utilities for `with`-statement contexts](#)
-  + [Utilities](#utilities)
-  + [Examples and Recipes](#examples-and-recipes)
-    - [Supporting a variable number of context managers](#supporting-a-variable-number-of-context-managers)
-    - [Catching exceptions from `__enter__` methods](#catching-exceptions-from-enter-methods)
-    - [Cleaning up in an `__enter__` implementation](#cleaning-up-in-an-enter-implementation)
-    - [Replacing any use of `try-finally` and flag variables](#replacing-any-use-of-try-finally-and-flag-variables)
-    - [Using a context manager as a function decorator](#using-a-context-manager-as-a-function-decorator)
-  + [Single use, reusable and reentrant context managers](#single-use-reusable-and-reentrant-context-managers)
-    - [Reentrant context managers](#reentrant-context-managers)
-    - [Reusable context managers](#reusable-context-managers)
-
-#### Previous topic
-
-[`dataclasses` — Data Classes](dataclasses.html "previous chapter")
-
-#### Next topic
-
-[`abc` — Abstract Base Classes](abc.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/contextlib.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](abc.html "abc — Abstract Base Classes") |
-* [previous](dataclasses.html "dataclasses — Data Classes") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Python Runtime Services](python.html) »
-* `contextlib` — Utilities for `with`-statement contexts
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `contextlib` — Utilities for `with`-statement contexts[¶](#module-contextlib "Link to this heading")
-
-**Source code:** [Lib/contextlib.py](https://github.com/python/cpython/tree/3.12/Lib/contextlib.py)
+**Source code:** [Lib/contextlib.py](https://github.com/python/cpython/tree/3.14/Lib/contextlib.py)
 
 ---
 
@@ -67,46 +13,46 @@ This module provides utilities for common tasks involving the [`with`](../refere
 statement. For more information see also [Context Manager Types](stdtypes.html#typecontextmanager) and
 [With Statement Context Managers](../reference/datamodel.html#context-managers).
 
-## Utilities[¶](#utilities "Link to this heading")
+## Utilities
 
 Functions and classes provided:
 
-*class* contextlib.AbstractContextManager[¶](#contextlib.AbstractContextManager "Link to this definition")
+*class*contextlib.AbstractContextManager
 :   An [abstract base class](../glossary.html#term-abstract-base-class) for classes that implement
-    [`object.__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") and [`object.__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__"). A default
-    implementation for [`object.__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") is provided which returns
-    `self` while [`object.__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__") is an abstract method which by default
+    [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") and [`__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__"). A default
+    implementation for `__enter__()` is provided which returns
+    `self` while `__exit__()` is an abstract method which by default
     returns `None`. See also the definition of [Context Manager Types](stdtypes.html#typecontextmanager).
 
     Added in version 3.6.
 
-*class* contextlib.AbstractAsyncContextManager[¶](#contextlib.AbstractAsyncContextManager "Link to this definition")
+*class*contextlib.AbstractAsyncContextManager
 :   An [abstract base class](../glossary.html#term-abstract-base-class) for classes that implement
-    [`object.__aenter__()`](../reference/datamodel.html#object.__aenter__ "object.__aenter__") and [`object.__aexit__()`](../reference/datamodel.html#object.__aexit__ "object.__aexit__"). A default
-    implementation for [`object.__aenter__()`](../reference/datamodel.html#object.__aenter__ "object.__aenter__") is provided which returns
-    `self` while [`object.__aexit__()`](../reference/datamodel.html#object.__aexit__ "object.__aexit__") is an abstract method which by default
+    [`__aenter__()`](../reference/datamodel.html#object.__aenter__ "object.__aenter__") and [`__aexit__()`](../reference/datamodel.html#object.__aexit__ "object.__aexit__"). A default
+    implementation for `__aenter__()` is provided which returns
+    `self` while `__aexit__()` is an abstract method which by default
     returns `None`. See also the definition of
     [Asynchronous Context Managers](../reference/datamodel.html#async-context-managers).
 
     Added in version 3.7.
 
-@contextlib.contextmanager[¶](#contextlib.contextmanager "Link to this definition")
+@contextlib.contextmanager
 :   This function is a [decorator](../glossary.html#term-decorator) that can be used to define a factory
     function for [`with`](../reference/compound_stmts.html#with) statement context managers, without needing to
     create a class or separate [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") and [`__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__") methods.
 
     While many objects natively support use in with statements, sometimes a
     resource needs to be managed that isn’t a context manager in its own right,
-    and doesn’t implement a `close()` method for use with `contextlib.closing`
+    and doesn’t implement a `close()` method for use with `contextlib.closing`.
 
     An abstract example would be the following to ensure correct resource
     management:
 
     ```
-    from contextlib import contextmanager
+    fromcontextlibimport contextmanager
 
     @contextmanager
-    def managed_resource(*args, **kwds):
+    defmanaged_resource(*args, **kwds):
         # Code to acquire resource, e.g.:
         resource = acquire_resource(*args, **kwds)
         try:
@@ -140,16 +86,16 @@ Functions and classes provided:
     the exception has been handled, and execution will resume with the statement
     immediately following the `with` statement.
 
-    [`contextmanager()`](#contextlib.contextmanager "contextlib.contextmanager") uses [`ContextDecorator`](#contextlib.ContextDecorator "contextlib.ContextDecorator") so the context managers
+    `contextmanager()` uses [`ContextDecorator`](#contextlib.ContextDecorator "contextlib.ContextDecorator") so the context managers
     it creates can be used as decorators as well as in [`with`](../reference/compound_stmts.html#with) statements.
     When used as a decorator, a new generator instance is implicitly created on
     each function call (this allows the otherwise “one-shot” context managers
-    created by [`contextmanager()`](#contextlib.contextmanager "contextlib.contextmanager") to meet the requirement that context
+    created by `contextmanager()` to meet the requirement that context
     managers support multiple invocations in order to be used as decorators).
 
     Changed in version 3.2: Use of [`ContextDecorator`](#contextlib.ContextDecorator "contextlib.ContextDecorator").
 
-@contextlib.asynccontextmanager[¶](#contextlib.asynccontextmanager "Link to this definition")
+@contextlib.asynccontextmanager
 :   Similar to [`contextmanager()`](#contextlib.contextmanager "contextlib.contextmanager"), but creates an
     [asynchronous context manager](../reference/datamodel.html#async-context-managers).
 
@@ -162,60 +108,60 @@ Functions and classes provided:
     A simple example:
 
     ```
-    from contextlib import asynccontextmanager
+    fromcontextlibimport asynccontextmanager
 
     @asynccontextmanager
-    async def get_connection():
+    async defget_connection():
         conn = await acquire_db_connection()
         try:
             yield conn
         finally:
             await release_db_connection(conn)
 
-    async def get_all_users():
+    async defget_all_users():
         async with get_connection() as conn:
             return conn.query('SELECT ...')
     ```
 
     Added in version 3.7.
 
-    Context managers defined with [`asynccontextmanager()`](#contextlib.asynccontextmanager "contextlib.asynccontextmanager") can be used
+    Context managers defined with `asynccontextmanager()` can be used
     either as decorators or with [`async with`](../reference/compound_stmts.html#async-with) statements:
 
     ```
-    import time
-    from contextlib import asynccontextmanager
+    importtime
+    fromcontextlibimport asynccontextmanager
 
     @asynccontextmanager
-    async def timeit():
+    async deftimeit():
         now = time.monotonic()
         try:
             yield
         finally:
-            print(f'it took {time.monotonic() - now}s to run')
+            print(f'it took {time.monotonic()-now}s to run')
 
     @timeit()
-    async def main():
+    async defmain():
         # ... async code ...
     ```
 
     When used as a decorator, a new generator instance is implicitly created on
     each function call. This allows the otherwise “one-shot” context managers
-    created by [`asynccontextmanager()`](#contextlib.asynccontextmanager "contextlib.asynccontextmanager") to meet the requirement that context
+    created by `asynccontextmanager()` to meet the requirement that context
     managers support multiple invocations in order to be used as decorators.
 
-    Changed in version 3.10: Async context managers created with [`asynccontextmanager()`](#contextlib.asynccontextmanager "contextlib.asynccontextmanager") can
+    Changed in version 3.10: Async context managers created with `asynccontextmanager()` can
     be used as decorators.
 
-contextlib.closing(*thing*)[¶](#contextlib.closing "Link to this definition")
+contextlib.closing(*thing*)
 :   Return a context manager that closes *thing* upon completion of the block. This
     is basically equivalent to:
 
     ```
-    from contextlib import contextmanager
+    fromcontextlibimport contextmanager
 
     @contextmanager
-    def closing(thing):
+    defclosing(thing):
         try:
             yield thing
         finally:
@@ -225,8 +171,8 @@ contextlib.closing(*thing*)[¶](#contextlib.closing "Link to this definition")
     And lets you write code like this:
 
     ```
-    from contextlib import closing
-    from urllib.request import urlopen
+    fromcontextlibimport closing
+    fromurllib.requestimport urlopen
 
     with closing(urlopen('https://www.python.org')) as page:
         for line in page:
@@ -245,15 +191,15 @@ contextlib.closing(*thing*)[¶](#contextlib.closing "Link to this definition")
     This example is purely for illustration purposes,
     as [`urlopen()`](urllib.request.html#urllib.request.urlopen "urllib.request.urlopen") would normally be used in a context manager.
 
-contextlib.aclosing(*thing*)[¶](#contextlib.aclosing "Link to this definition")
+contextlib.aclosing(*thing*)
 :   Return an async context manager that calls the `aclose()` method of *thing*
     upon completion of the block. This is basically equivalent to:
 
     ```
-    from contextlib import asynccontextmanager
+    fromcontextlibimport asynccontextmanager
 
     @asynccontextmanager
-    async def aclosing(thing):
+    async defaclosing(thing):
         try:
             yield thing
         finally:
@@ -265,7 +211,7 @@ contextlib.aclosing(*thing*)[¶](#contextlib.aclosing "Link to this definition")
     exception. For example:
 
     ```
-    from contextlib import aclosing
+    fromcontextlibimport aclosing
 
     async with aclosing(my_generator()) as values:
         async for value in values:
@@ -280,13 +226,13 @@ contextlib.aclosing(*thing*)[¶](#contextlib.aclosing "Link to this definition")
 
     Added in version 3.10.
 
-contextlib.nullcontext(*enter\_result=None*)[¶](#contextlib.nullcontext "Link to this definition")
-:   Return a context manager that returns *enter\_result* from `__enter__`, but
+contextlib.nullcontext(*enter\_result=None*)
+:   Return a context manager that returns *enter\_result* from [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__"), but
     otherwise does nothing. It is intended to be used as a stand-in for an
     optional context manager, for example:
 
     ```
-    def myfunction(arg, ignore_exceptions=False):
+    defmyfunction(arg, ignore_exceptions=False):
         if ignore_exceptions:
             # Use suppress to ignore all exceptions.
             cm = contextlib.suppress(Exception)
@@ -300,7 +246,7 @@ contextlib.nullcontext(*enter\_result=None*)[¶](#contextlib.nullcontext "Link t
     An example using *enter\_result*:
 
     ```
-    def process_file(file_or_path):
+    defprocess_file(file_or_path):
         if isinstance(file_or_path, str):
             # If string, open file
             cm = open(file_or_path)
@@ -316,7 +262,7 @@ contextlib.nullcontext(*enter\_result=None*)[¶](#contextlib.nullcontext "Link t
     [asynchronous context managers](../reference/datamodel.html#async-context-managers):
 
     ```
-    async def send_http(session=None):
+    async defsend_http(session=None):
         if not session:
             # If no http session, create it with aiohttp
             cm = aiohttp.ClientSession()
@@ -332,7 +278,7 @@ contextlib.nullcontext(*enter\_result=None*)[¶](#contextlib.nullcontext "Link t
 
     Changed in version 3.10: [asynchronous context manager](../glossary.html#term-asynchronous-context-manager) support was added.
 
-contextlib.suppress(*\*exceptions*)[¶](#contextlib.suppress "Link to this definition")
+contextlib.suppress(*\*exceptions*)
 :   Return a context manager that suppresses any of the specified exceptions
     if they occur in the body of a `with` statement and then
     resumes execution with the first statement following the end of the
@@ -346,7 +292,7 @@ contextlib.suppress(*\*exceptions*)[¶](#contextlib.suppress "Link to this defin
     For example:
 
     ```
-    from contextlib import suppress
+    fromcontextlibimport suppress
 
     with suppress(FileNotFoundError):
         os.remove('somefile.tmp')
@@ -382,7 +328,7 @@ contextlib.suppress(*\*exceptions*)[¶](#contextlib.suppress "Link to this defin
     Changed in version 3.12: `suppress` now supports suppressing exceptions raised as
     part of a [`BaseExceptionGroup`](exceptions.html#BaseExceptionGroup "BaseExceptionGroup").
 
-contextlib.redirect\_stdout(*new\_target*)[¶](#contextlib.redirect_stdout "Link to this definition")
+contextlib.redirect\_stdout(*new\_target*)
 :   Context manager for temporarily redirecting [`sys.stdout`](sys.html#sys.stdout "sys.stdout") to
     another file or file-like object.
 
@@ -392,7 +338,7 @@ contextlib.redirect\_stdout(*new\_target*)[¶](#contextlib.redirect_stdout "Link
     For example, the output of [`help()`](functions.html#help "help") normally is sent to *sys.stdout*.
     You can capture that output in a string by redirecting the output to an
     [`io.StringIO`](io.html#io.StringIO "io.StringIO") object. The replacement stream is returned from the
-    `__enter__` method and so is available as the target of the
+    [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") method and so is available as the target of the
     [`with`](../reference/compound_stmts.html#with) statement:
 
     ```
@@ -426,7 +372,7 @@ contextlib.redirect\_stdout(*new\_target*)[¶](#contextlib.redirect_stdout "Link
 
     Added in version 3.4.
 
-contextlib.redirect\_stderr(*new\_target*)[¶](#contextlib.redirect_stderr "Link to this definition")
+contextlib.redirect\_stderr(*new\_target*)
 :   Similar to [`redirect_stdout()`](#contextlib.redirect_stdout "contextlib.redirect_stdout") but redirecting
     [`sys.stderr`](sys.html#sys.stderr "sys.stderr") to another file or file-like object.
 
@@ -434,7 +380,7 @@ contextlib.redirect\_stderr(*new\_target*)[¶](#contextlib.redirect_stderr "Link
 
     Added in version 3.5.
 
-contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
+contextlib.chdir(*path*)
 :   Non parallel-safe context manager to change the current working directory.
     As this changes a global state, the working directory, it is not suitable
     for use in most threaded or async contexts. It is also not suitable for most
@@ -449,11 +395,12 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     Added in version 3.11.
 
-*class* contextlib.ContextDecorator[¶](#contextlib.ContextDecorator "Link to this definition")
+*class*contextlib.ContextDecorator
 :   A base class that enables a context manager to also be used as a decorator.
 
     Context managers inheriting from `ContextDecorator` have to implement
-    `__enter__` and `__exit__` as normal. `__exit__` retains its optional
+    [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") and [`__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__") as normal.
+    `__exit__` retains its optional
     exception handling even when used as a decorator.
 
     `ContextDecorator` is used by [`contextmanager()`](#contextlib.contextmanager "contextlib.contextmanager"), so you get this
@@ -462,14 +409,14 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
     Example of `ContextDecorator`:
 
     ```
-    from contextlib import ContextDecorator
+    fromcontextlibimport ContextDecorator
 
-    class mycontext(ContextDecorator):
-        def __enter__(self):
+    classmycontext(ContextDecorator):
+        def__enter__(self):
             print('Starting')
             return self
 
-        def __exit__(self, *exc):
+        def__exit__(self, *exc):
             print('Finishing')
             return False
     ```
@@ -478,7 +425,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     ```
     >>> @mycontext()
-    ... def function():
+    ... deffunction():
     ...     print('The bit in the middle')
     ...
     >>> function()
@@ -497,7 +444,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
     This change is just syntactic sugar for any construct of the following form:
 
     ```
-    def f():
+    deff():
         with cm():
             # Do stuff
     ```
@@ -506,7 +453,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     ```
     @cm()
-    def f():
+    deff():
         # Do stuff
     ```
 
@@ -517,13 +464,13 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
     using `ContextDecorator` as a mixin class:
 
     ```
-    from contextlib import ContextDecorator
+    fromcontextlibimport ContextDecorator
 
-    class mycontext(ContextBaseClass, ContextDecorator):
-        def __enter__(self):
+    classmycontext(ContextBaseClass, ContextDecorator):
+        def__enter__(self):
             return self
 
-        def __exit__(self, *exc):
+        def__exit__(self, *exc):
             return False
     ```
 
@@ -536,21 +483,21 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     Added in version 3.2.
 
-*class* contextlib.AsyncContextDecorator[¶](#contextlib.AsyncContextDecorator "Link to this definition")
+*class*contextlib.AsyncContextDecorator
 :   Similar to [`ContextDecorator`](#contextlib.ContextDecorator "contextlib.ContextDecorator") but only for asynchronous functions.
 
     Example of `AsyncContextDecorator`:
 
     ```
-    from asyncio import run
-    from contextlib import AsyncContextDecorator
+    fromasyncioimport run
+    fromcontextlibimport AsyncContextDecorator
 
-    class mycontext(AsyncContextDecorator):
-        async def __aenter__(self):
+    classmycontext(AsyncContextDecorator):
+        async def__aenter__(self):
             print('Starting')
             return self
 
-        async def __aexit__(self, *exc):
+        async def__aexit__(self, *exc):
             print('Finishing')
             return False
     ```
@@ -559,7 +506,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     ```
     >>> @mycontext()
-    ... async def function():
+    ... async deffunction():
     ...     print('The bit in the middle')
     ...
     >>> run(function())
@@ -567,7 +514,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
     The bit in the middle
     Finishing
 
-    >>> async def function():
+    >>> async deffunction():
     ...    async with mycontext():
     ...         print('The bit in the middle')
     ...
@@ -579,7 +526,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     Added in version 3.10.
 
-*class* contextlib.ExitStack[¶](#contextlib.ExitStack "Link to this definition")
+*class*contextlib.ExitStack
 :   A context manager that is designed to make it easy to programmatically
     combine other context managers and cleanup functions, especially those
     that are optional or otherwise driven by input data.
@@ -595,7 +542,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
         # in the list raise an exception
     ```
 
-    The [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") method returns the [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack") instance, and
+    The [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") method returns the `ExitStack` instance, and
     performs no additional operations.
 
     Each instance maintains a stack of registered callbacks that are called in
@@ -621,7 +568,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     Added in version 3.3.
 
-    enter\_context(*cm*)[¶](#contextlib.ExitStack.enter_context "Link to this definition")
+    enter\_context(*cm*)
     :   Enters a new context manager and adds its [`__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__") method to
         the callback stack. The return value is the result of the context
         manager’s own [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__") method.
@@ -632,7 +579,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
         Changed in version 3.11: Raises [`TypeError`](exceptions.html#TypeError "TypeError") instead of [`AttributeError`](exceptions.html#AttributeError "AttributeError") if *cm*
         is not a context manager.
 
-    push(*exit*)[¶](#contextlib.ExitStack.push "Link to this definition")
+    push(*exit*)
     :   Adds a context manager’s [`__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__") method to the callback stack.
 
         As `__enter__` is *not* invoked, this method can be used to cover
@@ -649,7 +596,7 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
         The passed in object is returned from the function, allowing this
         method to be used as a function decorator.
 
-    callback(*callback*, */*, *\*args*, *\*\*kwds*)[¶](#contextlib.ExitStack.callback "Link to this definition")
+    callback(*callback*, */*, *\*args*, *\*\*kwds*)
     :   Accepts an arbitrary callback function and arguments and adds it to
         the callback stack.
 
@@ -659,8 +606,8 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
         The passed in callback is returned from the function, allowing this
         method to be used as a function decorator.
 
-    pop\_all()[¶](#contextlib.ExitStack.pop_all "Link to this definition")
-    :   Transfers the callback stack to a fresh [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack") instance
+    pop\_all()
+    :   Transfers the callback stack to a fresh `ExitStack` instance
         and returns it. No callbacks are invoked by this operation - instead,
         they will now be invoked when the new stack is closed (either
         explicitly or implicitly at the end of a [`with`](../reference/compound_stmts.html#with) statement).
@@ -679,13 +626,13 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
             # close_files() can then be invoked explicitly to close them all.
         ```
 
-    close()[¶](#contextlib.ExitStack.close "Link to this definition")
+    close()
     :   Immediately unwinds the callback stack, invoking callbacks in the
         reverse order of registration. For any context managers and exit
         callbacks registered, the arguments passed in will indicate that no
         exception occurred.
 
-*class* contextlib.AsyncExitStack[¶](#contextlib.AsyncExitStack "Link to this definition")
+*class*contextlib.AsyncExitStack
 :   An [asynchronous context manager](../reference/datamodel.html#async-context-managers), similar
     to [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack"), that supports combining both synchronous and
     asynchronous context managers, as well as having coroutines for
@@ -694,21 +641,21 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
     The [`close()`](#contextlib.ExitStack.close "contextlib.ExitStack.close") method is not implemented; [`aclose()`](#contextlib.AsyncExitStack.aclose "contextlib.AsyncExitStack.aclose") must be used
     instead.
 
-    *async* enter\_async\_context(*cm*)[¶](#contextlib.AsyncExitStack.enter_async_context "Link to this definition")
+    *async*enter\_async\_context(*cm*)
     :   Similar to [`ExitStack.enter_context()`](#contextlib.ExitStack.enter_context "contextlib.ExitStack.enter_context") but expects an asynchronous context
         manager.
 
         Changed in version 3.11: Raises [`TypeError`](exceptions.html#TypeError "TypeError") instead of [`AttributeError`](exceptions.html#AttributeError "AttributeError") if *cm*
         is not an asynchronous context manager.
 
-    push\_async\_exit(*exit*)[¶](#contextlib.AsyncExitStack.push_async_exit "Link to this definition")
+    push\_async\_exit(*exit*)
     :   Similar to [`ExitStack.push()`](#contextlib.ExitStack.push "contextlib.ExitStack.push") but expects either an asynchronous context manager
         or a coroutine function.
 
-    push\_async\_callback(*callback*, */*, *\*args*, *\*\*kwds*)[¶](#contextlib.AsyncExitStack.push_async_callback "Link to this definition")
+    push\_async\_callback(*callback*, */*, *\*args*, *\*\*kwds*)
     :   Similar to [`ExitStack.callback()`](#contextlib.ExitStack.callback "contextlib.ExitStack.callback") but expects a coroutine function.
 
-    *async* aclose()[¶](#contextlib.AsyncExitStack.aclose "Link to this definition")
+    *async*aclose()
     :   Similar to [`ExitStack.close()`](#contextlib.ExitStack.close "contextlib.ExitStack.close") but properly handles awaitables.
 
     Continuing the example for [`asynccontextmanager()`](#contextlib.asynccontextmanager "contextlib.asynccontextmanager"):
@@ -724,12 +671,12 @@ contextlib.chdir(*path*)[¶](#contextlib.chdir "Link to this definition")
 
     Added in version 3.7.
 
-## Examples and Recipes[¶](#examples-and-recipes "Link to this heading")
+## Examples and Recipes
 
 This section describes some examples and recipes for making effective use of
-the tools provided by [`contextlib`](#module-contextlib "contextlib: Utilities for with-statement contexts.").
+the tools provided by `contextlib`.
 
-### Supporting a variable number of context managers[¶](#supporting-a-variable-number-of-context-managers "Link to this heading")
+### Supporting a variable number of context managers
 
 The primary use case for [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack") is the one given in the class
 documentation: supporting a variable number of context managers and other
@@ -752,11 +699,11 @@ As shown, [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack") also makes
 statements to manage arbitrary resources that don’t natively support the
 context management protocol.
 
-### Catching exceptions from `__enter__` methods[¶](#catching-exceptions-from-enter-methods "Link to this heading")
+### Catching exceptions from `__enter__` methods
 
-It is occasionally desirable to catch exceptions from an `__enter__`
+It is occasionally desirable to catch exceptions from an [`__enter__()`](../reference/datamodel.html#object.__enter__ "object.__enter__")
 method implementation, *without* inadvertently catching exceptions from
-the [`with`](../reference/compound_stmts.html#with) statement body or the context manager’s `__exit__`
+the [`with`](../reference/compound_stmts.html#with) statement body or the context manager’s [`__exit__()`](../reference/datamodel.html#object.__exit__ "object.__exit__")
 method. By using [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack") the steps in the context management
 protocol can be separated slightly in order to allow this:
 
@@ -779,7 +726,7 @@ only resource management API provided, then [`ExitStack`](#contextlib.ExitStack 
 easier to handle various situations that can’t be handled directly in a
 [`with`](../reference/compound_stmts.html#with) statement.
 
-### Cleaning up in an `__enter__` implementation[¶](#cleaning-up-in-an-enter-implementation "Link to this heading")
+### Cleaning up in an `__enter__` implementation
 
 As noted in the documentation of [`ExitStack.push()`](#contextlib.ExitStack.push "contextlib.ExitStack.push"), this
 method can be useful in cleaning up an already allocated resource if later
@@ -790,20 +737,20 @@ acquisition and release functions, along with an optional validation function,
 and maps them to the context management protocol:
 
 ```
-from contextlib import contextmanager, AbstractContextManager, ExitStack
+fromcontextlibimport contextmanager, AbstractContextManager, ExitStack
 
-class ResourceManager(AbstractContextManager):
+classResourceManager(AbstractContextManager):
 
-    def __init__(self, acquire_resource, release_resource, check_resource_ok=None):
+    def__init__(self, acquire_resource, release_resource, check_resource_ok=None):
         self.acquire_resource = acquire_resource
         self.release_resource = release_resource
         if check_resource_ok is None:
-            def check_resource_ok(resource):
+            defcheck_resource_ok(resource):
                 return True
         self.check_resource_ok = check_resource_ok
 
     @contextmanager
-    def _cleanup_on_error(self):
+    def_cleanup_on_error(self):
         with ExitStack() as stack:
             stack.push(self)
             yield
@@ -812,7 +759,7 @@ class ResourceManager(AbstractContextManager):
             # back to our caller
             stack.pop_all()
 
-    def __enter__(self):
+    def__enter__(self):
         resource = self.acquire_resource()
         with self._cleanup_on_error():
             if not self.check_resource_ok(resource):
@@ -820,12 +767,12 @@ class ResourceManager(AbstractContextManager):
                 raise RuntimeError(msg.format(resource))
         return resource
 
-    def __exit__(self, *exc_details):
+    def__exit__(self, *exc_details):
         # We don't need to duplicate any of our resource release logic
         self.release_resource()
 ```
 
-### Replacing any use of `try-finally` and flag variables[¶](#replacing-any-use-of-try-finally-and-flag-variables "Link to this heading")
+### Replacing any use of `try-finally` and flag variables
 
 A pattern you will sometimes see is a `try-finally` statement with a flag
 variable to indicate whether or not the body of the `finally` clause should
@@ -852,7 +799,7 @@ execution at the end of a `with` statement, and then later decide to skip
 executing that callback:
 
 ```
-from contextlib import ExitStack
+fromcontextlibimport ExitStack
 
 with ExitStack() as stack:
     stack.callback(cleanup_resources)
@@ -868,14 +815,14 @@ If a particular application uses this pattern a lot, it can be simplified
 even further by means of a small helper class:
 
 ```
-from contextlib import ExitStack
+fromcontextlibimport ExitStack
 
-class Callback(ExitStack):
-    def __init__(self, callback, /, *args, **kwds):
+classCallback(ExitStack):
+    def__init__(self, callback, /, *args, **kwds):
         super().__init__()
         self.callback(callback, *args, **kwds)
 
-    def cancel(self):
+    defcancel(self):
         self.pop_all()
 
 with Callback(cleanup_resources) as cb:
@@ -890,11 +837,11 @@ function, then it is still possible to use the decorator form of
 advance:
 
 ```
-from contextlib import ExitStack
+fromcontextlibimport ExitStack
 
 with ExitStack() as stack:
     @stack.callback
-    def cleanup_resources():
+    defcleanup_resources():
         ...
     result = perform_operation()
     if result:
@@ -905,7 +852,7 @@ Due to the way the decorator protocol works, a callback function
 declared this way cannot take any parameters. Instead, any resources to
 be released must be accessed as closure variables.
 
-### Using a context manager as a function decorator[¶](#using-a-context-manager-as-a-function-decorator "Link to this heading")
+### Using a context manager as a function decorator
 
 [`ContextDecorator`](#contextlib.ContextDecorator "contextlib.ContextDecorator") makes it possible to use a context manager in
 both an ordinary `with` statement and also as a function decorator.
@@ -917,19 +864,19 @@ inheriting from [`ContextDecorator`](#contextlib.ContextDecorator "contextlib.Co
 single definition:
 
 ```
-from contextlib import ContextDecorator
-import logging
+fromcontextlibimport ContextDecorator
+importlogging
 
 logging.basicConfig(level=logging.INFO)
 
-class track_entry_and_exit(ContextDecorator):
-    def __init__(self, name):
+classtrack_entry_and_exit(ContextDecorator):
+    def__init__(self, name):
         self.name = name
 
-    def __enter__(self):
+    def__enter__(self):
         logging.info('Entering: %s', self.name)
 
-    def __exit__(self, exc_type, exc, exc_tb):
+    def__exit__(self, exc_type, exc, exc_tb):
         logging.info('Exiting: %s', self.name)
 ```
 
@@ -945,7 +892,7 @@ And also as a function decorator:
 
 ```
 @track_entry_and_exit('widget loader')
-def activity():
+defactivity():
     print('Some time consuming activity goes here')
     load_widget()
 ```
@@ -961,7 +908,7 @@ See also
 :   The specification, background, and examples for the Python [`with`](../reference/compound_stmts.html#with)
     statement.
 
-## Single use, reusable and reentrant context managers[¶](#single-use-reusable-and-reentrant-context-managers "Link to this heading")
+## Single use, reusable and reentrant context managers
 
 Most context managers are written in a way that means they can only be
 used effectively in a [`with`](../reference/compound_stmts.html#with) statement once. These single use
@@ -982,9 +929,9 @@ context managers, and will complain about the underlying generator failing
 to yield if an attempt is made to use them a second time:
 
 ```
->>> from contextlib import contextmanager
+>>> fromcontextlibimport contextmanager
 >>> @contextmanager
-... def singleuse():
+... defsingleuse():
 ...     print("Before")
 ...     yield
 ...     print("After")
@@ -999,11 +946,11 @@ After
 ...     pass
 ...
 Traceback (most recent call last):
-    ...
+...
 RuntimeError: generator didn't yield
 ```
 
-### Reentrant context managers[¶](#reentrant-context-managers "Link to this heading")
+### Reentrant context managers
 
 More sophisticated context managers may be “reentrant”. These context
 managers can not only be used in multiple [`with`](../reference/compound_stmts.html#with) statements,
@@ -1015,8 +962,8 @@ using the same context manager.
 simple example of reentrant use:
 
 ```
->>> from contextlib import redirect_stdout
->>> from io import StringIO
+>>> fromcontextlibimport redirect_stdout
+>>> fromioimport StringIO
 >>> stream = StringIO()
 >>> write_to_stream = redirect_stdout(stream)
 >>> with write_to_stream:
@@ -1040,7 +987,7 @@ Note also that being reentrant is *not* the same thing as being thread safe.
 makes a global modification to the system state by binding [`sys.stdout`](sys.html#sys.stdout "sys.stdout")
 to a different stream.
 
-### Reusable context managers[¶](#reusable-context-managers "Link to this heading")
+### Reusable context managers
 
 Distinct from both single use and reentrant context managers are “reusable”
 context managers (or, to be completely explicit, “reusable, but not
@@ -1059,7 +1006,7 @@ when leaving any with statement, regardless of where those callbacks
 were added:
 
 ```
->>> from contextlib import ExitStack
+>>> fromcontextlibimport ExitStack
 >>> stack = ExitStack()
 >>> with stack:
 ...     stack.callback(print, "Callback: from first context")
@@ -1095,7 +1042,7 @@ Using separate [`ExitStack`](#contextlib.ExitStack "contextlib.ExitStack") insta
 instance avoids that problem:
 
 ```
->>> from contextlib import ExitStack
+>>> fromcontextlibimport ExitStack
 >>> with ExitStack() as outer_stack:
 ...     outer_stack.callback(print, "Callback: from outer context")
 ...     with ExitStack() as inner_stack:
@@ -1109,67 +1056,8 @@ Leaving outer context
 Callback: from outer context
 ```
 
-### [Table of Contents](../contents.html)
+---
 
-* [`contextlib` — Utilities for `with`-statement contexts](#)
-  + [Utilities](#utilities)
-  + [Examples and Recipes](#examples-and-recipes)
-    - [Supporting a variable number of context managers](#supporting-a-variable-number-of-context-managers)
-    - [Catching exceptions from `__enter__` methods](#catching-exceptions-from-enter-methods)
-    - [Cleaning up in an `__enter__` implementation](#cleaning-up-in-an-enter-implementation)
-    - [Replacing any use of `try-finally` and flag variables](#replacing-any-use-of-try-finally-and-flag-variables)
-    - [Using a context manager as a function decorator](#using-a-context-manager-as-a-function-decorator)
-  + [Single use, reusable and reentrant context managers](#single-use-reusable-and-reentrant-context-managers)
-    - [Reentrant context managers](#reentrant-context-managers)
-    - [Reusable context managers](#reusable-context-managers)
+## Bibliography
 
-#### Previous topic
-
-[`dataclasses` — Data Classes](dataclasses.html "previous chapter")
-
-#### Next topic
-
-[`abc` — Abstract Base Classes](abc.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/contextlib.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](abc.html "abc — Abstract Base Classes") |
-* [previous](dataclasses.html "dataclasses — Data Classes") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Python Runtime Services](python.html) »
-* `contextlib` — Utilities for `with`-statement contexts
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`contextlib` — Utilities for `with`-statement contexts](https://docs.python.org/3/library/contextlib.html)

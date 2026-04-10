@@ -1,72 +1,13 @@
-enum — Support for enumerations — Python 3.12.13 documentation
+# Python enum
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
-
-* [`enum` — Support for enumerations](#)
-  + [Module Contents](#module-contents)
-  + [Data Types](#data-types)
-    - [Supported `__dunder__` names](#supported-dunder-names)
-    - [Supported `_sunder_` names](#supported-sunder-names)
-  + [Utilities and Decorators](#utilities-and-decorators)
-  + [Notes](#notes)
-
-#### Previous topic
-
-[`reprlib` — Alternate `repr()` implementation](reprlib.html "previous chapter")
-
-#### Next topic
-
-[`graphlib` — Functionality to operate with graph-like structures](graphlib.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/enum.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](graphlib.html "graphlib — Functionality to operate with graph-like structures") |
-* [previous](reprlib.html "reprlib — Alternate repr() implementation") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Data Types](datatypes.html) »
-* `enum` — Support for enumerations
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `enum` — Support for enumerations[¶](#module-enum "Link to this heading")
+## 1. `enum` — Support for enumerations
 
 Added in version 3.4.
 
-**Source code:** [Lib/enum.py](https://github.com/python/cpython/tree/3.12/Lib/enum.py)
-
-Important
-
-This page contains the API reference information. For tutorial
-information and discussion of more advanced topics, see
-
-* [Basic Tutorial](../howto/enum.html#enum-basic-tutorial)
-* [Advanced Tutorial](../howto/enum.html#enum-advanced-tutorial)
-* [Enum Cookbook](../howto/enum.html#enum-cookbook)
+**Source code:** [Lib/enum.py](https://github.com/python/cpython/tree/3.14/Lib/enum.py)
 
 ---
 
@@ -82,10 +23,10 @@ Enumerations are created either by using [`class`](../reference/compound_stmts.h
 using function-call syntax:
 
 ```
->>> from enum import Enum
+>>> fromenumimport Enum
 
 >>> # class syntax
->>> class Color(Enum):
+>>> classColor(Enum):
 ...     RED = 1
 ...     GREEN = 2
 ...     BLUE = 3
@@ -111,7 +52,7 @@ Nomenclature
 
 ---
 
-## Module Contents[¶](#module-contents "Link to this heading")
+## Module contents
 
 > [`EnumType`](#enum.EnumType "enum.EnumType")
 >
@@ -140,7 +81,7 @@ Nomenclature
 >
 > > Base class for creating enumerated constants that can be combined using
 > > the bitwise operators without losing their [`IntFlag`](#enum.IntFlag "enum.IntFlag") membership.
-> > [`IntFlag`](#enum.IntFlag "enum.IntFlag") members are also subclasses of [`int`](functions.html#int "int"). ([Notes](#notes))
+> > `IntFlag` members are also subclasses of [`int`](functions.html#int "int"). ([Notes](#notes))
 >
 > [`ReprEnum`](#enum.ReprEnum "enum.ReprEnum")
 >
@@ -158,6 +99,10 @@ Nomenclature
 > > An enumeration with the values `STRICT`, `CONFORM`, `EJECT`, and
 > > `KEEP` which allows for more fine-grained control over how invalid values
 > > are dealt with in an enumeration.
+>
+> [`EnumDict`](#enum.EnumDict "enum.EnumDict")
+>
+> > A subclass of [`dict`](stdtypes.html#dict "dict") for use when subclassing [`EnumType`](#enum.EnumType "enum.EnumType").
 >
 > [`auto`](#enum.auto "enum.auto")
 >
@@ -197,26 +142,36 @@ Nomenclature
 > [`show_flag_values()`](#enum.show_flag_values "enum.show_flag_values")
 >
 > > Return a list of all power-of-two integers contained in a flag.
+>
+> [`enum.bin()`](#enum.bin "enum.bin")
+>
+> > Like built-in [`bin()`](functions.html#bin "bin"), except negative values are represented in
+> > two’s complement, and the leading bit always indicates sign
+> > (`0` implies positive, `1` implies negative).
 
 Added in version 3.6: `Flag`, `IntFlag`, `auto`
 
 Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `property`, `member`, `nonmember`, `global_enum`, `show_flag_values`
 
+Added in version 3.13: `EnumDict`
+
 ---
 
-## Data Types[¶](#data-types "Link to this heading")
+## Data types
 
-*class* enum.EnumType[¶](#enum.EnumType "Link to this definition")
+*class*enum.EnumType
 :   *EnumType* is the [metaclass](../glossary.html#term-metaclass) for *enum* enumerations. It is possible
     to subclass *EnumType* – see [Subclassing EnumType](../howto/enum.html#enumtype-examples)
     for details.
 
-    *EnumType* is responsible for setting the correct `__repr__()`,
+    `EnumType` is responsible for setting the correct `__repr__()`,
     `__str__()`, `__format__()`, and `__reduce__()` methods on the
     final *enum*, as well as creating the enum members, properly handling
     duplicates, providing iteration over the enum class, etc.
 
-    \_\_call\_\_(*cls*, *value*, *names=None*, *\**, *module=None*, *qualname=None*, *type=None*, *start=1*, *boundary=None*)[¶](#enum.EnumType.__call__ "Link to this definition")
+    Added in version 3.11: Before 3.11 `EnumType` was called `EnumMeta`, which is still available as an alias.
+
+    \_\_call\_\_(*cls*, *value*, *names=None*, *\**, *module=None*, *qualname=None*, *type=None*, *start=1*, *boundary=None*)
     :   This method is called in two different ways:
 
         * to look up an existing member:
@@ -253,7 +208,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
           > boundary:
           > :   How to handle out-of-range values from bit operations ([`Flag`](#enum.Flag "enum.Flag") only).
 
-    \_\_contains\_\_(*cls*, *member*)[¶](#enum.EnumType.__contains__ "Link to this definition")
+    \_\_contains\_\_(*cls*, *member*)
     :   Returns `True` if member belongs to the `cls`:
 
         ```
@@ -264,10 +219,10 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         True
         ```
 
-    Changed in version 3.12: Before Python 3.12, a `TypeError` is raised if a
-    non-Enum-member is used in a containment check.
+        Changed in version 3.12: Before Python 3.12, a `TypeError` is raised if a
+        non-Enum-member is used in a containment check.
 
-    \_\_dir\_\_(*cls*)[¶](#enum.EnumType.__dir__ "Link to this definition")
+    \_\_dir\_\_(*cls*)
     :   Returns `['__class__', '__doc__', '__members__', '__module__']` and the
         names of the members in *cls*:
 
@@ -276,7 +231,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         ['BLUE', 'GREEN', 'RED', '__class__', '__contains__', '__doc__', '__getitem__', '__init_subclass__', '__iter__', '__len__', '__members__', '__module__', '__name__', '__qualname__']
         ```
 
-    \_\_getitem\_\_(*cls*, *name*)[¶](#enum.EnumType.__getitem__ "Link to this definition")
+    \_\_getitem\_\_(*cls*, *name*)
     :   Returns the Enum member in *cls* matching *name*, or raises a [`KeyError`](exceptions.html#KeyError "KeyError"):
 
         ```
@@ -284,7 +239,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <Color.BLUE: 3>
         ```
 
-    \_\_iter\_\_(*cls*)[¶](#enum.EnumType.__iter__ "Link to this definition")
+    \_\_iter\_\_(*cls*)
     :   Returns each member in *cls* in definition order:
 
         ```
@@ -292,7 +247,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         [<Color.RED: 1>, <Color.GREEN: 2>, <Color.BLUE: 3>]
         ```
 
-    \_\_len\_\_(*cls*)[¶](#enum.EnumType.__len__ "Link to this definition")
+    \_\_len\_\_(*cls*)
     :   Returns the number of member in *cls*:
 
         ```
@@ -300,10 +255,10 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         3
         ```
 
-    \_\_members\_\_[¶](#enum.EnumType.__members__ "Link to this definition")
+    \_\_members\_\_
     :   Returns a mapping of every enum name to its member, including aliases
 
-    \_\_reversed\_\_(*cls*)[¶](#enum.EnumType.__reversed__ "Link to this definition")
+    \_\_reversed\_\_(*cls*)
     :   Returns each member in *cls* in reverse definition order:
 
         ```
@@ -311,12 +266,10 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         [<Color.BLUE: 3>, <Color.GREEN: 2>, <Color.RED: 1>]
         ```
 
-    Added in version 3.11: Before 3.11 `enum` used `EnumMeta` type, which is kept as an alias.
-
-*class* enum.Enum[¶](#enum.Enum "Link to this definition")
+*class*enum.Enum
 :   *Enum* is the base class for all *enum* enumerations.
 
-    name[¶](#enum.Enum.name "Link to this definition")
+    name
     :   The name used to define the `Enum` member:
 
         ```
@@ -324,7 +277,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         'BLUE'
         ```
 
-    value[¶](#enum.Enum.value "Link to this definition")
+    value
     :   The value given to the `Enum` member:
 
         ```
@@ -340,7 +293,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
         Member values can be anything: [`int`](functions.html#int "int"), [`str`](stdtypes.html#str "str"), etc. If
         the exact value is unimportant you may use [`auto`](#enum.auto "enum.auto") instances and an
-        appropriate value will be chosen for you. See [`auto`](#enum.auto "enum.auto") for the
+        appropriate value will be chosen for you. See `auto` for the
         details.
 
         While mutable/unhashable values, such as [`dict`](stdtypes.html#dict "dict"), [`list`](stdtypes.html#list "list") or
@@ -348,17 +301,41 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         quadratic performance impact during creation relative to the
         total number of mutable/unhashable values in the enum.
 
-    \_name\_[¶](#enum.Enum._name_ "Link to this definition")
+    \_name\_
     :   Name of the member.
 
-    \_value\_[¶](#enum.Enum._value_ "Link to this definition")
+    \_value\_
     :   Value of the member, can be set in [`__new__()`](#enum.Enum.__new__ "enum.Enum.__new__").
 
-    \_order\_[¶](#enum.Enum._order_ "Link to this definition")
+    \_order\_
     :   No longer used, kept for backward compatibility.
         (class attribute, removed during class creation).
 
-    \_ignore\_[¶](#enum.Enum._ignore_ "Link to this definition")
+        The `_order_` attribute can be provided to help keep Python 2 / Python 3 code in sync.
+        It will be checked against the actual order of the enumeration and raise an error if the two do not match:
+
+        ```
+        >>> classColor(Enum):
+        ...     _order_ = 'RED GREEN BLUE'
+        ...     RED = 1
+        ...     BLUE = 3
+        ...     GREEN = 2
+        ...
+        Traceback (most recent call last):
+        ...
+        TypeError: member order does not match _order_:
+           ['RED', 'BLUE', 'GREEN']
+           ['RED', 'GREEN', 'BLUE']
+        ```
+
+        Note
+
+        In Python 2 code the `_order_` attribute is necessary as definition
+        order is lost before it can be recorded.
+
+        Added in version 3.6.
+
+    \_ignore\_
     :   `_ignore_` is only used during creation and is removed from the
         enumeration once creation is complete.
 
@@ -366,13 +343,16 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         names will also be removed from the completed enumeration. See
         [TimePeriod](../howto/enum.html#enum-time-period) for an example.
 
-    \_\_dir\_\_(*self*)[¶](#enum.Enum.__dir__ "Link to this definition")
+        Added in version 3.7.
+
+    \_\_dir\_\_(*self*)
     :   Returns `['__class__', '__doc__', '__module__', 'name', 'value']` and
         any public methods defined on *self.\_\_class\_\_*:
 
         ```
-        >>> from datetime import date
-        >>> class Weekday(Enum):
+        >>> fromenumimport Enum
+        >>> importdatetimeasdt
+        >>> classWeekday(Enum):
         ...     MONDAY = 1
         ...     TUESDAY = 2
         ...     WEDNESDAY = 3
@@ -381,14 +361,14 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         ...     SATURDAY = 6
         ...     SUNDAY = 7
         ...     @classmethod
-        ...     def today(cls):
-        ...         print('today is %s' % cls(date.today().isoweekday()).name)
+        ...     deftoday(cls):
+        ...         print(f'today is {cls(dt.date.today().isoweekday()).name}')
         ...
         >>> dir(Weekday.SATURDAY)
         ['__class__', '__doc__', '__eq__', '__hash__', '__module__', 'name', 'today', 'value']
         ```
 
-    \_generate\_next\_value\_(*name*, *start*, *count*, *last\_values*)[¶](#enum.Enum._generate_next_value_ "Link to this definition")
+    \_generate\_next\_value\_(*name*, *start*, *count*, *last\_values*)
     :   > name:
         > :   The name of the member being defined (e.g. ‘RED’).
         >
@@ -402,13 +382,23 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         > :   A list of the previous values.
 
         A *staticmethod* that is used to determine the next value returned by
-        [`auto`](#enum.auto "enum.auto"):
+        [`auto`](#enum.auto "enum.auto").
+
+        Note
+
+        For standard `Enum` classes the next value chosen is the highest
+        value seen incremented by one.
+
+        For [`Flag`](#enum.Flag "enum.Flag") classes the next value chosen will be the next highest
+        power-of-two.
+
+        This method may be overridden, e.g.:
 
         ```
-        >>> from enum import auto
-        >>> class PowersOfThree(Enum):
+        >>> fromenumimport auto, Enum
+        >>> classPowersOfThree(Enum):
         ...     @staticmethod
-        ...     def _generate_next_value_(name, start, count, last_values):
+        ...     def_generate_next_value_(name, start, count, last_values):
         ...         return 3 ** (count + 1)
         ...     FIRST = auto()
         ...     SECOND = auto()
@@ -417,33 +407,37 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         9
         ```
 
-    \_\_init\_\_(*self*, *\*args*, *\*\*kwds*)[¶](#enum.Enum.__init__ "Link to this definition")
+        Added in version 3.6.
+
+        Changed in version 3.13: Prior versions would use the last seen value instead of the highest value.
+
+    \_\_init\_\_(*self*, *\*args*, *\*\*kwds*)
     :   By default, does nothing. If multiple values are given in the member
         assignment, those values become separate arguments to `__init__`; e.g.
 
         ```
-        >>> from enum import Enum
-        >>> class Weekday(Enum):
+        >>> fromenumimport Enum
+        >>> classWeekday(Enum):
         ...     MONDAY = 1, 'Mon'
         ```
 
         `Weekday.__init__()` would be called as `Weekday.__init__(self, 1, 'Mon')`
 
-    \_\_init\_subclass\_\_(*cls*, *\*\*kwds*)[¶](#enum.Enum.__init_subclass__ "Link to this definition")
+    \_\_init\_subclass\_\_(*cls*, *\*\*kwds*)
     :   A *classmethod* that is used to further configure subsequent subclasses.
         By default, does nothing.
 
-    \_missing\_(*cls*, *value*)[¶](#enum.Enum._missing_ "Link to this definition")
+    \_missing\_(*cls*, *value*)
     :   A *classmethod* for looking up values not found in *cls*. By default it
         does nothing, but can be overridden to implement custom search behavior:
 
         ```
-        >>> from enum import StrEnum
-        >>> class Build(StrEnum):
+        >>> fromenumimport auto, StrEnum
+        >>> classBuild(StrEnum):
         ...     DEBUG = auto()
         ...     OPTIMIZED = auto()
         ...     @classmethod
-        ...     def _missing_(cls, value):
+        ...     def_missing_(cls, value):
         ...         value = value.lower()
         ...         for member in cls:
         ...             if member.value == value:
@@ -456,14 +450,16 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <Build.DEBUG: 'debug'>
         ```
 
-    \_\_new\_\_(*cls*, *\*args*, *\*\*kwds*)[¶](#enum.Enum.__new__ "Link to this definition")
+        Added in version 3.6.
+
+    \_\_new\_\_(*cls*, *\*args*, *\*\*kwds*)
     :   By default, doesn’t exist. If specified, either in the enum class
         definition or in a mixin class (such as `int`), all values given
         in the member assignment will be passed; e.g.
 
         ```
-        >>> from enum import Enum
-        >>> class MyIntEnum(int, Enum):
+        >>> fromenumimport Enum
+        >>> classMyIntEnum(int, Enum):
         ...     TWENTYSIX = '1a', 16
         ```
 
@@ -474,16 +470,17 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         When writing a custom `__new__`, do not use `super().__new__` –
         call the appropriate `__new__` instead.
 
-    \_\_repr\_\_(*self*)[¶](#enum.Enum.__repr__ "Link to this definition")
+    \_\_repr\_\_(*self*)
     :   Returns the string used for *repr()* calls. By default, returns the
         *Enum* name, member name, and value, but can be overridden:
 
         ```
-        >>> class OtherStyle(Enum):
+        >>> fromenumimport auto, Enum
+        >>> classOtherStyle(Enum):
         ...     ALTERNATE = auto()
         ...     OTHER = auto()
         ...     SOMETHING_ELSE = auto()
-        ...     def __repr__(self):
+        ...     def__repr__(self):
         ...         cls_name = self.__class__.__name__
         ...         return f'{cls_name}.{self.name}'
         ...
@@ -491,32 +488,34 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         (OtherStyle.ALTERNATE, 'OtherStyle.ALTERNATE', 'OtherStyle.ALTERNATE')
         ```
 
-    \_\_str\_\_(*self*)[¶](#enum.Enum.__str__ "Link to this definition")
+    \_\_str\_\_(*self*)
     :   Returns the string used for *str()* calls. By default, returns the
         *Enum* name and member name, but can be overridden:
 
         ```
-        >>> class OtherStyle(Enum):
+        >>> fromenumimport auto, Enum
+        >>> classOtherStyle(Enum):
         ...     ALTERNATE = auto()
         ...     OTHER = auto()
         ...     SOMETHING_ELSE = auto()
-        ...     def __str__(self):
+        ...     def__str__(self):
         ...         return f'{self.name}'
         ...
         >>> OtherStyle.ALTERNATE, str(OtherStyle.ALTERNATE), f"{OtherStyle.ALTERNATE}"
         (<OtherStyle.ALTERNATE: 1>, 'ALTERNATE', 'ALTERNATE')
         ```
 
-    \_\_format\_\_(*self*)[¶](#enum.Enum.__format__ "Link to this definition")
+    \_\_format\_\_(*self*)
     :   Returns the string used for *format()* and *f-string* calls. By default,
         returns [`__str__()`](#enum.Enum.__str__ "enum.Enum.__str__") return value, but can be overridden:
 
         ```
-        >>> class OtherStyle(Enum):
+        >>> fromenumimport auto, Enum
+        >>> classOtherStyle(Enum):
         ...     ALTERNATE = auto()
         ...     OTHER = auto()
         ...     SOMETHING_ELSE = auto()
-        ...     def __format__(self, spec):
+        ...     def__format__(self, spec):
         ...         return f'{self.name}'
         ...
         >>> OtherStyle.ALTERNATE, str(OtherStyle.ALTERNATE), f"{OtherStyle.ALTERNATE}"
@@ -525,19 +524,47 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
     Note
 
-    Using [`auto`](#enum.auto "enum.auto") with [`Enum`](#enum.Enum "enum.Enum") results in integers of increasing value,
+    Using [`auto`](#enum.auto "enum.auto") with `Enum` results in integers of increasing value,
     starting with `1`.
 
     Changed in version 3.12: Added [Dataclass support](../howto/enum.html#enum-dataclass-support)
 
-*class* enum.IntEnum[¶](#enum.IntEnum "Link to this definition")
-:   *IntEnum* is the same as *Enum*, but its members are also integers and can be
+    \_add\_alias\_()
+    :   Adds a new name as an alias to an existing member:
+
+        ```
+        >>> Color.RED._add_alias_("ERROR")
+        >>> Color.ERROR
+        <Color.RED: 1>
+        ```
+
+        Raises a [`NameError`](exceptions.html#NameError "NameError") if the name is already assigned to a different member.
+
+        Added in version 3.13.
+
+    \_add\_value\_alias\_()
+    :   Adds a new value as an alias to an existing member:
+
+        ```
+        >>> Color.RED._add_value_alias_(42)
+        >>> Color(42)
+        <Color.RED: 1>
+        ```
+
+        Raises a [`ValueError`](exceptions.html#ValueError "ValueError") if the value is already linked with a different member.
+
+        See [MultiValueEnum](../howto/enum.html#multi-value-enum) for an example.
+
+        Added in version 3.13.
+
+*class*enum.IntEnum
+:   *IntEnum* is the same as [`Enum`](#enum.Enum "enum.Enum"), but its members are also integers and can be
     used anywhere that an integer can be used. If any integer operation is performed
     with an *IntEnum* member, the resulting value loses its enumeration status.
 
     ```
-    >>> from enum import IntEnum
-    >>> class Number(IntEnum):
+    >>> fromenumimport IntEnum
+    >>> classNumber(IntEnum):
     ...     ONE = 1
     ...     TWO = 2
     ...     THREE = 3
@@ -554,28 +581,45 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
     Note
 
-    Using [`auto`](#enum.auto "enum.auto") with [`IntEnum`](#enum.IntEnum "enum.IntEnum") results in integers of increasing
+    Using [`auto`](#enum.auto "enum.auto") with `IntEnum` results in integers of increasing
     value, starting with `1`.
 
     Changed in version 3.11: [`__str__()`](../reference/datamodel.html#object.__str__ "object.__str__") is now `int.__str__()` to
     better support the *replacement of existing constants* use-case.
     [`__format__()`](../reference/datamodel.html#object.__format__ "object.__format__") was already `int.__format__()` for that same reason.
 
-*class* enum.StrEnum[¶](#enum.StrEnum "Link to this definition")
-:   *StrEnum* is the same as *Enum*, but its members are also strings and can be used
-    in most of the same places that a string can be used. The result of any string
-    operation performed on or with a *StrEnum* member is not part of the enumeration.
+*class*enum.StrEnum
+:   *StrEnum* is the same as [`Enum`](#enum.Enum "enum.Enum"), but its members are also strings and
+    can be used in most of the same places that a string can be used. The result
+    of any string operation performed on or with a *StrEnum* member is not part
+    of the enumeration.
+
+    ```
+    >>> fromenumimport StrEnum, auto
+    >>> classColor(StrEnum):
+    ...     RED = 'r'
+    ...     GREEN = 'g'
+    ...     BLUE = 'b'
+    ...     UNKNOWN = auto()
+    ...
+    >>> Color.RED
+    <Color.RED: 'r'>
+    >>> Color.UNKNOWN
+    <Color.UNKNOWN: 'unknown'>
+    >>> str(Color.UNKNOWN)
+    'unknown'
+    ```
 
     Note
 
     There are places in the stdlib that check for an exact [`str`](stdtypes.html#str "str")
-    instead of a [`str`](stdtypes.html#str "str") subclass (i.e. `type(unknown) == str`
+    instead of a `str` subclass (i.e. `type(unknown) == str`
     instead of `isinstance(unknown, str)`), and in those locations you
-    will need to use `str(StrEnum.member)`.
+    will need to use `str(MyStrEnum.MY_MEMBER)`.
 
     Note
 
-    Using [`auto`](#enum.auto "enum.auto") with [`StrEnum`](#enum.StrEnum "enum.StrEnum") results in the lower-cased member
+    Using [`auto`](#enum.auto "enum.auto") with `StrEnum` results in the lower-cased member
     name as the value.
 
     Note
@@ -586,17 +630,17 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
     Added in version 3.11.
 
-*class* enum.Flag[¶](#enum.Flag "Link to this definition")
+*class*enum.Flag
 :   `Flag` is the same as [`Enum`](#enum.Enum "enum.Enum"), but its members support the bitwise
     operators `&` (*AND*), `|` (*OR*), `^` (*XOR*), and `~` (*INVERT*);
     the results of those operations are (aliases of) members of the enumeration.
 
-    \_\_contains\_\_(*self*, *value*)[¶](#enum.Flag.__contains__ "Link to this definition")
+    \_\_contains\_\_(*self*, *value*)
     :   Returns *True* if value is in self:
 
         ```
-        >>> from enum import Flag, auto
-        >>> class Color(Flag):
+        >>> fromenumimport Flag, auto
+        >>> classColor(Flag):
         ...     RED = auto()
         ...     GREEN = auto()
         ...     BLUE = auto()
@@ -650,7 +694,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         False
         ```
 
-    \_\_or\_\_(*self*, *other*)[¶](#enum.Flag.__or__ "Link to this definition")
+    \_\_or\_\_(*self*, *other*)
     :   Returns current flag binary or’ed with other:
 
         ```
@@ -658,7 +702,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <Color.RED|GREEN: 3>
         ```
 
-    \_\_and\_\_(*self*, *other*)[¶](#enum.Flag.__and__ "Link to this definition")
+    \_\_and\_\_(*self*, *other*)
     :   Returns current flag binary and’ed with other:
 
         ```
@@ -668,7 +712,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <Color: 0>
         ```
 
-    \_\_xor\_\_(*self*, *other*)[¶](#enum.Flag.__xor__ "Link to this definition")
+    \_\_xor\_\_(*self*, *other*)
     :   Returns current flag binary xor’ed with other:
 
         ```
@@ -679,7 +723,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         ```
 
     \_\_invert\_\_(self):
-    :   Returns all the flags in *type(self)* that are not in self:
+    :   Returns all the flags in *type(self)* that are not in *self*:
 
         ```
         >>> ~white
@@ -690,30 +734,30 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <Color.GREEN|BLUE: 6>
         ```
 
-    \_numeric\_repr\_()[¶](#enum.Flag._numeric_repr_ "Link to this definition")
+    \_numeric\_repr\_()
     :   Function used to format any remaining unnamed numeric values. Default is
         the value’s repr; common choices are [`hex()`](functions.html#hex "hex") and [`oct()`](functions.html#oct "oct").
 
     Note
 
-    Using [`auto`](#enum.auto "enum.auto") with [`Flag`](#enum.Flag "enum.Flag") results in integers that are powers
+    Using [`auto`](#enum.auto "enum.auto") with `Flag` results in integers that are powers
     of two, starting with `1`.
 
     Changed in version 3.11: The *repr()* of zero-valued flags has changed. It
-    is now::
+    is now:
 
     ```
     >>> Color(0)
     <Color: 0>
     ```
 
-*class* enum.IntFlag[¶](#enum.IntFlag "Link to this definition")
-:   *IntFlag* is the same as *Flag*, but its members are also integers and can be
+*class*enum.IntFlag
+:   `IntFlag` is the same as [`Flag`](#enum.Flag "enum.Flag"), but its members are also integers and can be
     used anywhere that an integer can be used.
 
     ```
-    >>> from enum import IntFlag, auto
-    >>> class Color(IntFlag):
+    >>> fromenumimport IntFlag, auto
+    >>> classColor(IntFlag):
     ...     RED = auto()
     ...     GREEN = auto()
     ...     BLUE = auto()
@@ -732,12 +776,12 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
     3
     ```
 
-    If a *Flag* operation is performed with an *IntFlag* member and:
+    If a [`Flag`](#enum.Flag "enum.Flag") operation is performed with an *IntFlag* member and:
 
     * the result is a valid *IntFlag*: an *IntFlag* is returned
-    * the result is not a valid *IntFlag*: the result depends on the *FlagBoundary* setting
+    * the result is not a valid *IntFlag*: the result depends on the [`FlagBoundary`](#enum.FlagBoundary "enum.FlagBoundary") setting
 
-    The *repr()* of unnamed zero-valued flags has changed. It is now:
+    The [`repr()`](functions.html#repr "repr") of unnamed zero-valued flags has changed. It is now:
 
     ```
     >>> Color(0)
@@ -746,7 +790,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
     Note
 
-    Using [`auto`](#enum.auto "enum.auto") with [`IntFlag`](#enum.IntFlag "enum.IntFlag") results in integers that are powers
+    Using [`auto`](#enum.auto "enum.auto") with `IntFlag` results in integers that are powers
     of two, starting with `1`.
 
     Changed in version 3.11: [`__str__()`](../reference/datamodel.html#object.__str__ "object.__str__") is now `int.__str__()` to better support the
@@ -757,7 +801,7 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
     union of all flags not in the given flag, rather than a negative value.
     This matches the existing [`Flag`](#enum.Flag "enum.Flag") behavior.
 
-*class* enum.ReprEnum[¶](#enum.ReprEnum "Link to this definition")
+*class*enum.ReprEnum
 :   `ReprEnum` uses the [`repr()`](#enum.Enum.__repr__ "enum.Enum.__repr__") of [`Enum`](#enum.Enum "enum.Enum"),
     but the [`str()`](stdtypes.html#str "str") of the mixed-in data type:
 
@@ -770,17 +814,17 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
     Added in version 3.11.
 
-*class* enum.EnumCheck[¶](#enum.EnumCheck "Link to this definition")
+*class*enum.EnumCheck
 :   *EnumCheck* contains the options used by the [`verify()`](#enum.verify "enum.verify") decorator to ensure
     various constraints; failed constraints result in a [`ValueError`](exceptions.html#ValueError "ValueError").
 
-    UNIQUE[¶](#enum.EnumCheck.UNIQUE "Link to this definition")
+    UNIQUE
     :   Ensure that each value has only one name:
 
         ```
-        >>> from enum import Enum, verify, UNIQUE
+        >>> fromenumimport Enum, verify, UNIQUE
         >>> @verify(UNIQUE)
-        ... class Color(Enum):
+        ... classColor(Enum):
         ...     RED = 1
         ...     GREEN = 2
         ...     BLUE = 3
@@ -790,14 +834,14 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         ValueError: aliases found in <enum 'Color'>: CRIMSON -> RED
         ```
 
-    CONTINUOUS[¶](#enum.EnumCheck.CONTINUOUS "Link to this definition")
+    CONTINUOUS
     :   Ensure that there are no missing values between the lowest-valued member
         and the highest-valued member:
 
         ```
-        >>> from enum import Enum, verify, CONTINUOUS
+        >>> fromenumimport Enum, verify, CONTINUOUS
         >>> @verify(CONTINUOUS)
-        ... class Color(Enum):
+        ... classColor(Enum):
         ...     RED = 1
         ...     GREEN = 2
         ...     BLUE = 5
@@ -806,14 +850,14 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         ValueError: invalid enum 'Color': missing values 3, 4
         ```
 
-    NAMED\_FLAGS[¶](#enum.EnumCheck.NAMED_FLAGS "Link to this definition")
+    NAMED\_FLAGS
     :   Ensure that any flag groups/masks contain only named flags – useful when
         values are specified instead of being generated by [`auto()`](#enum.auto "enum.auto"):
 
         ```
-        >>> from enum import Flag, verify, NAMED_FLAGS
+        >>> fromenumimport Flag, verify, NAMED_FLAGS
         >>> @verify(NAMED_FLAGS)
-        ... class Color(Flag):
+        ... classColor(Flag):
         ...     RED = 1
         ...     GREEN = 2
         ...     BLUE = 4
@@ -830,17 +874,17 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
 
     Added in version 3.11.
 
-*class* enum.FlagBoundary[¶](#enum.FlagBoundary "Link to this definition")
-:   *FlagBoundary* controls how out-of-range values are handled in *Flag* and its
+*class*enum.FlagBoundary
+:   `FlagBoundary` controls how out-of-range values are handled in [`Flag`](#enum.Flag "enum.Flag") and its
     subclasses.
 
-    STRICT[¶](#enum.FlagBoundary.STRICT "Link to this definition")
+    STRICT
     :   Out-of-range values cause a [`ValueError`](exceptions.html#ValueError "ValueError") to be raised. This is the
         default for [`Flag`](#enum.Flag "enum.Flag"):
 
         ```
-        >>> from enum import Flag, STRICT, auto
-        >>> class StrictFlag(Flag, boundary=STRICT):
+        >>> fromenumimport Flag, STRICT, auto
+        >>> classStrictFlag(Flag, boundary=STRICT):
         ...     RED = auto()
         ...     GREEN = auto()
         ...     BLUE = auto()
@@ -853,13 +897,13 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
           allowed 0b0 00111
         ```
 
-    CONFORM[¶](#enum.FlagBoundary.CONFORM "Link to this definition")
-    :   Out-of-range values have invalid values removed, leaving a valid *Flag*
+    CONFORM
+    :   Out-of-range values have invalid values removed, leaving a valid [`Flag`](#enum.Flag "enum.Flag")
         value:
 
         ```
-        >>> from enum import Flag, CONFORM, auto
-        >>> class ConformFlag(Flag, boundary=CONFORM):
+        >>> fromenumimport Flag, CONFORM, auto
+        >>> classConformFlag(Flag, boundary=CONFORM):
         ...     RED = auto()
         ...     GREEN = auto()
         ...     BLUE = auto()
@@ -868,12 +912,12 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <ConformFlag.BLUE: 4>
         ```
 
-    EJECT[¶](#enum.FlagBoundary.EJECT "Link to this definition")
-    :   Out-of-range values lose their *Flag* membership and revert to [`int`](functions.html#int "int").
+    EJECT
+    :   Out-of-range values lose their [`Flag`](#enum.Flag "enum.Flag") membership and revert to [`int`](functions.html#int "int").
 
         ```
-        >>> from enum import Flag, EJECT, auto
-        >>> class EjectFlag(Flag, boundary=EJECT):
+        >>> fromenumimport Flag, EJECT, auto
+        >>> classEjectFlag(Flag, boundary=EJECT):
         ...     RED = auto()
         ...     GREEN = auto()
         ...     BLUE = auto()
@@ -882,13 +926,13 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         20
         ```
 
-    KEEP[¶](#enum.FlagBoundary.KEEP "Link to this definition")
-    :   Out-of-range values are kept, and the *Flag* membership is kept.
+    KEEP
+    :   Out-of-range values are kept, and the [`Flag`](#enum.Flag "enum.Flag") membership is kept.
         This is the default for [`IntFlag`](#enum.IntFlag "enum.IntFlag"):
 
         ```
-        >>> from enum import Flag, KEEP, auto
-        >>> class KeepFlag(Flag, boundary=KEEP):
+        >>> fromenumimport Flag, KEEP, auto
+        >>> classKeepFlag(Flag, boundary=KEEP):
         ...     RED = auto()
         ...     GREEN = auto()
         ...     BLUE = auto()
@@ -897,20 +941,38 @@ Added in version 3.11: `StrEnum`, `EnumCheck`, `ReprEnum`, `FlagBoundary`, `prop
         <KeepFlag.BLUE|16: 20>
         ```
 
-Added in version 3.11.
+    Added in version 3.11.
+
+*class*enum.EnumDict
+:   *EnumDict* is a subclass of [`dict`](stdtypes.html#dict "dict") that is used as the namespace
+    for defining enum classes (see [Preparing the class namespace](../reference/datamodel.html#prepare)).
+    It is exposed to allow subclasses of [`EnumType`](#enum.EnumType "enum.EnumType") with advanced
+    behavior like having multiple values per member.
+    It should be called with the name of the enum class being created, otherwise
+    private names and internal classes will not be handled correctly.
+
+    Note that only the [`MutableMapping`](collections.abc.html#collections.abc.MutableMapping "collections.abc.MutableMapping") interface
+    ([`__setitem__()`](../reference/datamodel.html#object.__setitem__ "object.__setitem__") and [`update()`](stdtypes.html#dict.update "dict.update")) is overridden.
+    It may be possible to bypass the checks using other `dict`
+    operations like [`|=`](../reference/datamodel.html#object.__ior__ "object.__ior__").
+
+    member\_names
+    :   A list of member names.
+
+    Added in version 3.13.
 
 ---
 
-### Supported `__dunder__` names[¶](#supported-dunder-names "Link to this heading")
+### Supported `__dunder__` names
 
 [`__members__`](#enum.EnumType.__members__ "enum.EnumType.__members__") is a read-only ordered mapping of `member_name`:`member`
 items. It is only available on the class.
 
-[`__new__()`](#enum.Enum.__new__ "enum.Enum.__new__"), if specified, must create and return the enum members; it is
-also a very good idea to set the member’s `_value_` appropriately. Once
-all the members are created it is no longer used.
+[`__new__()`](#enum.Enum.__new__ "enum.Enum.__new__"), if specified, must create and return the enum members;
+it is also a very good idea to set the member’s [`_value_`](#enum.Enum._value_ "enum.Enum._value_") appropriately.
+Once all the members are created it is no longer used.
 
-### Supported `_sunder_` names[¶](#supported-sunder-names "Link to this heading")
+### Supported `_sunder_` names
 
 * [`_name_`](#enum.Enum._name_ "enum.Enum._name_") – name of the member
 * [`_value_`](#enum.Enum._value_ "enum.Enum._value_") – value of the member; can be set in `__new__`
@@ -923,38 +985,41 @@ all the members are created it is no longer used.
   compatibility (class attribute, removed during class creation)
 * [`_generate_next_value_()`](#enum.Enum._generate_next_value_ "enum.Enum._generate_next_value_") – used to get an appropriate value for
   an enum member; may be overridden
+* [`_add_alias_()`](#enum.Enum._add_alias_ "enum.Enum._add_alias_") – adds a new name as an alias to an existing
+  member.
+* [`_add_value_alias_()`](#enum.Enum._add_value_alias_ "enum.Enum._add_value_alias_") – adds a new value as an alias to an
+  existing member.
+* While `_sunder_` names are generally reserved for the further development
+  of the [`Enum`](#enum.Enum "enum.Enum") class and can not be used, some are explicitly allowed:
 
-  Note
-
-  For standard [`Enum`](#enum.Enum "enum.Enum") classes the next value chosen is the last value seen
-  incremented by one.
-
-  For [`Flag`](#enum.Flag "enum.Flag") classes the next value chosen will be the next highest
-  power-of-two, regardless of the last value seen.
+  + `_repr_*` (e.g. `_repr_html_`), as used in [IPython’s rich display](https://ipython.readthedocs.io/en/stable/config/integrating.html#rich-display)
 
 Added in version 3.6: `_missing_`, `_order_`, `_generate_next_value_`
 
 Added in version 3.7: `_ignore_`
 
+Added in version 3.13: `_add_alias_`, `_add_value_alias_`, `_repr_*`
+
 ---
 
-## Utilities and Decorators[¶](#utilities-and-decorators "Link to this heading")
+## Utilities and decorators
 
-*class* enum.auto[¶](#enum.auto "Link to this definition")
+*class*enum.auto
 :   *auto* can be used in place of a value. If used, the *Enum* machinery will
-    call an *Enum*’s [`_generate_next_value_()`](#enum.Enum._generate_next_value_ "enum.Enum._generate_next_value_") to get an appropriate value.
-    For *Enum* and *IntEnum* that appropriate value will be the last value plus
-    one; for *Flag* and *IntFlag* it will be the first power-of-two greater
-    than the highest value; for *StrEnum* it will be the lower-cased version of
+    call an [`Enum`](#enum.Enum "enum.Enum")’s [`_generate_next_value_()`](#enum.Enum._generate_next_value_ "enum.Enum._generate_next_value_") to get an appropriate value.
+    For `Enum` and [`IntEnum`](#enum.IntEnum "enum.IntEnum") that appropriate value will be the last value plus
+    one; for [`Flag`](#enum.Flag "enum.Flag") and [`IntFlag`](#enum.IntFlag "enum.IntFlag") it will be the first power-of-two greater
+    than the highest value; for [`StrEnum`](#enum.StrEnum "enum.StrEnum") it will be the lower-cased version of
     the member’s name. Care must be taken if mixing *auto()* with manually
     specified values.
 
-    *auto* instances are only resolved when at the top level of an assignment:
+    *auto* instances are only resolved when at the top level of an assignment, either by
+    itself or as part of a tuple:
 
     * `FIRST = auto()` will work (auto() is replaced with `1`);
     * `SECOND = auto(), -2` will work (auto is replaced with `2`, so `2, -2` is
       used to create the `SECOND` enum member;
-    * `THREE = [auto(), -3]` will *not* work (`<auto instance>, -3` is used to
+    * `THREE = [auto(), -3]` will *not* work (`[<auto instance>, -3]` is used to
       create the `THREE` enum member)
 
     Changed in version 3.11.1: In prior versions, `auto()` had to be the only thing
@@ -969,7 +1034,7 @@ Added in version 3.7: `_ignore_`
     the highest member value incremented by 1, and will fail if any
     member is an incompatible type.
 
-@enum.property[¶](#enum.property "Link to this definition")
+@enum.property
 :   A decorator similar to the built-in *property*, but specifically for
     enumerations. It allows member attributes to have the same names as members
     themselves.
@@ -983,15 +1048,15 @@ Added in version 3.7: `_ignore_`
 
     Added in version 3.11.
 
-@enum.unique[¶](#enum.unique "Link to this definition")
+@enum.unique
 :   A [`class`](../reference/compound_stmts.html#class) decorator specifically for enumerations. It searches an
     enumeration’s [`__members__`](#enum.EnumType.__members__ "enum.EnumType.__members__"), gathering any aliases it finds; if any are
     found [`ValueError`](exceptions.html#ValueError "ValueError") is raised with the details:
 
     ```
-    >>> from enum import Enum, unique
+    >>> fromenumimport Enum, unique
     >>> @unique
-    ... class Mistake(Enum):
+    ... classMistake(Enum):
     ...     ONE = 1
     ...     TWO = 2
     ...     THREE = 3
@@ -1002,24 +1067,24 @@ Added in version 3.7: `_ignore_`
     ValueError: duplicate values found in <enum 'Mistake'>: FOUR -> THREE
     ```
 
-@enum.verify[¶](#enum.verify "Link to this definition")
+@enum.verify
 :   A [`class`](../reference/compound_stmts.html#class) decorator specifically for enumerations. Members from
     [`EnumCheck`](#enum.EnumCheck "enum.EnumCheck") are used to specify which constraints should be checked
     on the decorated enumeration.
 
     Added in version 3.11.
 
-@enum.member[¶](#enum.member "Link to this definition")
+@enum.member
 :   A decorator for use in enums: its target will become a member.
 
     Added in version 3.11.
 
-@enum.nonmember[¶](#enum.nonmember "Link to this definition")
+@enum.nonmember
 :   A decorator for use in enums: its target will not become a member.
 
     Added in version 3.11.
 
-@enum.global\_enum[¶](#enum.global_enum "Link to this definition")
+@enum.global\_enum
 :   A decorator to change the [`str()`](stdtypes.html#str "str") and [`repr()`](functions.html#repr "repr") of an enum
     to show its members as belonging to the module instead of its class.
     Should only be used when the enum members are exported
@@ -1027,14 +1092,29 @@ Added in version 3.7: `_ignore_`
 
     Added in version 3.11.
 
-enum.show\_flag\_values(*value*)[¶](#enum.show_flag_values "Link to this definition")
+enum.show\_flag\_values(*value*)
 :   Return a list of all power-of-two integers contained in a flag *value*.
+
+    Added in version 3.11.
+
+enum.bin(*num*, *max\_bits=None*)
+:   Like built-in `bin()`, except negative values are represented in
+    two’s complement, and the leading bit always indicates sign
+    (`0` implies positive, `1` implies negative).
+
+    ```
+    >>> importenum
+    >>> enum.bin(10)
+    '0b0 1010'
+    >>> enum.bin(~10)   # ~10 is -11
+    '0b1 0101'
+    ```
 
     Added in version 3.11.
 
 ---
 
-## Notes[¶](#notes "Link to this heading")
+## Notes
 
 [`IntEnum`](#enum.IntEnum "enum.IntEnum"), [`StrEnum`](#enum.StrEnum "enum.StrEnum"), and [`IntFlag`](#enum.IntFlag "enum.IntFlag")
 
@@ -1049,76 +1129,20 @@ enum.show\_flag\_values(*value*)[¶](#enum.show_flag_values "Link to this defini
 > base class by mixing in the `int` or `str` type yourself:
 >
 > ```
-> >>> from enum import Enum
-> >>> class MyIntEnum(int, Enum):
+> >>> fromenumimport Enum
+> >>> classMyIntEnum(int, Enum):
 > ...     pass
 > ```
 >
 > or you can reassign the appropriate [`str()`](stdtypes.html#str "str"), etc., in your enum:
 >
 > ```
-> >>> from enum import Enum, IntEnum
-> >>> class MyIntEnum(IntEnum):
-> ...     __str__ = Enum.__str__
-> ```
+> >>> fromenumimport Enum, IntEnum
+> >>> classMyIntEnum(IntEnum):
+> ...     > ```
 
-### [Table of Contents](../contents.html)
+---
 
-* [`enum` — Support for enumerations](#)
-  + [Module Contents](#module-contents)
-  + [Data Types](#data-types)
-    - [Supported `__dunder__` names](#supported-dunder-names)
-    - [Supported `_sunder_` names](#supported-sunder-names)
-  + [Utilities and Decorators](#utilities-and-decorators)
-  + [Notes](#notes)
+## Bibliography
 
-#### Previous topic
-
-[`reprlib` — Alternate `repr()` implementation](reprlib.html "previous chapter")
-
-#### Next topic
-
-[`graphlib` — Functionality to operate with graph-like structures](graphlib.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/enum.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](graphlib.html "graphlib — Functionality to operate with graph-like structures") |
-* [previous](reprlib.html "reprlib — Alternate repr() implementation") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Data Types](datatypes.html) »
-* `enum` — Support for enumerations
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`enum` — Support for enumerations](https://docs.python.org/3/library/enum.html)

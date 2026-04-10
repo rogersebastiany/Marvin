@@ -1,73 +1,11 @@
-datetime — Basic date and time types — Python 3.12.13 documentation
+# Python datetime
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
+## 1. `datetime` — Basic date and time types
 
-* [`datetime` — Basic date and time types](#)
-  + [Aware and Naive Objects](#aware-and-naive-objects)
-  + [Constants](#constants)
-  + [Available Types](#available-types)
-    - [Common Properties](#common-properties)
-    - [Determining if an Object is Aware or Naive](#determining-if-an-object-is-aware-or-naive)
-  + [`timedelta` Objects](#timedelta-objects)
-    - [Examples of usage: `timedelta`](#examples-of-usage-timedelta)
-  + [`date` Objects](#date-objects)
-    - [Examples of Usage: `date`](#examples-of-usage-date)
-  + [`datetime` Objects](#datetime-objects)
-    - [Examples of Usage: `datetime`](#examples-of-usage-datetime)
-  + [`time` Objects](#time-objects)
-    - [Examples of Usage: `time`](#examples-of-usage-time)
-  + [`tzinfo` Objects](#tzinfo-objects)
-  + [`timezone` Objects](#timezone-objects)
-  + [`strftime()` and `strptime()` Behavior](#strftime-and-strptime-behavior)
-    - [`strftime()` and `strptime()` Format Codes](#strftime-and-strptime-format-codes)
-    - [Technical Detail](#technical-detail)
-
-#### Previous topic
-
-[Data Types](datatypes.html "previous chapter")
-
-#### Next topic
-
-[`zoneinfo` — IANA time zone support](zoneinfo.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/datetime.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](zoneinfo.html "zoneinfo — IANA time zone support") |
-* [previous](datatypes.html "Data Types") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Data Types](datatypes.html) »
-* `datetime` — Basic date and time types
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `datetime` — Basic date and time types[¶](#module-datetime "Link to this heading")
-
-**Source code:** [Lib/datetime.py](https://github.com/python/cpython/tree/3.12/Lib/datetime.py)
+**Source code:** [Lib/datetime.py](https://github.com/python/cpython/tree/3.14/Lib/datetime.py)
 
 ---
 
@@ -95,11 +33,11 @@ Package [dateutil](https://dateutil.readthedocs.io/en/stable/)
 :   Third-party library with expanded time zone and parsing support.
 
 Package [DateType](https://pypi.org/project/DateType/)
-:   Third-party library that introduces distinct static types to e.g. allow
-    [static type checkers](../glossary.html#term-static-type-checker)
+:   Third-party library that introduces distinct static types to for example,
+    allow [static type checkers](../glossary.html#term-static-type-checker)
     to differentiate between naive and aware datetimes.
 
-## Aware and Naive Objects[¶](#aware-and-naive-objects "Link to this heading")
+## Aware and naive objects
 
 Date and time objects may be categorized as “aware” or “naive” depending on
 whether or not they include time zone information.
@@ -119,7 +57,7 @@ understand and to work with, at the cost of ignoring some aspects of reality.
 
 For applications requiring aware objects, [`datetime`](#datetime.datetime "datetime.datetime") and [`time`](#datetime.time "datetime.time")
 objects have an optional time zone information attribute, `tzinfo`, that
-can be set to an instance of a subclass of the abstract [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") class.
+can be set to an instance of a subclass of the abstract `tzinfo` class.
 These [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") objects capture information about the offset from UTC
 time, the time zone name, and whether daylight saving time is in effect.
 
@@ -131,52 +69,52 @@ detail is up to the application. The rules for time adjustment across the
 world are more political than rational, change frequently, and there is no
 standard suitable for every application aside from UTC.
 
-## Constants[¶](#constants "Link to this heading")
+## Constants
 
 The `datetime` module exports the following constants:
 
-datetime.MINYEAR[¶](#datetime.MINYEAR "Link to this definition")
+datetime.MINYEAR
 :   The smallest year number allowed in a [`date`](#datetime.date "datetime.date") or [`datetime`](#datetime.datetime "datetime.datetime") object.
     [`MINYEAR`](#datetime.MINYEAR "datetime.MINYEAR") is 1.
 
-datetime.MAXYEAR[¶](#datetime.MAXYEAR "Link to this definition")
+datetime.MAXYEAR
 :   The largest year number allowed in a [`date`](#datetime.date "datetime.date") or [`datetime`](#datetime.datetime "datetime.datetime") object.
     [`MAXYEAR`](#datetime.MAXYEAR "datetime.MAXYEAR") is 9999.
 
-datetime.UTC[¶](#datetime.UTC "Link to this definition")
+datetime.UTC
 :   Alias for the UTC time zone singleton [`datetime.timezone.utc`](#datetime.timezone.utc "datetime.timezone.utc").
 
     Added in version 3.11.
 
-## Available Types[¶](#available-types "Link to this heading")
+## Available types
 
-*class* datetime.date
+*class*datetime.date
 :   An idealized naive date, assuming the current Gregorian calendar always was, and
     always will be, in effect. Attributes: [`year`](#datetime.date.year "datetime.date.year"), [`month`](#datetime.date.month "datetime.date.month"), and
     [`day`](#datetime.date.day "datetime.date.day").
 
-*class* datetime.time
+*class*datetime.time
 :   An idealized time, independent of any particular day, assuming that every day
     has exactly 24\*60\*60 seconds. (There is no notion of “leap seconds” here.)
     Attributes: [`hour`](#datetime.time.hour "datetime.time.hour"), [`minute`](#datetime.time.minute "datetime.time.minute"), [`second`](#datetime.time.second "datetime.time.second"), [`microsecond`](#datetime.time.microsecond "datetime.time.microsecond"),
     and [`tzinfo`](#datetime.time.tzinfo "datetime.time.tzinfo").
 
-*class* datetime.datetime
+*class*datetime.datetime
 :   A combination of a date and a time. Attributes: [`year`](#datetime.datetime.year "datetime.datetime.year"), [`month`](#datetime.datetime.month "datetime.datetime.month"),
     [`day`](#datetime.datetime.day "datetime.datetime.day"), [`hour`](#datetime.datetime.hour "datetime.datetime.hour"), [`minute`](#datetime.datetime.minute "datetime.datetime.minute"), [`second`](#datetime.datetime.second "datetime.datetime.second"), [`microsecond`](#datetime.datetime.microsecond "datetime.datetime.microsecond"),
     and [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo").
 
-*class* datetime.timedelta
+*class*datetime.timedelta
 :   A duration expressing the difference between two [`datetime`](#datetime.datetime "datetime.datetime")
     or [`date`](#datetime.date "datetime.date") instances to microsecond resolution.
 
-*class* datetime.tzinfo
+*class*datetime.tzinfo
 :   An abstract base class for time zone information objects. These are used by the
     [`datetime`](#datetime.datetime "datetime.datetime") and [`time`](#datetime.time "datetime.time") classes to provide a customizable notion of
     time adjustment (for example, to account for time zone and/or daylight saving
     time).
 
-*class* datetime.timezone
+*class*datetime.timezone
 :   A class that implements the [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") abstract base class as a
     fixed offset from the UTC.
 
@@ -186,17 +124,7 @@ Objects of these types are immutable.
 
 Subclass relationships:
 
-```
-object
-    timedelta
-    tzinfo
-        timezone
-    time
-    date
-        datetime
-```
-
-### Common Properties[¶](#common-properties "Link to this heading")
+### Common properties
 
 The [`date`](#datetime.date "datetime.date"), [`datetime`](#datetime.datetime "datetime.datetime"), [`time`](#datetime.time "datetime.time"), and [`timezone`](#datetime.timezone "datetime.timezone") types
 share these common features:
@@ -206,7 +134,7 @@ share these common features:
   dictionary keys.
 * Objects of these types support efficient pickling via the [`pickle`](pickle.html#module-pickle "pickle: Convert Python objects to streams of bytes and back.") module.
 
-### Determining if an Object is Aware or Naive[¶](#determining-if-an-object-is-aware-or-naive "Link to this heading")
+### Determining if an object is aware or naive
 
 Objects of the [`date`](#datetime.date "datetime.date") type are always naive.
 
@@ -229,12 +157,12 @@ Otherwise, `t` is naive.
 The distinction between aware and naive doesn’t apply to [`timedelta`](#datetime.timedelta "datetime.timedelta")
 objects.
 
-## [`timedelta`](#datetime.timedelta "datetime.timedelta") Objects[¶](#timedelta-objects "Link to this heading")
+## `timedelta` objects
 
 A [`timedelta`](#datetime.timedelta "datetime.timedelta") object represents a duration, the difference between two
 [`datetime`](#datetime.datetime "datetime.datetime") or [`date`](#datetime.date "datetime.date") instances.
 
-*class* datetime.timedelta(*days=0*, *seconds=0*, *microseconds=0*, *milliseconds=0*, *minutes=0*, *hours=0*, *weeks=0*)[¶](#datetime.timedelta "Link to this definition")
+*class*datetime.timedelta(*days=0*, *seconds=0*, *microseconds=0*, *milliseconds=0*, *minutes=0*, *hours=0*, *weeks=0*)
 :   All arguments are optional and default to 0. Arguments may be integers
     or floats, and may be positive or negative.
 
@@ -258,8 +186,8 @@ A [`timedelta`](#datetime.timedelta "datetime.timedelta") object represents a du
     three resulting attributes:
 
     ```
-    >>> from datetime import timedelta
-    >>> delta = timedelta(
+    >>> importdatetimeasdt
+    >>> delta = dt.timedelta(
     ...     days=50,
     ...     seconds=27,
     ...     microseconds=10,
@@ -272,6 +200,12 @@ A [`timedelta`](#datetime.timedelta "datetime.timedelta") object represents a du
     >>> delta
     datetime.timedelta(days=64, seconds=29156, microseconds=10)
     ```
+
+    Tip
+
+    `import datetime as dt` instead of `import datetime` or
+    `from datetime import datetime` to avoid confusion between the module
+    and the class. See [How I Import Python’s datetime Module](https://adamj.eu/tech/2019/09/12/how-i-import-pythons-datetime-module/).
 
     If any argument is a float and there are fractional microseconds,
     the fractional microseconds left over from all arguments are
@@ -287,22 +221,38 @@ A [`timedelta`](#datetime.timedelta "datetime.timedelta") object represents a du
     example:
 
     ```
-    >>> from datetime import timedelta
-    >>> d = timedelta(microseconds=-1)
+    >>> importdatetimeasdt
+    >>> d = dt.timedelta(microseconds=-1)
     >>> (d.days, d.seconds, d.microseconds)
     (-1, 86399, 999999)
     ```
 
+    Since the string representation of `timedelta` objects can be confusing,
+    use the following recipe to produce a more readable format:
+
+    ```
+    >>> defpretty_timedelta(td):
+    ...     if td.days >= 0:
+    ...         return str(td)
+    ...     return f'-({-td!s})'
+    ...
+    >>> d = timedelta(hours=-1)
+    >>> str(d)  # not human-friendly
+    '-1 day, 23:00:00'
+    >>> pretty_timedelta(d)
+    '-(1:00:00)'
+    ```
+
 Class attributes:
 
-timedelta.min[¶](#datetime.timedelta.min "Link to this definition")
+timedelta.min
 :   The most negative [`timedelta`](#datetime.timedelta "datetime.timedelta") object, `timedelta(-999999999)`.
 
-timedelta.max[¶](#datetime.timedelta.max "Link to this definition")
+timedelta.max
 :   The most positive [`timedelta`](#datetime.timedelta "datetime.timedelta") object, `timedelta(days=999999999,
     hours=23, minutes=59, seconds=59, microseconds=999999)`.
 
-timedelta.resolution[¶](#datetime.timedelta.resolution "Link to this definition")
+timedelta.resolution
 :   The smallest possible difference between non-equal [`timedelta`](#datetime.timedelta "datetime.timedelta") objects,
     `timedelta(microseconds=1)`.
 
@@ -311,10 +261,10 @@ Note that, because of normalization, `timedelta.max` is greater than `-timedelta
 
 Instance attributes (read-only):
 
-timedelta.days[¶](#datetime.timedelta.days "Link to this definition")
+timedelta.days
 :   Between -999,999,999 and 999,999,999 inclusive.
 
-timedelta.seconds[¶](#datetime.timedelta.seconds "Link to this definition")
+timedelta.seconds
 :   Between 0 and 86,399 inclusive.
 
     Caution
@@ -324,15 +274,15 @@ timedelta.seconds[¶](#datetime.timedelta.seconds "Link to this definition")
     value instead:
 
     ```
-    >>> from datetime import timedelta
-    >>> duration = timedelta(seconds=11235813)
+    >>> importdatetimeasdt
+    >>> duration = dt.timedelta(seconds=11235813)
     >>> duration.days, duration.seconds
     (130, 3813)
     >>> duration.total_seconds()
     11235813.0
     ```
 
-timedelta.microseconds[¶](#datetime.timedelta.microseconds "Link to this definition")
+timedelta.microseconds
 :   Between 0 and 999,999 inclusive.
 
 Supported operations:
@@ -380,9 +330,9 @@ certain additions and subtractions with [`date`](#datetime.date "datetime.date")
 objects (see below).
 
 Changed in version 3.2: Floor division and true division of a [`timedelta`](#datetime.timedelta "datetime.timedelta") object by another
-[`timedelta`](#datetime.timedelta "datetime.timedelta") object are now supported, as are remainder operations and
+`timedelta` object are now supported, as are remainder operations and
 the [`divmod()`](functions.html#divmod "divmod") function. True division and multiplication of a
-[`timedelta`](#datetime.timedelta "datetime.timedelta") object by a [`float`](functions.html#float "float") object are now supported.
+`timedelta` object by a [`float`](functions.html#float "float") object are now supported.
 
 [`timedelta`](#datetime.timedelta "datetime.timedelta") objects support equality and order comparisons.
 
@@ -391,26 +341,26 @@ considered to be true if and only if it isn’t equal to `timedelta(0)`.
 
 Instance methods:
 
-timedelta.total\_seconds()[¶](#datetime.timedelta.total_seconds "Link to this definition")
+timedelta.total\_seconds()
 :   Return the total number of seconds contained in the duration. Equivalent to
     `td / timedelta(seconds=1)`. For interval units other than seconds, use the
-    division form directly (e.g. `td / timedelta(microseconds=1)`).
+    division form directly (for example, `td / timedelta(microseconds=1)`).
 
     Note that for very large time intervals (greater than 270 years on
     most platforms) this method will lose microsecond accuracy.
 
     Added in version 3.2.
 
-### Examples of usage: [`timedelta`](#datetime.timedelta "datetime.timedelta")[¶](#examples-of-usage-timedelta "Link to this heading")
+### Examples of usage: `timedelta`
 
 An additional example of normalization:
 
 ```
 >>> # Components of another_year add up to exactly 365 days
->>> from datetime import timedelta
->>> year = timedelta(days=365)
->>> another_year = timedelta(weeks=40, days=84, hours=23,
-...                          minutes=50, seconds=600)
+>>> importdatetimeasdt
+>>> year = dt.timedelta(days=365)
+>>> another_year = dt.timedelta(weeks=40, days=84, hours=23,
+...                             minutes=50, seconds=600)
 >>> year == another_year
 True
 >>> year.total_seconds()
@@ -420,8 +370,8 @@ True
 Examples of [`timedelta`](#datetime.timedelta "datetime.timedelta") arithmetic:
 
 ```
->>> from datetime import timedelta
->>> year = timedelta(days=365)
+>>> importdatetimeasdt
+>>> year = dt.timedelta(days=365)
 >>> ten_years = 10 * year
 >>> ten_years
 datetime.timedelta(days=3650)
@@ -435,7 +385,7 @@ datetime.timedelta(days=3285)
 (datetime.timedelta(days=1095), 3)
 ```
 
-## [`date`](#datetime.date "datetime.date") Objects[¶](#date-objects "Link to this heading")
+## `date` objects
 
 A [`date`](#datetime.date "datetime.date") object represents a date (year, month and day) in an idealized
 calendar, the current Gregorian calendar indefinitely extended in both
@@ -444,7 +394,7 @@ directions.
 January 1 of year 1 is called day number 1, January 2 of year 1 is
 called day number 2, and so on. [[2]](#id5)
 
-*class* datetime.date(*year*, *month*, *day*)[¶](#datetime.date "Link to this definition")
+*class*datetime.date(*year*, *month*, *day*)
 :   All arguments are required. Arguments must be integers, in the following
     ranges:
 
@@ -456,13 +406,13 @@ called day number 2, and so on. [[2]](#id5)
 
 Other constructors, all class methods:
 
-*classmethod* date.today()[¶](#datetime.date.today "Link to this definition")
+*classmethod*date.today()
 :   Return the current local date.
 
     This is equivalent to `date.fromtimestamp(time.time())`.
 
-*classmethod* date.fromtimestamp(*timestamp*)[¶](#datetime.date.fromtimestamp "Link to this definition")
-:   Return the local date corresponding to the POSIX timestamp, such as is
+*classmethod*date.fromtimestamp(*timestamp*)
+:   Return the local date corresponding to the POSIX *timestamp*, such as is
     returned by [`time.time()`](time.html#time.time "time.time").
 
     This may raise [`OverflowError`](exceptions.html#OverflowError "OverflowError"), if the timestamp is out
@@ -470,22 +420,22 @@ Other constructors, all class methods:
     function, and [`OSError`](exceptions.html#OSError "OSError") on `localtime()` failure.
     It’s common for this to be restricted to years from 1970 through 2038. Note
     that on non-POSIX systems that include leap seconds in their notion of a
-    timestamp, leap seconds are ignored by [`fromtimestamp()`](#datetime.date.fromtimestamp "datetime.date.fromtimestamp").
+    timestamp, leap seconds are ignored by `fromtimestamp()`.
 
     Changed in version 3.3: Raise [`OverflowError`](exceptions.html#OverflowError "OverflowError") instead of [`ValueError`](exceptions.html#ValueError "ValueError") if the timestamp
     is out of the range of values supported by the platform C
     `localtime()` function. Raise [`OSError`](exceptions.html#OSError "OSError") instead of
-    [`ValueError`](exceptions.html#ValueError "ValueError") on `localtime()` failure.
+    `ValueError` on `localtime()` failure.
 
-*classmethod* date.fromordinal(*ordinal*)[¶](#datetime.date.fromordinal "Link to this definition")
-:   Return the date corresponding to the proleptic Gregorian ordinal, where
+*classmethod*date.fromordinal(*ordinal*)
+:   Return the date corresponding to the proleptic Gregorian *ordinal*, where
     January 1 of year 1 has ordinal 1.
 
     [`ValueError`](exceptions.html#ValueError "ValueError") is raised unless `1 <= ordinal <=
     date.max.toordinal()`. For any date `d`,
     `date.fromordinal(d.toordinal()) == d`.
 
-*classmethod* date.fromisoformat(*date\_string*)[¶](#datetime.date.fromisoformat "Link to this definition")
+*classmethod*date.fromisoformat(*date\_string*)
 :   Return a [`date`](#datetime.date "datetime.date") corresponding to a *date\_string* given in any valid
     ISO 8601 format, with the following exceptions:
 
@@ -498,12 +448,12 @@ Other constructors, all class methods:
     Examples:
 
     ```
-    >>> from datetime import date
-    >>> date.fromisoformat('2019-12-04')
+    >>> importdatetimeasdt
+    >>> dt.date.fromisoformat('2019-12-04')
     datetime.date(2019, 12, 4)
-    >>> date.fromisoformat('20191204')
+    >>> dt.date.fromisoformat('20191204')
     datetime.date(2019, 12, 4)
-    >>> date.fromisoformat('2021-W01-1')
+    >>> dt.date.fromisoformat('2021-W01-1')
     datetime.date(2021, 1, 4)
     ```
 
@@ -511,33 +461,67 @@ Other constructors, all class methods:
 
     Changed in version 3.11: Previously, this method only supported the format `YYYY-MM-DD`.
 
-*classmethod* date.fromisocalendar(*year*, *week*, *day*)[¶](#datetime.date.fromisocalendar "Link to this definition")
+*classmethod*date.fromisocalendar(*year*, *week*, *day*)
 :   Return a [`date`](#datetime.date "datetime.date") corresponding to the ISO calendar date specified by
-    year, week and day. This is the inverse of the function [`date.isocalendar()`](#datetime.date.isocalendar "datetime.date.isocalendar").
+    *year*, *week* and *day*. This is the inverse of the function [`date.isocalendar()`](#datetime.date.isocalendar "datetime.date.isocalendar").
 
     Added in version 3.8.
 
+*classmethod*date.strptime(*date\_string*, *format*)
+:   Return a [`date`](#datetime.date "datetime.date") corresponding to *date\_string*, parsed according to
+    *format*. This is equivalent to:
+
+    ```
+    date(*(time.strptime(date_string, format)[0:3]))
+    ```
+
+    [`ValueError`](exceptions.html#ValueError "ValueError") is raised if the date\_string and format
+    can’t be parsed by [`time.strptime()`](time.html#time.strptime "time.strptime") or if it returns a value which isn’t a
+    time tuple. See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and
+    [`date.fromisoformat()`](#datetime.date.fromisoformat "datetime.date.fromisoformat").
+
+    Note
+
+    If *format* specifies a day of month without a year a
+    [`DeprecationWarning`](exceptions.html#DeprecationWarning "DeprecationWarning") is emitted. This is to avoid a quadrennial
+    leap year bug in code seeking to parse only a month and day as the
+    default year used in absence of one in the format is not a leap year.
+    Such *format* values may raise an error as of Python 3.15. The
+    workaround is to always include a year in your *format*. If parsing
+    *date\_string* values that do not have a year, explicitly add a year that
+    is a leap year before parsing:
+
+    ```
+    >>> importdatetimeasdt
+    >>> date_string = "02/29"
+    >>> when = dt.date.strptime(f"{date_string};1984", "%m/%d;%Y")  # Avoids leap year bug.
+    >>> when.strftime("%B %d")
+    'February 29'
+    ```
+
+    Added in version 3.14.
+
 Class attributes:
 
-date.min[¶](#datetime.date.min "Link to this definition")
+date.min
 :   The earliest representable date, `date(MINYEAR, 1, 1)`.
 
-date.max[¶](#datetime.date.max "Link to this definition")
+date.max
 :   The latest representable date, `date(MAXYEAR, 12, 31)`.
 
-date.resolution[¶](#datetime.date.resolution "Link to this definition")
+date.resolution
 :   The smallest possible difference between non-equal date objects,
     `timedelta(days=1)`.
 
 Instance attributes (read-only):
 
-date.year[¶](#datetime.date.year "Link to this definition")
+date.year
 :   Between [`MINYEAR`](#datetime.MINYEAR "datetime.MINYEAR") and [`MAXYEAR`](#datetime.MAXYEAR "datetime.MAXYEAR") inclusive.
 
-date.month[¶](#datetime.date.month "Link to this definition")
+date.month
 :   Between 1 and 12 inclusive.
 
-date.day[¶](#datetime.date.day "Link to this definition")
+date.day
 :   Between 1 and the number of days in the given month of the given year.
 
 Supported operations:
@@ -561,28 +545,46 @@ Notes:
 3. This is exact, and cannot overflow. `timedelta.seconds` and
    `timedelta.microseconds` are 0, and `date2 + timedelta == date1` after.
 4. [`date`](#datetime.date "datetime.date") objects are equal if they represent the same date.
+
+   `date` objects that are not also [`datetime`](#datetime.datetime "datetime.datetime") instances
+   are never equal to `datetime` objects, even if they represent
+   the same date.
 5. *date1* is considered less than *date2* when *date1* precedes *date2* in time.
    In other words, `date1 < date2` if and only if `date1.toordinal() <
    date2.toordinal()`.
+
+   Order comparison between a [`date`](#datetime.date "datetime.date") object that is not also a
+   [`datetime`](#datetime.datetime "datetime.datetime") instance and a `datetime` object raises
+   [`TypeError`](exceptions.html#TypeError "TypeError").
+
+Changed in version 3.13: Comparison between [`datetime`](#datetime.datetime "datetime.datetime") object and an instance of
+the [`date`](#datetime.date "datetime.date") subclass that is not a `datetime` subclass
+no longer converts the latter to `date`, ignoring the time part
+and the time zone.
+The default behavior can be changed by overriding the special comparison
+methods in subclasses.
 
 In Boolean contexts, all [`date`](#datetime.date "datetime.date") objects are considered to be true.
 
 Instance methods:
 
-date.replace(*year=self.year*, *month=self.month*, *day=self.day*)[¶](#datetime.date.replace "Link to this definition")
+date.replace(*year=self.year*, *month=self.month*, *day=self.day*)
 :   Return a new [`date`](#datetime.date "datetime.date") object with the same values, but with specified
     parameters updated.
 
     Example:
 
     ```
-    >>> from datetime import date
-    >>> d = date(2002, 12, 31)
+    >>> importdatetimeasdt
+    >>> d = dt.date(2002, 12, 31)
     >>> d.replace(day=26)
     datetime.date(2002, 12, 26)
     ```
 
-date.timetuple()[¶](#datetime.date.timetuple "Link to this definition")
+    The generic function [`copy.replace()`](copy.html#copy.replace "copy.replace") also supports [`date`](#datetime.date "datetime.date")
+    objects.
+
+date.timetuple()
 :   Return a [`time.struct_time`](time.html#time.struct_time "time.struct_time") such as returned by [`time.localtime()`](time.html#time.localtime "time.localtime").
 
     The hours, minutes and seconds are 0, and the DST flag is -1.
@@ -596,22 +598,22 @@ date.timetuple()[¶](#datetime.date.timetuple "Link to this definition")
     where `yday = d.toordinal() - date(d.year, 1, 1).toordinal() + 1`
     is the day number within the current year starting with 1 for January 1st.
 
-date.toordinal()[¶](#datetime.date.toordinal "Link to this definition")
+date.toordinal()
 :   Return the proleptic Gregorian ordinal of the date, where January 1 of year 1
     has ordinal 1. For any [`date`](#datetime.date "datetime.date") object `d`,
     `date.fromordinal(d.toordinal()) == d`.
 
-date.weekday()[¶](#datetime.date.weekday "Link to this definition")
+date.weekday()
 :   Return the day of the week as an integer, where Monday is 0 and Sunday is 6.
     For example, `date(2002, 12, 4).weekday() == 2`, a Wednesday. See also
     [`isoweekday()`](#datetime.date.isoweekday "datetime.date.isoweekday").
 
-date.isoweekday()[¶](#datetime.date.isoweekday "Link to this definition")
+date.isoweekday()
 :   Return the day of the week as an integer, where Monday is 1 and Sunday is 7.
     For example, `date(2002, 12, 4).isoweekday() == 3`, a Wednesday. See also
     [`weekday()`](#datetime.date.weekday "datetime.date.weekday"), [`isocalendar()`](#datetime.date.isocalendar "datetime.date.isocalendar").
 
-date.isocalendar()[¶](#datetime.date.isocalendar "Link to this definition")
+date.isocalendar()
 :   Return a [named tuple](../glossary.html#term-named-tuple) object with three components: `year`,
     `week` and `weekday`.
 
@@ -626,33 +628,33 @@ date.isocalendar()[¶](#datetime.date.isocalendar "Link to this definition")
     begins on Monday, 29 Dec 2003 and ends on Sunday, 4 Jan 2004:
 
     ```
-    >>> from datetime import date
-    >>> date(2003, 12, 29).isocalendar()
+    >>> importdatetimeasdt
+    >>> dt.date(2003, 12, 29).isocalendar()
     datetime.IsoCalendarDate(year=2004, week=1, weekday=1)
-    >>> date(2004, 1, 4).isocalendar()
+    >>> dt.date(2004, 1, 4).isocalendar()
     datetime.IsoCalendarDate(year=2004, week=1, weekday=7)
     ```
 
     Changed in version 3.9: Result changed from a tuple to a [named tuple](../glossary.html#term-named-tuple).
 
-date.isoformat()[¶](#datetime.date.isoformat "Link to this definition")
+date.isoformat()
 :   Return a string representing the date in ISO 8601 format, `YYYY-MM-DD`:
 
     ```
-    >>> from datetime import date
-    >>> date(2002, 12, 4).isoformat()
+    >>> importdatetimeasdt
+    >>> dt.date(2002, 12, 4).isoformat()
     '2002-12-04'
     ```
 
-date.\_\_str\_\_()[¶](#datetime.date.__str__ "Link to this definition")
+date.\_\_str\_\_()
 :   For a date `d`, `str(d)` is equivalent to `d.isoformat()`.
 
-date.ctime()[¶](#datetime.date.ctime "Link to this definition")
+date.ctime()
 :   Return a string representing the date:
 
     ```
-    >>> from datetime import date
-    >>> date(2002, 12, 4).ctime()
+    >>> importdatetimeasdt
+    >>> dt.date(2002, 12, 4).ctime()
     'Wed Dec  4 00:00:00 2002'
     ```
 
@@ -664,32 +666,32 @@ date.ctime()[¶](#datetime.date.ctime "Link to this definition")
 
     on platforms where the native C
     `ctime()` function (which [`time.ctime()`](time.html#time.ctime "time.ctime") invokes, but which
-    [`date.ctime()`](#datetime.date.ctime "datetime.date.ctime") does not invoke) conforms to the C standard.
+    `date.ctime()` does not invoke) conforms to the C standard.
 
-date.strftime(*format*)[¶](#datetime.date.strftime "Link to this definition")
+date.strftime(*format*)
 :   Return a string representing the date, controlled by an explicit format string.
     Format codes referring to hours, minutes or seconds will see 0 values.
-    See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and [`date.isoformat()`](#datetime.date.isoformat "datetime.date.isoformat").
+    See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and [`date.isoformat()`](#datetime.date.isoformat "datetime.date.isoformat").
 
-date.\_\_format\_\_(*format*)[¶](#datetime.date.__format__ "Link to this definition")
+date.\_\_format\_\_(*format*)
 :   Same as [`date.strftime()`](#datetime.date.strftime "datetime.date.strftime"). This makes it possible to specify a format
     string for a [`date`](#datetime.date "datetime.date") object in [formatted string
     literals](../reference/lexical_analysis.html#f-strings) and when using [`str.format()`](stdtypes.html#str.format "str.format").
-    See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and [`date.isoformat()`](#datetime.date.isoformat "datetime.date.isoformat").
+    See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and [`date.isoformat()`](#datetime.date.isoformat "datetime.date.isoformat").
 
-### Examples of Usage: [`date`](#datetime.date "datetime.date")[¶](#examples-of-usage-date "Link to this heading")
+### Examples of usage: `date`
 
 Example of counting days to an event:
 
 ```
->>> import time
->>> from datetime import date
->>> today = date.today()
+>>> importtime
+>>> importdatetimeasdt
+>>> today = dt.date.today()
 >>> today
 datetime.date(2007, 12, 5)
->>> today == date.fromtimestamp(time.time())
+>>> today == dt.date.fromtimestamp(time.time())
 True
->>> my_birthday = date(today.year, 6, 24)
+>>> my_birthday = dt.date(today.year, 6, 24)
 >>> if my_birthday < today:
 ...     my_birthday = my_birthday.replace(year=today.year + 1)
 ...
@@ -703,8 +705,8 @@ datetime.date(2008, 6, 24)
 More examples of working with [`date`](#datetime.date "datetime.date"):
 
 ```
->>> from datetime import date
->>> d = date.fromordinal(730920) # 730920th day after 1. 1. 0001
+>>> importdatetimeasdt
+>>> d = dt.date.fromordinal(730920) # 730920th day after 1. 1. 0001
 >>> d
 datetime.date(2002, 3, 11)
 
@@ -720,7 +722,7 @@ datetime.date(2002, 3, 11)
 >>> 'The {1} is {0:%d}, the {2} is {0:%B}.'.format(d, "day", "month")
 'The day is 11, the month is March.'
 
->>> # Methods for to extracting 'components' under different calendars
+>>> # Methods for extracting 'components' under different calendars
 >>> t = d.timetuple()
 >>> for i in t:
 ...     print(i)
@@ -745,18 +747,18 @@ datetime.date(2002, 3, 11)
 datetime.date(2005, 3, 11)
 ```
 
-## [`datetime`](#datetime.datetime "datetime.datetime") Objects[¶](#datetime-objects "Link to this heading")
+## `datetime` objects
 
 A [`datetime`](#datetime.datetime "datetime.datetime") object is a single object containing all the information
 from a [`date`](#datetime.date "datetime.date") object and a [`time`](#datetime.time "datetime.time") object.
 
 Like a [`date`](#datetime.date "datetime.date") object, [`datetime`](#datetime.datetime "datetime.datetime") assumes the current Gregorian
 calendar extended in both directions; like a [`time`](#datetime.time "datetime.time") object,
-[`datetime`](#datetime.datetime "datetime.datetime") assumes there are exactly 3600\*24 seconds in every day.
+`datetime` assumes there are exactly 3600\*24 seconds in every day.
 
 Constructor:
 
-*class* datetime.datetime(*year*, *month*, *day*, *hour=0*, *minute=0*, *second=0*, *microsecond=0*, *tzinfo=None*, *\**, *fold=0*)[¶](#datetime.datetime "Link to this definition")
+*class*datetime.datetime(*year*, *month*, *day*, *hour=0*, *minute=0*, *second=0*, *microsecond=0*, *tzinfo=None*, *\**, *fold=0*)
 :   The *year*, *month* and *day* arguments are required. *tzinfo* may be `None`, or an
     instance of a [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass. The remaining arguments must be integers
     in the following ranges:
@@ -776,7 +778,7 @@ Constructor:
 
 Other constructors, all class methods:
 
-*classmethod* datetime.today()[¶](#datetime.datetime.today "Link to this definition")
+*classmethod*datetime.today()
 :   Return the current local date and time, with [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") `None`.
 
     Equivalent to:
@@ -790,7 +792,7 @@ Other constructors, all class methods:
     This method is functionally equivalent to [`now()`](#datetime.datetime.now "datetime.datetime.now"), but without a
     `tz` parameter.
 
-*classmethod* datetime.now(*tz=None*)[¶](#datetime.datetime.now "Link to this definition")
+*classmethod*datetime.now(*tz=None*)
 :   Return the current local date and time.
 
     If optional argument *tz* is `None`
@@ -809,12 +811,12 @@ Other constructors, all class methods:
     Subsequent calls to `datetime.now()` may return the same
     instant depending on the precision of the underlying clock.
 
-*classmethod* datetime.utcnow()[¶](#datetime.datetime.utcnow "Link to this definition")
+*classmethod*datetime.utcnow()
 :   Return the current UTC date and time, with [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") `None`.
 
     This is like [`now()`](#datetime.datetime.now "datetime.datetime.now"), but returns the current UTC date and time, as a naive
     [`datetime`](#datetime.datetime "datetime.datetime") object. An aware current UTC datetime can be obtained by
-    calling `datetime.now(timezone.utc)`. See also [`now()`](#datetime.datetime.now "datetime.datetime.now").
+    calling `datetime.now(timezone.utc)`. See also `now()`.
 
     Warning
 
@@ -825,7 +827,7 @@ Other constructors, all class methods:
 
     Deprecated since version 3.12: Use [`datetime.now()`](#datetime.datetime.now "datetime.datetime.now") with [`UTC`](#datetime.UTC "datetime.UTC") instead.
 
-*classmethod* datetime.fromtimestamp(*timestamp*, *tz=None*)[¶](#datetime.datetime.fromtimestamp "Link to this definition")
+*classmethod*datetime.fromtimestamp(*timestamp*, *tz=None*)
 :   Return the local date and time corresponding to the POSIX timestamp, such as is
     returned by [`time.time()`](time.html#time.time "time.time"). If optional argument *tz* is `None` or not
     specified, the timestamp is converted to the platform’s local date and time, and
@@ -834,13 +836,13 @@ Other constructors, all class methods:
     If *tz* is not `None`, it must be an instance of a [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass, and the
     timestamp is converted to *tz*’s time zone.
 
-    [`fromtimestamp()`](#datetime.datetime.fromtimestamp "datetime.datetime.fromtimestamp") may raise [`OverflowError`](exceptions.html#OverflowError "OverflowError"), if the timestamp is out of
+    `fromtimestamp()` may raise [`OverflowError`](exceptions.html#OverflowError "OverflowError"), if the timestamp is out of
     the range of values supported by the platform C `localtime()` or
     `gmtime()` functions, and [`OSError`](exceptions.html#OSError "OSError") on `localtime()` or
     `gmtime()` failure.
     It’s common for this to be restricted to years in
     1970 through 2038. Note that on non-POSIX systems that include leap seconds in
-    their notion of a timestamp, leap seconds are ignored by [`fromtimestamp()`](#datetime.datetime.fromtimestamp "datetime.datetime.fromtimestamp"),
+    their notion of a timestamp, leap seconds are ignored by `fromtimestamp()`,
     and then it’s possible to have two timestamps differing by a second that yield
     identical [`datetime`](#datetime.datetime "datetime.datetime") objects. This method is preferred over
     [`utcfromtimestamp()`](#datetime.datetime.utcfromtimestamp "datetime.datetime.utcfromtimestamp").
@@ -848,12 +850,12 @@ Other constructors, all class methods:
     Changed in version 3.3: Raise [`OverflowError`](exceptions.html#OverflowError "OverflowError") instead of [`ValueError`](exceptions.html#ValueError "ValueError") if the timestamp
     is out of the range of values supported by the platform C
     `localtime()` or `gmtime()` functions. Raise [`OSError`](exceptions.html#OSError "OSError")
-    instead of [`ValueError`](exceptions.html#ValueError "ValueError") on `localtime()` or `gmtime()`
+    instead of `ValueError` on `localtime()` or `gmtime()`
     failure.
 
-    Changed in version 3.6: [`fromtimestamp()`](#datetime.datetime.fromtimestamp "datetime.datetime.fromtimestamp") may return instances with [`fold`](#datetime.datetime.fold "datetime.datetime.fold") set to 1.
+    Changed in version 3.6: `fromtimestamp()` may return instances with [`fold`](#datetime.datetime.fold "datetime.datetime.fold") set to 1.
 
-*classmethod* datetime.utcfromtimestamp(*timestamp*)[¶](#datetime.datetime.utcfromtimestamp "Link to this definition")
+*classmethod*datetime.utcfromtimestamp(*timestamp*)
 :   Return the UTC [`datetime`](#datetime.datetime "datetime.datetime") corresponding to the POSIX timestamp, with
     [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") `None`. (The resulting object is naive.)
 
@@ -889,31 +891,33 @@ Other constructors, all class methods:
     Changed in version 3.3: Raise [`OverflowError`](exceptions.html#OverflowError "OverflowError") instead of [`ValueError`](exceptions.html#ValueError "ValueError") if the timestamp
     is out of the range of values supported by the platform C
     `gmtime()` function. Raise [`OSError`](exceptions.html#OSError "OSError") instead of
-    [`ValueError`](exceptions.html#ValueError "ValueError") on `gmtime()` failure.
+    `ValueError` on `gmtime()` failure.
+
+    Changed in version 3.15: Accepts any real number as *timestamp*, not only integer or float.
 
     Deprecated since version 3.12: Use [`datetime.fromtimestamp()`](#datetime.datetime.fromtimestamp "datetime.datetime.fromtimestamp") with [`UTC`](#datetime.UTC "datetime.UTC") instead.
 
-*classmethod* datetime.fromordinal(*ordinal*)[¶](#datetime.datetime.fromordinal "Link to this definition")
+*classmethod*datetime.fromordinal(*ordinal*)
 :   Return the [`datetime`](#datetime.datetime "datetime.datetime") corresponding to the proleptic Gregorian ordinal,
     where January 1 of year 1 has ordinal 1. [`ValueError`](exceptions.html#ValueError "ValueError") is raised unless
     `1 <= ordinal <= datetime.max.toordinal()`. The hour, minute, second and
     microsecond of the result are all 0, and [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None`.
 
-*classmethod* datetime.combine(*date*, *time*, *tzinfo=time.tzinfo*)[¶](#datetime.datetime.combine "Link to this definition")
+*classmethod*datetime.combine(*date*, *time*, *tzinfo=time.tzinfo*)
 :   Return a new [`datetime`](#datetime.datetime "datetime.datetime") object whose date components are equal to the
     given [`date`](#datetime.date "datetime.date") object’s, and whose time components
     are equal to the given [`time`](#datetime.time "datetime.time") object’s. If the *tzinfo*
     argument is provided, its value is used to set the [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") attribute
     of the result, otherwise the [`tzinfo`](#datetime.time.tzinfo "datetime.time.tzinfo") attribute of the *time* argument
-    is used. If the *date* argument is a [`datetime`](#datetime.datetime "datetime.datetime") object, its time components
-    and [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") attributes are ignored.
+    is used. If the *date* argument is a `datetime` object, its time components
+    and `tzinfo` attributes are ignored.
 
     For any [`datetime`](#datetime.datetime "datetime.datetime") object `d`,
     `d == datetime.combine(d.date(), d.time(), d.tzinfo)`.
 
     Changed in version 3.6: Added the *tzinfo* argument.
 
-*classmethod* datetime.fromisoformat(*date\_string*)[¶](#datetime.datetime.fromisoformat "Link to this definition")
+*classmethod*datetime.fromisoformat(*date\_string*)
 :   Return a [`datetime`](#datetime.datetime "datetime.datetime") corresponding to a *date\_string* in any valid
     ISO 8601 format, with the following exceptions:
 
@@ -929,24 +933,24 @@ Other constructors, all class methods:
     Examples:
 
     ```
-    >>> from datetime import datetime
-    >>> datetime.fromisoformat('2011-11-04')
+    >>> importdatetimeasdt
+    >>> dt.datetime.fromisoformat('2011-11-04')
     datetime.datetime(2011, 11, 4, 0, 0)
-    >>> datetime.fromisoformat('20111104')
+    >>> dt.datetime.fromisoformat('20111104')
     datetime.datetime(2011, 11, 4, 0, 0)
-    >>> datetime.fromisoformat('2011-11-04T00:05:23')
+    >>> dt.datetime.fromisoformat('2011-11-04T00:05:23')
     datetime.datetime(2011, 11, 4, 0, 5, 23)
-    >>> datetime.fromisoformat('2011-11-04T00:05:23Z')
+    >>> dt.datetime.fromisoformat('2011-11-04T00:05:23Z')
     datetime.datetime(2011, 11, 4, 0, 5, 23, tzinfo=datetime.timezone.utc)
-    >>> datetime.fromisoformat('20111104T000523')
+    >>> dt.datetime.fromisoformat('20111104T000523')
     datetime.datetime(2011, 11, 4, 0, 5, 23)
-    >>> datetime.fromisoformat('2011-W01-2T00:05:23.283')
+    >>> dt.datetime.fromisoformat('2011-W01-2T00:05:23.283')
     datetime.datetime(2011, 1, 4, 0, 5, 23, 283000)
-    >>> datetime.fromisoformat('2011-11-04 00:05:23.283')
+    >>> dt.datetime.fromisoformat('2011-11-04 00:05:23.283')
     datetime.datetime(2011, 11, 4, 0, 5, 23, 283000)
-    >>> datetime.fromisoformat('2011-11-04 00:05:23.283+00:00')
+    >>> dt.datetime.fromisoformat('2011-11-04 00:05:23.283+00:00')
     datetime.datetime(2011, 11, 4, 0, 5, 23, 283000, tzinfo=datetime.timezone.utc)
-    >>> datetime.fromisoformat('2011-11-04T00:05:23+04:00')
+    >>> dt.datetime.fromisoformat('2011-11-04T00:05:23+04:00')
     datetime.datetime(2011, 11, 4, 0, 5, 23,
         tzinfo=datetime.timezone(datetime.timedelta(seconds=14400)))
     ```
@@ -956,15 +960,15 @@ Other constructors, all class methods:
     Changed in version 3.11: Previously, this method only supported formats that could be emitted by
     [`date.isoformat()`](#datetime.date.isoformat "datetime.date.isoformat") or [`datetime.isoformat()`](#datetime.datetime.isoformat "datetime.datetime.isoformat").
 
-*classmethod* datetime.fromisocalendar(*year*, *week*, *day*)[¶](#datetime.datetime.fromisocalendar "Link to this definition")
+*classmethod*datetime.fromisocalendar(*year*, *week*, *day*)
 :   Return a [`datetime`](#datetime.datetime "datetime.datetime") corresponding to the ISO calendar date specified
-    by year, week and day. The non-date components of the datetime are populated
+    by *year*, *week* and *day*. The non-date components of the datetime are populated
     with their normal default values. This is the inverse of the function
     [`datetime.isocalendar()`](#datetime.datetime.isocalendar "datetime.datetime.isocalendar").
 
     Added in version 3.8.
 
-*classmethod* datetime.strptime(*date\_string*, *format*)[¶](#datetime.datetime.strptime "Link to this definition")
+*classmethod*datetime.strptime(*date\_string*, *format*)
 :   Return a [`datetime`](#datetime.datetime "datetime.datetime") corresponding to *date\_string*, parsed according to
     *format*.
 
@@ -976,51 +980,68 @@ Other constructors, all class methods:
 
     [`ValueError`](exceptions.html#ValueError "ValueError") is raised if the date\_string and format
     can’t be parsed by [`time.strptime()`](time.html#time.strptime "time.strptime") or if it returns a value which isn’t a
-    time tuple. See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and
+    time tuple. See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and
     [`datetime.fromisoformat()`](#datetime.datetime.fromisoformat "datetime.datetime.fromisoformat").
+
+    Changed in version 3.13: If *format* specifies a day of month without a year a
+    [`DeprecationWarning`](exceptions.html#DeprecationWarning "DeprecationWarning") is now emitted. This is to avoid a quadrennial
+    leap year bug in code seeking to parse only a month and day as the
+    default year used in absence of one in the format is not a leap year.
+    Such *format* values may raise an error as of Python 3.15. The
+    workaround is to always include a year in your *format*. If parsing
+    *date\_string* values that do not have a year, explicitly add a year that
+    is a leap year before parsing:
+
+    ```
+    >>> importdatetimeasdt
+    >>> date_string = "02/29"
+    >>> when = dt.datetime.strptime(f"{date_string};1984", "%m/%d;%Y")  # Avoids leap year bug.
+    >>> when.strftime("%B %d")
+    'February 29'
+    ```
 
 Class attributes:
 
-datetime.min[¶](#datetime.datetime.min "Link to this definition")
+datetime.min
 :   The earliest representable [`datetime`](#datetime.datetime "datetime.datetime"), `datetime(MINYEAR, 1, 1,
     tzinfo=None)`.
 
-datetime.max[¶](#datetime.datetime.max "Link to this definition")
+datetime.max
 :   The latest representable [`datetime`](#datetime.datetime "datetime.datetime"), `datetime(MAXYEAR, 12, 31, 23, 59,
     59, 999999, tzinfo=None)`.
 
-datetime.resolution[¶](#datetime.datetime.resolution "Link to this definition")
+datetime.resolution
 :   The smallest possible difference between non-equal [`datetime`](#datetime.datetime "datetime.datetime") objects,
     `timedelta(microseconds=1)`.
 
 Instance attributes (read-only):
 
-datetime.year[¶](#datetime.datetime.year "Link to this definition")
+datetime.year
 :   Between [`MINYEAR`](#datetime.MINYEAR "datetime.MINYEAR") and [`MAXYEAR`](#datetime.MAXYEAR "datetime.MAXYEAR") inclusive.
 
-datetime.month[¶](#datetime.datetime.month "Link to this definition")
+datetime.month
 :   Between 1 and 12 inclusive.
 
-datetime.day[¶](#datetime.datetime.day "Link to this definition")
+datetime.day
 :   Between 1 and the number of days in the given month of the given year.
 
-datetime.hour[¶](#datetime.datetime.hour "Link to this definition")
+datetime.hour
 :   In `range(24)`.
 
-datetime.minute[¶](#datetime.datetime.minute "Link to this definition")
+datetime.minute
 :   In `range(60)`.
 
-datetime.second[¶](#datetime.datetime.second "Link to this definition")
+datetime.second
 :   In `range(60)`.
 
-datetime.microsecond[¶](#datetime.datetime.microsecond "Link to this definition")
+datetime.microsecond
 :   In `range(1000000)`.
 
-datetime.tzinfo[¶](#datetime.datetime.tzinfo "Link to this definition")
+datetime.tzinfo
 :   The object passed as the *tzinfo* argument to the [`datetime`](#datetime.datetime "datetime.datetime") constructor,
     or `None` if none was passed.
 
-datetime.fold[¶](#datetime.datetime.fold "Link to this definition")
+datetime.fold
 :   In `[0, 1]`. Used to disambiguate wall times during a repeated interval. (A
     repeated interval occurs when clocks are rolled back at the end of daylight saving
     time or when the UTC offset for the current zone is decreased for political reasons.)
@@ -1049,12 +1070,12 @@ Supported operations:
 2. Computes the `datetime2` such that `datetime2 + timedelta == datetime1`. As for
    addition, the result has the same [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") attribute as the input
    datetime, and no time zone adjustments are done even if the input is aware.
-3. Subtraction of a [`datetime`](#datetime.datetime "datetime.datetime") from a [`datetime`](#datetime.datetime "datetime.datetime") is defined only if
+3. Subtraction of a [`datetime`](#datetime.datetime "datetime.datetime") from a `datetime` is defined only if
    both operands are naive, or if both are aware. If one is aware and the other is
    naive, [`TypeError`](exceptions.html#TypeError "TypeError") is raised.
 
    If both are naive, or both are aware and have the same [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") attribute,
-   the [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") attributes are ignored, and the result is a [`timedelta`](#datetime.timedelta "datetime.timedelta")
+   the `tzinfo` attributes are ignored, and the result is a [`timedelta`](#datetime.timedelta "datetime.timedelta")
    object `t` such that `datetime2 + t == datetime1`. No time zone adjustments
    are done in this case.
 
@@ -1065,10 +1086,7 @@ Supported operations:
 4. [`datetime`](#datetime.datetime "datetime.datetime") objects are equal if they represent the same date
    and time, taking into account the time zone.
 
-   Naive and aware `datetime` objects are never equal.
-   `datetime` objects are never equal to [`date`](#datetime.date "datetime.date") objects
-   that are not also `datetime` instances, even if they represent
-   the same date.
+   Naive and aware [`datetime`](#datetime.datetime "datetime.datetime") objects are never equal.
 
    If both comparands are aware, and have the same `tzinfo` attribute,
    the `tzinfo` and [`fold`](#datetime.datetime.fold "datetime.datetime.fold") attributes are ignored and
@@ -1076,14 +1094,13 @@ Supported operations:
    If both comparands are aware and have different [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo")
    attributes, the comparison acts as comparands were first converted to UTC
    datetimes except that the implementation never overflows.
-   `datetime` instances in a repeated interval are never equal to
+   [`datetime`](#datetime.datetime "datetime.datetime") instances in a repeated interval are never equal to
    `datetime` instances in other time zone.
 5. *datetime1* is considered less than *datetime2* when *datetime1* precedes
    *datetime2* in time, taking into account the time zone.
 
-   Order comparison between naive and aware [`datetime`](#datetime.datetime "datetime.datetime") objects,
-   as well as a `datetime` object and a `date` object
-   that is not also a `datetime` instance, raises [`TypeError`](exceptions.html#TypeError "TypeError").
+   Order comparison between naive and aware [`datetime`](#datetime.datetime "datetime.datetime") objects
+   raises [`TypeError`](exceptions.html#TypeError "TypeError").
 
    If both comparands are aware, and have the same `tzinfo` attribute,
    the `tzinfo` and [`fold`](#datetime.datetime.fold "datetime.datetime.fold") attributes are ignored and
@@ -1095,32 +1112,42 @@ Supported operations:
 Changed in version 3.3: Equality comparisons between aware and naive [`datetime`](#datetime.datetime "datetime.datetime")
 instances don’t raise [`TypeError`](exceptions.html#TypeError "TypeError").
 
+Changed in version 3.13: Comparison between [`datetime`](#datetime.datetime "datetime.datetime") object and an instance of
+the [`date`](#datetime.date "datetime.date") subclass that is not a `datetime` subclass
+no longer converts the latter to `date`, ignoring the time part
+and the time zone.
+The default behavior can be changed by overriding the special comparison
+methods in subclasses.
+
 Instance methods:
 
-datetime.date()[¶](#datetime.datetime.date "Link to this definition")
+datetime.date()
 :   Return [`date`](#datetime.date "datetime.date") object with same year, month and day.
 
-datetime.time()[¶](#datetime.datetime.time "Link to this definition")
+datetime.time()
 :   Return [`time`](#datetime.time "datetime.time") object with same hour, minute, second, microsecond and fold.
     [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None`. See also method [`timetz()`](#datetime.datetime.timetz "datetime.datetime.timetz").
 
     Changed in version 3.6: The fold value is copied to the returned [`time`](#datetime.time "datetime.time") object.
 
-datetime.timetz()[¶](#datetime.datetime.timetz "Link to this definition")
+datetime.timetz()
 :   Return [`time`](#datetime.time "datetime.time") object with same hour, minute, second, microsecond, fold, and
     tzinfo attributes. See also method [`time()`](time.html#module-time "time: Time access and conversions.").
 
     Changed in version 3.6: The fold value is copied to the returned [`time`](#datetime.time "datetime.time") object.
 
-datetime.replace(*year=self.year*, *month=self.month*, *day=self.day*, *hour=self.hour*, *minute=self.minute*, *second=self.second*, *microsecond=self.microsecond*, *tzinfo=self.tzinfo*, *\**, *fold=0*)[¶](#datetime.datetime.replace "Link to this definition")
+datetime.replace(*year=self.year*, *month=self.month*, *day=self.day*, *hour=self.hour*, *minute=self.minute*, *second=self.second*, *microsecond=self.microsecond*, *tzinfo=self.tzinfo*, *\**, *fold=0*)
 :   Return a new [`datetime`](#module-datetime "datetime: Basic date and time types.") object with the same attributes, but with
     specified parameters updated. Note that `tzinfo=None` can be specified to
     create a naive datetime from an aware datetime with no conversion of date
     and time data.
 
+    [`datetime`](#datetime.datetime "datetime.datetime") objects are also supported by generic function
+    [`copy.replace()`](copy.html#copy.replace "copy.replace").
+
     Changed in version 3.6: Added the *fold* parameter.
 
-datetime.astimezone(*tz=None*)[¶](#datetime.datetime.astimezone "Link to this definition")
+datetime.astimezone(*tz=None*)
 :   Return a [`datetime`](#datetime.datetime "datetime.datetime") object with new [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") attribute *tz*,
     adjusting the date and time data so the result is the same UTC time as
     *self*, but in *tz*’s local time.
@@ -1146,11 +1173,11 @@ datetime.astimezone(*tz=None*)[¶](#datetime.datetime.astimezone "Link to this d
     conversion of date and time data, use `dt.replace(tzinfo=None)`.
 
     Note that the default [`tzinfo.fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") method can be overridden in a
-    [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass to affect the result returned by [`astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone").
-    Ignoring error cases, [`astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone") acts like:
+    [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass to affect the result returned by `astimezone()`.
+    Ignoring error cases, `astimezone()` acts like:
 
     ```
-    def astimezone(self, tz):
+    defastimezone(self, tz):
         if self.tzinfo is tz:
             return self
         # Convert self to UTC, and attach the new timezone object.
@@ -1161,29 +1188,29 @@ datetime.astimezone(*tz=None*)[¶](#datetime.datetime.astimezone "Link to this d
 
     Changed in version 3.3: *tz* now can be omitted.
 
-    Changed in version 3.6: The [`astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone") method can now be called on naive instances that
+    Changed in version 3.6: The `astimezone()` method can now be called on naive instances that
     are presumed to represent system local time.
 
-datetime.utcoffset()[¶](#datetime.datetime.utcoffset "Link to this definition")
+datetime.utcoffset()
 :   If [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None`, returns `None`, else returns
     `self.tzinfo.utcoffset(self)`, and raises an exception if the latter doesn’t
     return `None` or a [`timedelta`](#datetime.timedelta "datetime.timedelta") object with magnitude less than one day.
 
     Changed in version 3.7: The UTC offset is not restricted to a whole number of minutes.
 
-datetime.dst()[¶](#datetime.datetime.dst "Link to this definition")
+datetime.dst()
 :   If [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None`, returns `None`, else returns
     `self.tzinfo.dst(self)`, and raises an exception if the latter doesn’t return
     `None` or a [`timedelta`](#datetime.timedelta "datetime.timedelta") object with magnitude less than one day.
 
     Changed in version 3.7: The DST offset is not restricted to a whole number of minutes.
 
-datetime.tzname()[¶](#datetime.datetime.tzname "Link to this definition")
+datetime.tzname()
 :   If [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None`, returns `None`, else returns
     `self.tzinfo.tzname(self)`, raises an exception if the latter doesn’t return
     `None` or a string object,
 
-datetime.timetuple()[¶](#datetime.datetime.timetuple "Link to this definition")
+datetime.timetuple()
 :   Return a [`time.struct_time`](time.html#time.struct_time "time.struct_time") such as returned by [`time.localtime()`](time.html#time.localtime "time.localtime").
 
     `d.timetuple()` is equivalent to:
@@ -1197,12 +1224,12 @@ datetime.timetuple()[¶](#datetime.datetime.timetuple "Link to this definition")
     where `yday = d.toordinal() - date(d.year, 1, 1).toordinal() + 1`
     is the day number within the current year starting with 1 for January
     1st. The [`tm_isdst`](time.html#time.struct_time.tm_isdst "time.struct_time.tm_isdst") flag of the result is set according to the
-    [`dst()`](#datetime.datetime.dst "datetime.datetime.dst") method: [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None` or [`dst()`](#datetime.datetime.dst "datetime.datetime.dst") returns
-    `None`, `tm_isdst` is set to `-1`; else if [`dst()`](#datetime.datetime.dst "datetime.datetime.dst") returns a
+    [`dst()`](#datetime.datetime.dst "datetime.datetime.dst") method: [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo") is `None` or `dst()` returns
+    `None`, `tm_isdst` is set to `-1`; else if `dst()` returns a
     non-zero value, `tm_isdst` is set to 1; else `tm_isdst` is
     set to 0.
 
-datetime.utctimetuple()[¶](#datetime.datetime.utctimetuple "Link to this definition")
+datetime.utctimetuple()
 :   If [`datetime`](#datetime.datetime "datetime.datetime") instance `d` is naive, this is the same as
     `d.timetuple()` except that [`tm_isdst`](time.html#time.struct_time.tm_isdst "time.struct_time.tm_isdst") is forced to 0 regardless of what
     `d.dst()` returns. DST is never in effect for a UTC time.
@@ -1218,23 +1245,23 @@ datetime.utctimetuple()[¶](#datetime.datetime.utctimetuple "Link to this defini
 
     Because naive `datetime` objects are treated by many `datetime` methods
     as local times, it is preferred to use aware datetimes to represent times
-    in UTC; as a result, using [`datetime.utctimetuple()`](#datetime.datetime.utctimetuple "datetime.datetime.utctimetuple") may give misleading
+    in UTC; as a result, using `datetime.utctimetuple()` may give misleading
     results. If you have a naive `datetime` representing UTC, use
     `datetime.replace(tzinfo=timezone.utc)` to make it aware, at which point
     you can use [`datetime.timetuple()`](#datetime.datetime.timetuple "datetime.datetime.timetuple").
 
-datetime.toordinal()[¶](#datetime.datetime.toordinal "Link to this definition")
+datetime.toordinal()
 :   Return the proleptic Gregorian ordinal of the date. The same as
     `self.date().toordinal()`.
 
-datetime.timestamp()[¶](#datetime.datetime.timestamp "Link to this definition")
+datetime.timestamp()
 :   Return POSIX timestamp corresponding to the [`datetime`](#datetime.datetime "datetime.datetime")
     instance. The return value is a [`float`](functions.html#float "float") similar to that
     returned by [`time.time()`](time.html#time.time "time.time").
 
     Naive [`datetime`](#datetime.datetime "datetime.datetime") instances are assumed to represent local
     time and this method relies on the platform C `mktime()`
-    function to perform the conversion. Since [`datetime`](#datetime.datetime "datetime.datetime")
+    function to perform the conversion. Since `datetime`
     supports wider range of values than `mktime()` on many
     platforms, this method may raise [`OverflowError`](exceptions.html#OverflowError "OverflowError") or [`OSError`](exceptions.html#OSError "OSError")
     for times far in the past or far in the future.
@@ -1245,11 +1272,6 @@ datetime.timestamp()[¶](#datetime.datetime.timestamp "Link to this definition")
     ```
     (dt - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
     ```
-
-    Added in version 3.3.
-
-    Changed in version 3.6: The [`timestamp()`](#datetime.datetime.timestamp "datetime.datetime.timestamp") method uses the [`fold`](#datetime.datetime.fold "datetime.datetime.fold") attribute to
-    disambiguate the times during a repeated interval.
 
     Note
 
@@ -1269,20 +1291,25 @@ datetime.timestamp()[¶](#datetime.datetime.timestamp "Link to this definition")
     timestamp = (dt - datetime(1970, 1, 1)) / timedelta(seconds=1)
     ```
 
-datetime.weekday()[¶](#datetime.datetime.weekday "Link to this definition")
+    Added in version 3.3.
+
+    Changed in version 3.6: The `timestamp()` method uses the [`fold`](#datetime.datetime.fold "datetime.datetime.fold") attribute to
+    disambiguate the times during a repeated interval.
+
+datetime.weekday()
 :   Return the day of the week as an integer, where Monday is 0 and Sunday is 6.
     The same as `self.date().weekday()`. See also [`isoweekday()`](#datetime.datetime.isoweekday "datetime.datetime.isoweekday").
 
-datetime.isoweekday()[¶](#datetime.datetime.isoweekday "Link to this definition")
+datetime.isoweekday()
 :   Return the day of the week as an integer, where Monday is 1 and Sunday is 7.
     The same as `self.date().isoweekday()`. See also [`weekday()`](#datetime.datetime.weekday "datetime.datetime.weekday"),
     [`isocalendar()`](#datetime.datetime.isocalendar "datetime.datetime.isocalendar").
 
-datetime.isocalendar()[¶](#datetime.datetime.isocalendar "Link to this definition")
+datetime.isocalendar()
 :   Return a [named tuple](../glossary.html#term-named-tuple) with three components: `year`, `week`
     and `weekday`. The same as `self.date().isocalendar()`.
 
-datetime.isoformat(*sep='T'*, *timespec='auto'*)[¶](#datetime.datetime.isoformat "Link to this definition")
+datetime.isoformat(*sep='T'*, *timespec='auto'*)
 :   Return a string representing the date and time in ISO 8601 format:
 
     * `YYYY-MM-DDTHH:MM:SS.ffffff`, if [`microsecond`](#datetime.datetime.microsecond "datetime.datetime.microsecond") is not 0
@@ -1298,10 +1325,10 @@ datetime.isoformat(*sep='T'*, *timespec='auto'*)[¶](#datetime.datetime.isoforma
     Examples:
 
     ```
-    >>> from datetime import datetime, timezone
-    >>> datetime(2019, 5, 18, 15, 17, 8, 132263).isoformat()
+    >>> importdatetimeasdt
+    >>> dt.datetime(2019, 5, 18, 15, 17, 8, 132263).isoformat()
     '2019-05-18T15:17:08.132263'
-    >>> datetime(2019, 5, 18, 15, 17, tzinfo=timezone.utc).isoformat()
+    >>> dt.datetime(2019, 5, 18, 15, 17, tzinfo=dt.timezone.utc).isoformat()
     '2019-05-18T15:17:00+00:00'
     ```
 
@@ -1309,15 +1336,15 @@ datetime.isoformat(*sep='T'*, *timespec='auto'*)[¶](#datetime.datetime.isoforma
     placed between the date and time portions of the result. For example:
 
     ```
-    >>> from datetime import tzinfo, timedelta, datetime
-    >>> class TZ(tzinfo):
-    ...     """A time zone with an arbitrary, constant -06:39 offset."""
-    ...     def utcoffset(self, dt):
-    ...         return timedelta(hours=-6, minutes=-39)
+    >>> importdatetimeasdt
+    >>> classTZ(dt.tzinfo):
+    ... """A time zone with an arbitrary, constant -06:39 offset."""
+    ...     defutcoffset(self, when):
+    ...         return dt.timedelta(hours=-6, minutes=-39)
     ...
-    >>> datetime(2002, 12, 25, tzinfo=TZ()).isoformat(' ')
+    >>> dt.datetime(2002, 12, 25, tzinfo=TZ()).isoformat(' ')
     '2002-12-25 00:00:00-06:39'
-    >>> datetime(2009, 11, 27, microsecond=100, tzinfo=TZ()).isoformat()
+    >>> dt.datetime(2009, 11, 27, microsecond=100, tzinfo=TZ()).isoformat()
     '2009-11-27T00:00:00.000100-06:39'
     ```
 
@@ -1342,26 +1369,26 @@ datetime.isoformat(*sep='T'*, *timespec='auto'*)[¶](#datetime.datetime.isoforma
     [`ValueError`](exceptions.html#ValueError "ValueError") will be raised on an invalid *timespec* argument:
 
     ```
-    >>> from datetime import datetime
-    >>> datetime.now().isoformat(timespec='minutes')
+    >>> importdatetimeasdt
+    >>> dt.datetime.now().isoformat(timespec='minutes')
     '2002-12-25T00:00'
-    >>> dt = datetime(2015, 1, 1, 12, 30, 59, 0)
-    >>> dt.isoformat(timespec='microseconds')
+    >>> my_datetime = dt.datetime(2015, 1, 1, 12, 30, 59, 0)
+    >>> my_datetime.isoformat(timespec='microseconds')
     '2015-01-01T12:30:59.000000'
     ```
 
     Changed in version 3.6: Added the *timespec* parameter.
 
-datetime.\_\_str\_\_()[¶](#datetime.datetime.__str__ "Link to this definition")
+datetime.\_\_str\_\_()
 :   For a [`datetime`](#datetime.datetime "datetime.datetime") instance `d`, `str(d)` is equivalent to
     `d.isoformat(' ')`.
 
-datetime.ctime()[¶](#datetime.datetime.ctime "Link to this definition")
+datetime.ctime()
 :   Return a string representing the date and time:
 
     ```
-    >>> from datetime import datetime
-    >>> datetime(2002, 12, 4, 20, 30, 40).ctime()
+    >>> importdatetimeasdt
+    >>> dt.datetime(2002, 12, 4, 20, 30, 40).ctime()
     'Wed Dec  4 20:30:40 2002'
     ```
 
@@ -1376,45 +1403,45 @@ datetime.ctime()[¶](#datetime.datetime.ctime "Link to this definition")
 
     on platforms where the native C `ctime()` function
     (which [`time.ctime()`](time.html#time.ctime "time.ctime") invokes, but which
-    [`datetime.ctime()`](#datetime.datetime.ctime "datetime.datetime.ctime") does not invoke) conforms to the C standard.
+    `datetime.ctime()` does not invoke) conforms to the C standard.
 
-datetime.strftime(*format*)[¶](#datetime.datetime.strftime "Link to this definition")
+datetime.strftime(*format*)
 :   Return a string representing the date and time,
     controlled by an explicit format string.
-    See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and [`datetime.isoformat()`](#datetime.datetime.isoformat "datetime.datetime.isoformat").
+    See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and [`datetime.isoformat()`](#datetime.datetime.isoformat "datetime.datetime.isoformat").
 
-datetime.\_\_format\_\_(*format*)[¶](#datetime.datetime.__format__ "Link to this definition")
+datetime.\_\_format\_\_(*format*)
 :   Same as [`datetime.strftime()`](#datetime.datetime.strftime "datetime.datetime.strftime"). This makes it possible to specify a format
     string for a [`datetime`](#datetime.datetime "datetime.datetime") object in [formatted string
     literals](../reference/lexical_analysis.html#f-strings) and when using [`str.format()`](stdtypes.html#str.format "str.format").
-    See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and [`datetime.isoformat()`](#datetime.datetime.isoformat "datetime.datetime.isoformat").
+    See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and [`datetime.isoformat()`](#datetime.datetime.isoformat "datetime.datetime.isoformat").
 
-### Examples of Usage: [`datetime`](#datetime.datetime "datetime.datetime")[¶](#examples-of-usage-datetime "Link to this heading")
+### Examples of usage: `datetime`
 
 Examples of working with [`datetime`](#datetime.datetime "datetime.datetime") objects:
 
 ```
->>> from datetime import datetime, date, time, timezone
+>>> importdatetimeasdt
 
 >>> # Using datetime.combine()
->>> d = date(2005, 7, 14)
->>> t = time(12, 30)
->>> datetime.combine(d, t)
+>>> d = dt.date(2005, 7, 14)
+>>> t = dt.time(12, 30)
+>>> dt.datetime.combine(d, t)
 datetime.datetime(2005, 7, 14, 12, 30)
 
 >>> # Using datetime.now()
->>> datetime.now()
+>>> dt.datetime.now()
 datetime.datetime(2007, 12, 6, 16, 29, 43, 79043)   # GMT +1
->>> datetime.now(timezone.utc)
+>>> dt.datetime.now(dt.timezone.utc)
 datetime.datetime(2007, 12, 6, 15, 29, 43, 79060, tzinfo=datetime.timezone.utc)
 
 >>> # Using datetime.strptime()
->>> dt = datetime.strptime("21/11/06 16:30", "%d/%m/%y %H:%M")
->>> dt
+>>> my_datetime = dt.datetime.strptime("21/11/06 16:30", "%d/%m/%y %H:%M")
+>>> my_datetime
 datetime.datetime(2006, 11, 21, 16, 30)
 
 >>> # Using datetime.timetuple() to get tuple of all attributes
->>> tt = dt.timetuple()
+>>> tt = my_datetime.timetuple()
 >>> for it in tt:
 ...     print(it)
 ...
@@ -1429,7 +1456,7 @@ datetime.datetime(2006, 11, 21, 16, 30)
 -1      # dst - method tzinfo.dst() returned None
 
 >>> # Date in ISO format
->>> ic = dt.isocalendar()
+>>> ic = my_datetime.isocalendar()
 >>> for it in ic:
 ...     print(it)
 ...
@@ -1438,9 +1465,9 @@ datetime.datetime(2006, 11, 21, 16, 30)
 2       # ISO weekday
 
 >>> # Formatting a datetime
->>> dt.strftime("%A, %d. %B %Y %I:%M%p")
+>>> my_datetime.strftime("%A, %d. %B %Y %I:%M%p")
 'Tuesday, 21. November 2006 04:30PM'
->>> 'The {1} is {0:%d}, the {2} is {0:%B}, the {3} is {0:%I:%M%p}.'.format(dt, "day", "month", "time")
+>>> 'The {1} is {0:%d}, the {2} is {0:%B}, the {3} is {0:%I:%M%p}.'.format(my_datetime, "day", "month", "time")
 'The day is 21, the month is November, the time is 04:30PM.'
 ```
 
@@ -1449,46 +1476,46 @@ information for Kabul, Afghanistan, which used +4 UTC until 1945
 and then +4:30 UTC thereafter:
 
 ```
-from datetime import timedelta, datetime, tzinfo, timezone
+importdatetimeasdt
 
-class KabulTz(tzinfo):
+classKabulTz(dt.tzinfo):
     # Kabul used +4 until 1945, when they moved to +4:30
-    UTC_MOVE_DATE = datetime(1944, 12, 31, 20, tzinfo=timezone.utc)
+    UTC_MOVE_DATE = dt.datetime(1944, 12, 31, 20, tzinfo=dt.timezone.utc)
 
-    def utcoffset(self, dt):
-        if dt.year < 1945:
-            return timedelta(hours=4)
-        elif (1945, 1, 1, 0, 0) <= dt.timetuple()[:5] < (1945, 1, 1, 0, 30):
+    defutcoffset(self, when):
+        if when.year < 1945:
+            return dt.timedelta(hours=4)
+        elif (1945, 1, 1, 0, 0) <= when.timetuple()[:5] < (1945, 1, 1, 0, 30):
             # An ambiguous ("imaginary") half-hour range representing
             # a 'fold' in time due to the shift from +4 to +4:30.
-            # If dt falls in the imaginary range, use fold to decide how
-            # to resolve. See PEP495.
-            return timedelta(hours=4, minutes=(30 if dt.fold else 0))
+            # If when falls in the imaginary range, use fold to decide how
+            # to resolve. See PEP 495.
+            return dt.timedelta(hours=4, minutes=(30 if when.fold else 0))
         else:
-            return timedelta(hours=4, minutes=30)
+            return dt.timedelta(hours=4, minutes=30)
 
-    def fromutc(self, dt):
+    deffromutc(self, when):
         # Follow same validations as in datetime.tzinfo
-        if not isinstance(dt, datetime):
+        if not isinstance(when, dt.datetime):
             raise TypeError("fromutc() requires a datetime argument")
-        if dt.tzinfo is not self:
-            raise ValueError("dt.tzinfo is not self")
+        if when.tzinfo is not self:
+            raise ValueError("when.tzinfo is not self")
 
         # A custom implementation is required for fromutc as
         # the input to this function is a datetime with utc values
         # but with a tzinfo set to self.
         # See datetime.astimezone or fromtimestamp.
-        if dt.replace(tzinfo=timezone.utc) >= self.UTC_MOVE_DATE:
-            return dt + timedelta(hours=4, minutes=30)
+        if when.replace(tzinfo=dt.timezone.utc) >= self.UTC_MOVE_DATE:
+            return when + dt.timedelta(hours=4, minutes=30)
         else:
-            return dt + timedelta(hours=4)
+            return when + dt.timedelta(hours=4)
 
-    def dst(self, dt):
+    defdst(self, when):
         # Kabul does not observe daylight saving time.
-        return timedelta(0)
+        return dt.timedelta(0)
 
-    def tzname(self, dt):
-        if dt >= self.UTC_MOVE_DATE:
+    deftzname(self, when):
+        if when >= self.UTC_MOVE_DATE:
             return "+04:30"
         return "+04"
 ```
@@ -1499,17 +1526,17 @@ Usage of `KabulTz` from above:
 >>> tz1 = KabulTz()
 
 >>> # Datetime before the change
->>> dt1 = datetime(1900, 11, 21, 16, 30, tzinfo=tz1)
+>>> dt1 = dt.datetime(1900, 11, 21, 16, 30, tzinfo=tz1)
 >>> print(dt1.utcoffset())
 4:00:00
 
 >>> # Datetime after the change
->>> dt2 = datetime(2006, 6, 14, 13, 0, tzinfo=tz1)
+>>> dt2 = dt.datetime(2006, 6, 14, 13, 0, tzinfo=tz1)
 >>> print(dt2.utcoffset())
 4:30:00
 
 >>> # Convert datetime to another time zone
->>> dt3 = dt2.astimezone(timezone.utc)
+>>> dt3 = dt2.astimezone(dt.timezone.utc)
 >>> dt3
 datetime.datetime(2006, 6, 14, 8, 30, tzinfo=datetime.timezone.utc)
 >>> dt2
@@ -1518,12 +1545,12 @@ datetime.datetime(2006, 6, 14, 13, 0, tzinfo=KabulTz())
 True
 ```
 
-## [`time`](#datetime.time "datetime.time") Objects[¶](#time-objects "Link to this heading")
+## `time` objects
 
 A [`time`](#datetime.time "datetime.time") object represents a (local) time of day, independent of any particular
 day, and subject to adjustment via a [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") object.
 
-*class* datetime.time(*hour=0*, *minute=0*, *second=0*, *microsecond=0*, *tzinfo=None*, *\**, *fold=0*)[¶](#datetime.time "Link to this definition")
+*class*datetime.time(*hour=0*, *minute=0*, *second=0*, *microsecond=0*, *tzinfo=None*, *\**, *fold=0*)
 :   All arguments are optional. *tzinfo* may be `None`, or an instance of a
     [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass. The remaining arguments must be integers in the
     following ranges:
@@ -1539,36 +1566,36 @@ day, and subject to adjustment via a [`tzinfo`](#datetime.tzinfo "datetime.tzinf
 
 Class attributes:
 
-time.min[¶](#datetime.time.min "Link to this definition")
+time.min
 :   The earliest representable [`time`](#datetime.time "datetime.time"), `time(0, 0, 0, 0)`.
 
-time.max[¶](#datetime.time.max "Link to this definition")
+time.max
 :   The latest representable [`time`](#datetime.time "datetime.time"), `time(23, 59, 59, 999999)`.
 
-time.resolution[¶](#datetime.time.resolution "Link to this definition")
+time.resolution
 :   The smallest possible difference between non-equal [`time`](#datetime.time "datetime.time") objects,
     `timedelta(microseconds=1)`, although note that arithmetic on
-    [`time`](#datetime.time "datetime.time") objects is not supported.
+    `time` objects is not supported.
 
 Instance attributes (read-only):
 
-time.hour[¶](#datetime.time.hour "Link to this definition")
+time.hour
 :   In `range(24)`.
 
-time.minute[¶](#datetime.time.minute "Link to this definition")
+time.minute
 :   In `range(60)`.
 
-time.second[¶](#datetime.time.second "Link to this definition")
+time.second
 :   In `range(60)`.
 
-time.microsecond[¶](#datetime.time.microsecond "Link to this definition")
+time.microsecond
 :   In `range(1000000)`.
 
-time.tzinfo[¶](#datetime.time.tzinfo "Link to this definition")
+time.tzinfo
 :   The object passed as the tzinfo argument to the [`time`](#datetime.time "datetime.time") constructor, or
     `None` if none was passed.
 
-time.fold[¶](#datetime.time.fold "Link to this definition")
+time.fold
 :   In `[0, 1]`. Used to disambiguate wall times during a repeated interval. (A
     repeated interval occurs when clocks are rolled back at the end of daylight saving
     time or when the UTC offset for the current zone is decreased for political reasons.)
@@ -1597,12 +1624,12 @@ In Boolean contexts, a [`time`](#datetime.time "datetime.time") object is always
 
 Changed in version 3.5: Before Python 3.5, a [`time`](#datetime.time "datetime.time") object was considered to be false if it
 represented midnight in UTC. This behavior was considered obscure and
-error-prone and has been removed in Python 3.5. See [bpo-13936](https://bugs.python.org/issue?@action=redirect&bpo=13936) for full
-details.
+error-prone and has been removed in Python 3.5. See [bpo-13936](https://bugs.python.org/issue?@action=redirect&bpo=13936) for more
+information.
 
-Other constructor:
+Other constructors:
 
-*classmethod* time.fromisoformat(*time\_string*)[¶](#datetime.time.fromisoformat "Link to this definition")
+*classmethod*time.fromisoformat(*time\_string*)
 :   Return a [`time`](#datetime.time "datetime.time") corresponding to a *time\_string* in any valid
     ISO 8601 format, with the following exceptions:
 
@@ -1616,22 +1643,22 @@ Other constructor:
     Examples:
 
     ```
-    >>> from datetime import time
-    >>> time.fromisoformat('04:23:01')
+    >>> importdatetimeasdt
+    >>> dt.time.fromisoformat('04:23:01')
     datetime.time(4, 23, 1)
-    >>> time.fromisoformat('T04:23:01')
+    >>> dt.time.fromisoformat('T04:23:01')
     datetime.time(4, 23, 1)
-    >>> time.fromisoformat('T042301')
+    >>> dt.time.fromisoformat('T042301')
     datetime.time(4, 23, 1)
-    >>> time.fromisoformat('04:23:01.000384')
+    >>> dt.time.fromisoformat('04:23:01.000384')
     datetime.time(4, 23, 1, 384)
-    >>> time.fromisoformat('04:23:01,000384')
+    >>> dt.time.fromisoformat('04:23:01,000384')
     datetime.time(4, 23, 1, 384)
-    >>> time.fromisoformat('04:23:01+04:00')
+    >>> dt.time.fromisoformat('04:23:01+04:00')
     datetime.time(4, 23, 1, tzinfo=datetime.timezone(datetime.timedelta(seconds=14400)))
-    >>> time.fromisoformat('04:23:01Z')
+    >>> dt.time.fromisoformat('04:23:01Z')
     datetime.time(4, 23, 1, tzinfo=datetime.timezone.utc)
-    >>> time.fromisoformat('04:23:01+00:00')
+    >>> dt.time.fromisoformat('04:23:01+00:00')
     datetime.time(4, 23, 1, tzinfo=datetime.timezone.utc)
     ```
 
@@ -1640,17 +1667,37 @@ Other constructor:
     Changed in version 3.11: Previously, this method only supported formats that could be emitted by
     [`time.isoformat()`](#datetime.time.isoformat "datetime.time.isoformat").
 
+*classmethod*time.strptime(*date\_string*, *format*)
+:   Return a [`time`](#datetime.time "datetime.time") corresponding to *date\_string*, parsed according to
+    *format*.
+
+    If *format* does not contain microseconds or timezone information, this is equivalent to:
+
+    ```
+    time(*(time.strptime(date_string, format)[3:6]))
+    ```
+
+    [`ValueError`](exceptions.html#ValueError "ValueError") is raised if the *date\_string* and *format*
+    cannot be parsed by [`time.strptime()`](time.html#time.strptime "time.strptime") or if it returns a value which is not a
+    time tuple. See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and
+    [`time.fromisoformat()`](#datetime.time.fromisoformat "datetime.time.fromisoformat").
+
+    Added in version 3.14.
+
 Instance methods:
 
-time.replace(*hour=self.hour*, *minute=self.minute*, *second=self.second*, *microsecond=self.microsecond*, *tzinfo=self.tzinfo*, *\**, *fold=0*)[¶](#datetime.time.replace "Link to this definition")
+time.replace(*hour=self.hour*, *minute=self.minute*, *second=self.second*, *microsecond=self.microsecond*, *tzinfo=self.tzinfo*, *\**, *fold=0*)
 :   Return a new [`time`](#datetime.time "datetime.time") with the same values, but with specified
     parameters updated. Note that `tzinfo=None` can be specified to create a
-    naive [`time`](#datetime.time "datetime.time") from an aware [`time`](#datetime.time "datetime.time"), without conversion of the
+    naive `time` from an aware `time`, without conversion of the
     time data.
+
+    [`time`](#datetime.time "datetime.time") objects are also supported by generic function
+    [`copy.replace()`](copy.html#copy.replace "copy.replace").
 
     Changed in version 3.6: Added the *fold* parameter.
 
-time.isoformat(*timespec='auto'*)[¶](#datetime.time.isoformat "Link to this definition")
+time.isoformat(*timespec='auto'*)
 :   Return a string representing the time in ISO 8601 format, one of:
 
     * `HH:MM:SS.ffffff`, if [`microsecond`](#datetime.time.microsecond "datetime.time.microsecond") is not 0
@@ -1681,67 +1728,67 @@ time.isoformat(*timespec='auto'*)[¶](#datetime.time.isoformat "Link to this def
     Example:
 
     ```
-    >>> from datetime import time
-    >>> time(hour=12, minute=34, second=56, microsecond=123456).isoformat(timespec='minutes')
+    >>> importdatetimeasdt
+    >>> dt.time(hour=12, minute=34, second=56, microsecond=123456).isoformat(timespec='minutes')
     '12:34'
-    >>> dt = time(hour=12, minute=34, second=56, microsecond=0)
-    >>> dt.isoformat(timespec='microseconds')
+    >>> my_time = dt.time(hour=12, minute=34, second=56, microsecond=0)
+    >>> my_time.isoformat(timespec='microseconds')
     '12:34:56.000000'
-    >>> dt.isoformat(timespec='auto')
+    >>> my_time.isoformat(timespec='auto')
     '12:34:56'
     ```
 
     Changed in version 3.6: Added the *timespec* parameter.
 
-time.\_\_str\_\_()[¶](#datetime.time.__str__ "Link to this definition")
+time.\_\_str\_\_()
 :   For a time `t`, `str(t)` is equivalent to `t.isoformat()`.
 
-time.strftime(*format*)[¶](#datetime.time.strftime "Link to this definition")
+time.strftime(*format*)
 :   Return a string representing the time, controlled by an explicit format
-    string. See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and [`time.isoformat()`](#datetime.time.isoformat "datetime.time.isoformat").
+    string. See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and [`time.isoformat()`](#datetime.time.isoformat "datetime.time.isoformat").
 
-time.\_\_format\_\_(*format*)[¶](#datetime.time.__format__ "Link to this definition")
+time.\_\_format\_\_(*format*)
 :   Same as [`time.strftime()`](#datetime.time.strftime "datetime.time.strftime"). This makes it possible to specify
     a format string for a [`time`](#datetime.time "datetime.time") object in [formatted string
     literals](../reference/lexical_analysis.html#f-strings) and when using [`str.format()`](stdtypes.html#str.format "str.format").
-    See also [strftime() and strptime() Behavior](#strftime-strptime-behavior) and [`time.isoformat()`](#datetime.time.isoformat "datetime.time.isoformat").
+    See also [strftime() and strptime() behavior](#strftime-strptime-behavior) and [`time.isoformat()`](#datetime.time.isoformat "datetime.time.isoformat").
 
-time.utcoffset()[¶](#datetime.time.utcoffset "Link to this definition")
+time.utcoffset()
 :   If [`tzinfo`](#datetime.time.tzinfo "datetime.time.tzinfo") is `None`, returns `None`, else returns
     `self.tzinfo.utcoffset(None)`, and raises an exception if the latter doesn’t
     return `None` or a [`timedelta`](#datetime.timedelta "datetime.timedelta") object with magnitude less than one day.
 
     Changed in version 3.7: The UTC offset is not restricted to a whole number of minutes.
 
-time.dst()[¶](#datetime.time.dst "Link to this definition")
+time.dst()
 :   If [`tzinfo`](#datetime.time.tzinfo "datetime.time.tzinfo") is `None`, returns `None`, else returns
     `self.tzinfo.dst(None)`, and raises an exception if the latter doesn’t return
     `None`, or a [`timedelta`](#datetime.timedelta "datetime.timedelta") object with magnitude less than one day.
 
     Changed in version 3.7: The DST offset is not restricted to a whole number of minutes.
 
-time.tzname()[¶](#datetime.time.tzname "Link to this definition")
+time.tzname()
 :   If [`tzinfo`](#datetime.time.tzinfo "datetime.time.tzinfo") is `None`, returns `None`, else returns
     `self.tzinfo.tzname(None)`, or raises an exception if the latter doesn’t
     return `None` or a string object.
 
-### Examples of Usage: [`time`](#datetime.time "datetime.time")[¶](#examples-of-usage-time "Link to this heading")
+### Examples of usage: `time`
 
 Examples of working with a [`time`](#datetime.time "datetime.time") object:
 
 ```
->>> from datetime import time, tzinfo, timedelta
->>> class TZ1(tzinfo):
-...     def utcoffset(self, dt):
-...         return timedelta(hours=1)
-...     def dst(self, dt):
-...         return timedelta(0)
-...     def tzname(self,dt):
+>>> importdatetimeasdt
+>>> classTZ1(dt.tzinfo):
+...     defutcoffset(self, when):
+...         return dt.timedelta(hours=1)
+...     defdst(self, when):
+...         return dt.timedelta(0)
+...     deftzname(self, when):
 ...         return "+01:00"
-...     def  __repr__(self):
+...     def__repr__(self):
 ...         return f"{self.__class__.__name__}()"
 ...
->>> t = time(12, 10, 30, tzinfo=TZ1())
+>>> t = dt.time(12, 10, 30, tzinfo=TZ1())
 >>> t
 datetime.time(12, 10, 30, tzinfo=TZ1())
 >>> t.isoformat()
@@ -1756,62 +1803,62 @@ datetime.timedelta(0)
 'The time is 12:10.'
 ```
 
-## [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") Objects[¶](#tzinfo-objects "Link to this heading")
+## `tzinfo` objects
 
-*class* datetime.tzinfo[¶](#datetime.tzinfo "Link to this definition")
-:   This is an abstract base class, meaning that this class should not be
-    instantiated directly. Define a subclass of [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") to capture
+*class*datetime.tzinfo
+:   This is an [abstract base class](../glossary.html#term-abstract-base-class), meaning that this class should not be
+    instantiated directly. Define a subclass of `tzinfo` to capture
     information about a particular time zone.
 
-    An instance of (a concrete subclass of) [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") can be passed to the
+    An instance of (a concrete subclass of) `tzinfo` can be passed to the
     constructors for [`datetime`](#datetime.datetime "datetime.datetime") and [`time`](#datetime.time "datetime.time") objects. The latter objects
-    view their attributes as being in local time, and the [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") object
+    view their attributes as being in local time, and the `tzinfo` object
     supports methods revealing offset of local time from UTC, the name of the time
     zone, and DST offset, all relative to a date or time object passed to them.
 
     You need to derive a concrete subclass, and (at least)
-    supply implementations of the standard [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") methods needed by the
+    supply implementations of the standard `tzinfo` methods needed by the
     [`datetime`](#datetime.datetime "datetime.datetime") methods you use. The `datetime` module provides
-    [`timezone`](#datetime.timezone "datetime.timezone"), a simple concrete subclass of [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") which can
+    [`timezone`](#datetime.timezone "datetime.timezone"), a simple concrete subclass of `tzinfo` which can
     represent time zones with fixed offset from UTC such as UTC itself or North
     American EST and EDT.
 
-    Special requirement for pickling: A [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass must have an
+    Special requirement for pickling: A `tzinfo` subclass must have an
     [`__init__()`](../reference/datamodel.html#object.__init__ "object.__init__") method that can be called with no arguments,
     otherwise it can be
     pickled but possibly not unpickled again. This is a technical requirement that
     may be relaxed in the future.
 
-    A concrete subclass of [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") may need to implement the following
+    A concrete subclass of `tzinfo` may need to implement the following
     methods. Exactly which methods are needed depends on the uses made of aware
     `datetime` objects. If in doubt, simply implement all of them.
 
-tzinfo.utcoffset(*dt*)[¶](#datetime.tzinfo.utcoffset "Link to this definition")
+tzinfo.utcoffset(*dt*)
 :   Return offset of local time from UTC, as a [`timedelta`](#datetime.timedelta "datetime.timedelta") object that is
     positive east of UTC. If local time is west of UTC, this should be negative.
 
     This represents the *total* offset from UTC; for example, if a
     [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") object represents both time zone and DST adjustments,
-    [`utcoffset()`](#datetime.tzinfo.utcoffset "datetime.tzinfo.utcoffset") should return their sum. If the UTC offset isn’t known,
+    `utcoffset()` should return their sum. If the UTC offset isn’t known,
     return `None`. Else the value returned must be a [`timedelta`](#datetime.timedelta "datetime.timedelta") object
     strictly between `-timedelta(hours=24)` and `timedelta(hours=24)`
     (the magnitude of the offset must be less than one day). Most implementations
-    of [`utcoffset()`](#datetime.tzinfo.utcoffset "datetime.tzinfo.utcoffset") will probably look like one of these two:
+    of `utcoffset()` will probably look like one of these two:
 
     ```
     return CONSTANT                 # fixed-offset class
     return CONSTANT + self.dst(dt)  # daylight-aware class
     ```
 
-    If [`utcoffset()`](#datetime.tzinfo.utcoffset "datetime.tzinfo.utcoffset") does not return `None`, [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") should not return
+    If `utcoffset()` does not return `None`, [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") should not return
     `None` either.
 
-    The default implementation of [`utcoffset()`](#datetime.tzinfo.utcoffset "datetime.tzinfo.utcoffset") raises
+    The default implementation of `utcoffset()` raises
     [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError").
 
     Changed in version 3.7: The UTC offset is not restricted to a whole number of minutes.
 
-tzinfo.dst(*dt*)[¶](#datetime.tzinfo.dst "Link to this definition")
+tzinfo.dst(*dt*)
 :   Return the daylight saving time (DST) adjustment, as a [`timedelta`](#datetime.timedelta "datetime.timedelta")
     object or
     `None` if DST information isn’t known.
@@ -1819,11 +1866,11 @@ tzinfo.dst(*dt*)[¶](#datetime.tzinfo.dst "Link to this definition")
     Return `timedelta(0)` if DST is not in effect.
     If DST is in effect, return the offset as a [`timedelta`](#datetime.timedelta "datetime.timedelta") object
     (see [`utcoffset()`](#datetime.tzinfo.utcoffset "datetime.tzinfo.utcoffset") for details). Note that DST offset, if applicable, has
-    already been added to the UTC offset returned by [`utcoffset()`](#datetime.tzinfo.utcoffset "datetime.tzinfo.utcoffset"), so there’s
-    no need to consult [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") unless you’re interested in obtaining DST info
+    already been added to the UTC offset returned by `utcoffset()`, so there’s
+    no need to consult `dst()` unless you’re interested in obtaining DST info
     separately. For example, [`datetime.timetuple()`](#datetime.datetime.timetuple "datetime.datetime.timetuple") calls its [`tzinfo`](#datetime.datetime.tzinfo "datetime.datetime.tzinfo")
-    attribute’s [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") method to determine how the [`tm_isdst`](time.html#time.struct_time.tm_isdst "time.struct_time.tm_isdst") flag
-    should be set, and [`tzinfo.fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") calls [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") to account for
+    attribute’s `dst()` method to determine how the [`tm_isdst`](time.html#time.struct_time.tm_isdst "time.struct_time.tm_isdst") flag
+    should be set, and [`tzinfo.fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") calls `dst()` to account for
     DST changes when crossing time zones.
 
     An instance *tz* of a [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass that models both standard and
@@ -1832,41 +1879,45 @@ tzinfo.dst(*dt*)[¶](#datetime.tzinfo.dst "Link to this definition")
     `tz.utcoffset(dt) - tz.dst(dt)`
 
     must return the same result for every [`datetime`](#datetime.datetime "datetime.datetime") *dt* with `dt.tzinfo ==
-    tz`. For sane [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclasses, this expression yields the time
+    tz`. For sane `tzinfo` subclasses, this expression yields the time
     zone’s “standard offset”, which should not depend on the date or the time, but
     only on geographic location. The implementation of [`datetime.astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone")
     relies on this, but cannot detect violations; it’s the programmer’s
-    responsibility to ensure it. If a [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass cannot guarantee
+    responsibility to ensure it. If a `tzinfo` subclass cannot guarantee
     this, it may be able to override the default implementation of
-    [`tzinfo.fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") to work correctly with [`astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone") regardless.
+    [`tzinfo.fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") to work correctly with `astimezone()` regardless.
 
-    Most implementations of [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") will probably look like one of these two:
+    Most implementations of `dst()` will probably look like one of these two:
 
     ```
-    def dst(self, dt):
+    importdatetimeasdt
+
+    defdst(self, when):
         # a fixed-offset class:  doesn't account for DST
-        return timedelta(0)
+        return dt.timedelta(0)
     ```
 
     or:
 
     ```
-    def dst(self, dt):
+    importdatetimeasdt
+
+    defdst(self, when):
         # Code to set dston and dstoff to the time zone's DST
-        # transition times based on the input dt.year, and expressed
+        # transition times based on the input when.year, and expressed
         # in standard local time.
 
-        if dston <= dt.replace(tzinfo=None) < dstoff:
-            return timedelta(hours=1)
+        if dston <= when.replace(tzinfo=None) < dstoff:
+            return dt.timedelta(hours=1)
         else:
-            return timedelta(0)
+            return dt.timedelta(0)
     ```
 
-    The default implementation of [`dst()`](#datetime.tzinfo.dst "datetime.tzinfo.dst") raises [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError").
+    The default implementation of `dst()` raises [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError").
 
     Changed in version 3.7: The DST offset is not restricted to a whole number of minutes.
 
-tzinfo.tzname(*dt*)[¶](#datetime.tzinfo.tzname "Link to this definition")
+tzinfo.tzname(*dt*)
 :   Return the time zone name corresponding to the [`datetime`](#datetime.datetime "datetime.datetime") object *dt*, as
     a string. Nothing about string names is defined by the `datetime` module,
     and there’s no requirement that it mean anything in particular. For example,
@@ -1874,16 +1925,16 @@ tzinfo.tzname(*dt*)[¶](#datetime.tzinfo.tzname "Link to this definition")
     valid replies. Return `None` if a string name isn’t known. Note that this is
     a method rather than a fixed string primarily because some [`tzinfo`](#datetime.tzinfo "datetime.tzinfo")
     subclasses will wish to return different names depending on the specific value
-    of *dt* passed, especially if the [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") class is accounting for
+    of *dt* passed, especially if the `tzinfo` class is accounting for
     daylight time.
 
-    The default implementation of [`tzname()`](#datetime.tzinfo.tzname "datetime.tzinfo.tzname") raises [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError").
+    The default implementation of `tzname()` raises [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError").
 
 These methods are called by a [`datetime`](#datetime.datetime "datetime.datetime") or [`time`](#datetime.time "datetime.time") object, in
-response to their methods of the same names. A [`datetime`](#datetime.datetime "datetime.datetime") object passes
-itself as the argument, and a [`time`](#datetime.time "datetime.time") object passes `None` as the
+response to their methods of the same names. A `datetime` object passes
+itself as the argument, and a `time` object passes `None` as the
 argument. A [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass’s methods should therefore be prepared to
-accept a *dt* argument of `None`, or of class [`datetime`](#datetime.datetime "datetime.datetime").
+accept a *dt* argument of `None`, or of class `datetime`.
 
 When `None` is passed, it’s up to the class designer to decide the best
 response. For example, returning `None` is appropriate if the class wishes to
@@ -1891,120 +1942,122 @@ say that time objects don’t participate in the [`tzinfo`](#datetime.tzinfo "da
 may be more useful for `utcoffset(None)` to return the standard UTC offset, as
 there is no other convention for discovering the standard offset.
 
-When a [`datetime`](#datetime.datetime "datetime.datetime") object is passed in response to a [`datetime`](#datetime.datetime "datetime.datetime")
+When a [`datetime`](#datetime.datetime "datetime.datetime") object is passed in response to a `datetime`
 method, `dt.tzinfo` is the same object as *self*. [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") methods can
-rely on this, unless user code calls [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") methods directly. The
-intent is that the [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") methods interpret *dt* as being in local
+rely on this, unless user code calls `tzinfo` methods directly. The
+intent is that the `tzinfo` methods interpret *dt* as being in local
 time, and not need worry about objects in other time zones.
 
 There is one more [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") method that a subclass may wish to override:
 
-tzinfo.fromutc(*dt*)[¶](#datetime.tzinfo.fromutc "Link to this definition")
+tzinfo.fromutc(*dt*)
 :   This is called from the default [`datetime.astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone")
     implementation. When called from that, `dt.tzinfo` is *self*, and *dt*’s
     date and time data are to be viewed as expressing a UTC time. The purpose
-    of [`fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") is to adjust the date and time data, returning an
+    of `fromutc()` is to adjust the date and time data, returning an
     equivalent datetime in *self*’s local time.
 
     Most [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclasses should be able to inherit the default
-    [`fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") implementation without problems. It’s strong enough to handle
+    `fromutc()` implementation without problems. It’s strong enough to handle
     fixed-offset time zones, and time zones accounting for both standard and
     daylight time, and the latter even if the DST transition times differ in
-    different years. An example of a time zone the default [`fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc")
+    different years. An example of a time zone the default `fromutc()`
     implementation may not handle correctly in all cases is one where the standard
     offset (from UTC) depends on the specific date and time passed, which can happen
     for political reasons. The default implementations of [`astimezone()`](#datetime.datetime.astimezone "datetime.datetime.astimezone") and
-    [`fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") may not produce the result you want if the result is one of the
+    `fromutc()` may not produce the result you want if the result is one of the
     hours straddling the moment the standard offset changes.
 
-    Skipping code for error cases, the default [`fromutc()`](#datetime.tzinfo.fromutc "datetime.tzinfo.fromutc") implementation acts
+    Skipping code for error cases, the default `fromutc()` implementation acts
     like:
 
     ```
-    def fromutc(self, dt):
-        # raise ValueError error if dt.tzinfo is not self
-        dtoff = dt.utcoffset()
-        dtdst = dt.dst()
+    importdatetimeasdt
+
+    deffromutc(self, when):
+        # raise ValueError error if when.tzinfo is not self
+        dtoff = when.utcoffset()
+        dtdst = when.dst()
         # raise ValueError if dtoff is None or dtdst is None
         delta = dtoff - dtdst  # this is self's standard offset
         if delta:
-            dt += delta   # convert to standard local time
-            dtdst = dt.dst()
+            when += delta   # convert to standard local time
+            dtdst = when.dst()
             # raise ValueError if dtdst is None
         if dtdst:
-            return dt + dtdst
+            return when + dtdst
         else:
-            return dt
+            return when
     ```
 
 In the following [`tzinfo_examples.py`](../_downloads/6dc1f3f4f0e6ca13cb42ddf4d6cbc8af/tzinfo_examples.py) file there are some examples of
 [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") classes:
 
 ```
-from datetime import tzinfo, timedelta, datetime
-
-ZERO = timedelta(0)
-HOUR = timedelta(hours=1)
-SECOND = timedelta(seconds=1)
+importdatetimeasdt
 
 # A class capturing the platform's idea of local time.
 # (May result in wrong values on historical times in
 #  timezones where UTC offset and/or the DST rules had
 #  changed in the past.)
-import time as _time
+importtime
 
-STDOFFSET = timedelta(seconds = -_time.timezone)
-if _time.daylight:
-    DSTOFFSET = timedelta(seconds = -_time.altzone)
+ZERO = dt.timedelta(0)
+HOUR = dt.timedelta(hours=1)
+SECOND = dt.timedelta(seconds=1)
+
+STDOFFSET = dt.timedelta(seconds=-time.timezone)
+if time.daylight:
+    DSTOFFSET = dt.timedelta(seconds=-time.altzone)
 else:
     DSTOFFSET = STDOFFSET
 
 DSTDIFF = DSTOFFSET - STDOFFSET
 
-class LocalTimezone(tzinfo):
+classLocalTimezone(dt.tzinfo):
 
-    def fromutc(self, dt):
-        assert dt.tzinfo is self
-        stamp = (dt - datetime(1970, 1, 1, tzinfo=self)) // SECOND
-        args = _time.localtime(stamp)[:6]
+    deffromutc(self, when):
+        assert when.tzinfo is self
+        stamp = (when - dt.datetime(1970, 1, 1, tzinfo=self)) // SECOND
+        args = time.localtime(stamp)[:6]
         dst_diff = DSTDIFF // SECOND
         # Detect fold
-        fold = (args == _time.localtime(stamp - dst_diff))
-        return datetime(*args, microsecond=dt.microsecond,
-                        tzinfo=self, fold=fold)
+        fold = (args == time.localtime(stamp - dst_diff))
+        return dt.datetime(*args, microsecond=when.microsecond,
+                           tzinfo=self, fold=fold)
 
-    def utcoffset(self, dt):
-        if self._isdst(dt):
+    defutcoffset(self, when):
+        if self._isdst(when):
             return DSTOFFSET
         else:
             return STDOFFSET
 
-    def dst(self, dt):
-        if self._isdst(dt):
+    defdst(self, when):
+        if self._isdst(when):
             return DSTDIFF
         else:
             return ZERO
 
-    def tzname(self, dt):
-        return _time.tzname[self._isdst(dt)]
+    deftzname(self, when):
+        return time.tzname[self._isdst(when)]
 
-    def _isdst(self, dt):
-        tt = (dt.year, dt.month, dt.day,
-              dt.hour, dt.minute, dt.second,
-              dt.weekday(), 0, 0)
-        stamp = _time.mktime(tt)
-        tt = _time.localtime(stamp)
+    def_isdst(self, when):
+        tt = (when.year, when.month, when.day,
+              when.hour, when.minute, when.second,
+              when.weekday(), 0, 0)
+        stamp = time.mktime(tt)
+        tt = time.localtime(stamp)
         return tt.tm_isdst > 0
 
 Local = LocalTimezone()
 
 # A complete implementation of current DST rules for major US time zones.
 
-def first_sunday_on_or_after(dt):
-    days_to_go = 6 - dt.weekday()
+deffirst_sunday_on_or_after(when):
+    days_to_go = 6 - when.weekday()
     if days_to_go:
-        dt += timedelta(days_to_go)
-    return dt
+        when += dt.timedelta(days_to_go)
+    return when
 
 # US DST Rules
 #
@@ -2016,22 +2069,22 @@ def first_sunday_on_or_after(dt):
 #
 # In the US, since 2007, DST starts at 2am (standard time) on the second
 # Sunday in March, which is the first Sunday on or after Mar 8.
-DSTSTART_2007 = datetime(1, 3, 8, 2)
+DSTSTART_2007 = dt.datetime(1, 3, 8, 2)
 # and ends at 2am (DST time) on the first Sunday of Nov.
-DSTEND_2007 = datetime(1, 11, 1, 2)
+DSTEND_2007 = dt.datetime(1, 11, 1, 2)
 # From 1987 to 2006, DST used to start at 2am (standard time) on the first
 # Sunday in April and to end at 2am (DST time) on the last
 # Sunday of October, which is the first Sunday on or after Oct 25.
-DSTSTART_1987_2006 = datetime(1, 4, 1, 2)
-DSTEND_1987_2006 = datetime(1, 10, 25, 2)
+DSTSTART_1987_2006 = dt.datetime(1, 4, 1, 2)
+DSTEND_1987_2006 = dt.datetime(1, 10, 25, 2)
 # From 1967 to 1986, DST used to start at 2am (standard time) on the last
 # Sunday in April (the one on or after April 24) and to end at 2am (DST time)
 # on the last Sunday of October, which is the first Sunday
 # on or after Oct 25.
-DSTSTART_1967_1986 = datetime(1, 4, 24, 2)
+DSTSTART_1967_1986 = dt.datetime(1, 4, 24, 2)
 DSTEND_1967_1986 = DSTEND_1987_2006
 
-def us_dst_range(year):
+defus_dst_range(year):
     # Find start and end times for US DST. For years before 1967, return
     # start = end for no DST.
     if 2006 < year:
@@ -2041,62 +2094,62 @@ def us_dst_range(year):
     elif 1966 < year < 1987:
         dststart, dstend = DSTSTART_1967_1986, DSTEND_1967_1986
     else:
-        return (datetime(year, 1, 1), ) * 2
+        return (dt.datetime(year, 1, 1), ) * 2
 
     start = first_sunday_on_or_after(dststart.replace(year=year))
     end = first_sunday_on_or_after(dstend.replace(year=year))
     return start, end
 
-class USTimeZone(tzinfo):
+classUSTimeZone(dt.tzinfo):
 
-    def __init__(self, hours, reprname, stdname, dstname):
-        self.stdoffset = timedelta(hours=hours)
+    def__init__(self, hours, reprname, stdname, dstname):
+        self.stdoffset = dt.timedelta(hours=hours)
         self.reprname = reprname
         self.stdname = stdname
         self.dstname = dstname
 
-    def __repr__(self):
+    def__repr__(self):
         return self.reprname
 
-    def tzname(self, dt):
-        if self.dst(dt):
+    deftzname(self, when):
+        if self.dst(when):
             return self.dstname
         else:
             return self.stdname
 
-    def utcoffset(self, dt):
-        return self.stdoffset + self.dst(dt)
+    defutcoffset(self, when):
+        return self.stdoffset + self.dst(when)
 
-    def dst(self, dt):
-        if dt is None or dt.tzinfo is None:
+    defdst(self, when):
+        if when is None or when.tzinfo is None:
             # An exception may be sensible here, in one or both cases.
             # It depends on how you want to treat them.  The default
             # fromutc() implementation (called by the default astimezone()
-            # implementation) passes a datetime with dt.tzinfo is self.
+            # implementation) passes a datetime with when.tzinfo is self.
             return ZERO
-        assert dt.tzinfo is self
-        start, end = us_dst_range(dt.year)
+        assert when.tzinfo is self
+        start, end = us_dst_range(when.year)
         # Can't compare naive to aware objects, so strip the timezone from
-        # dt first.
-        dt = dt.replace(tzinfo=None)
-        if start + HOUR <= dt < end - HOUR:
+        # when first.
+        when = when.replace(tzinfo=None)
+        if start + HOUR <= when < end - HOUR:
             # DST is in effect.
             return HOUR
-        if end - HOUR <= dt < end:
-            # Fold (an ambiguous hour): use dt.fold to disambiguate.
-            return ZERO if dt.fold else HOUR
-        if start <= dt < start + HOUR:
+        if end - HOUR <= when < end:
+            # Fold (an ambiguous hour): use when.fold to disambiguate.
+            return ZERO if when.fold else HOUR
+        if start <= when < start + HOUR:
             # Gap (a non-existent hour): reverse the fold rule.
-            return HOUR if dt.fold else ZERO
+            return HOUR if when.fold else ZERO
         # DST is off.
         return ZERO
 
-    def fromutc(self, dt):
-        assert dt.tzinfo is self
-        start, end = us_dst_range(dt.year)
+    deffromutc(self, when):
+        assert when.tzinfo is self
+        start, end = us_dst_range(when.year)
         start = start.replace(tzinfo=self)
         end = end.replace(tzinfo=self)
-        std_time = dt + self.stdoffset
+        std_time = when + self.stdoffset
         dst_time = std_time + HOUR
         if end <= dst_time < end + HOUR:
             # Repeated hour
@@ -2136,9 +2189,9 @@ When DST starts (the “start” line), the local wall clock leaps from 1:59 to
 begins. For example, at the Spring forward transition of 2016, we get:
 
 ```
->>> from datetime import datetime, timezone
->>> from tzinfo_examples import HOUR, Eastern
->>> u0 = datetime(2016, 3, 13, 5, tzinfo=timezone.utc)
+>>> importdatetimeasdt
+>>> fromtzinfo_examplesimport HOUR, Eastern
+>>> u0 = dt.datetime(2016, 3, 13, 5, tzinfo=dt.timezone.utc)
 >>> for i in range(4):
 ...     u = u0 + i*HOUR
 ...     t = u.astimezone(Eastern)
@@ -2162,7 +2215,9 @@ have the [`fold`](#datetime.datetime.fold "datetime.datetime.fold") attribute se
 For example, at the Fall back transition of 2016, we get:
 
 ```
->>> u0 = datetime(2016, 11, 6, 4, tzinfo=timezone.utc)
+>>> importdatetimeasdt
+>>> fromtzinfo_examplesimport HOUR, Eastern
+>>> u0 = dt.datetime(2016, 11, 6, 4, tzinfo=dt.timezone.utc)
 >>> for i in range(4):
 ...     u = u0 + i*HOUR
 ...     t = u.astimezone(Eastern)
@@ -2180,7 +2235,7 @@ Note that the [`datetime`](#datetime.datetime "datetime.datetime") instances tha
 Applications that can’t bear wall-time ambiguities should explicitly check the
 value of the [`fold`](#datetime.datetime.fold "datetime.datetime.fold") attribute or avoid using hybrid
 [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclasses; there are no ambiguities when using [`timezone`](#datetime.timezone "datetime.timezone"),
-or any other fixed-offset [`tzinfo`](#datetime.tzinfo "datetime.tzinfo") subclass (such as a class representing
+or any other fixed-offset `tzinfo` subclass (such as a class representing
 only EST (fixed offset -5 hours), or only EDT (fixed offset -4 hours)).
 
 See also
@@ -2200,7 +2255,7 @@ See also
     made by political bodies to time zone boundaries, UTC offsets, and
     daylight-saving rules.
 
-## [`timezone`](#datetime.timezone "datetime.timezone") Objects[¶](#timezone-objects "Link to this heading")
+## `timezone` objects
 
 The [`timezone`](#datetime.timezone "datetime.timezone") class is a subclass of [`tzinfo`](#datetime.tzinfo "datetime.tzinfo"), each
 instance of which represents a time zone defined by a fixed offset from
@@ -2210,7 +2265,7 @@ Objects of this class cannot be used to represent time zone information in the
 locations where different offsets are used in different days of the year or
 where historical changes have been made to civil time.
 
-*class* datetime.timezone(*offset*, *name=None*)[¶](#datetime.timezone "Link to this definition")
+*class*datetime.timezone(*offset*, *name=None*)
 :   The *offset* argument must be specified as a [`timedelta`](#datetime.timedelta "datetime.timedelta")
     object representing the difference between the local time and UTC. It must
     be strictly between `-timedelta(hours=24)` and
@@ -2223,7 +2278,7 @@ where historical changes have been made to civil time.
 
     Changed in version 3.7: The UTC offset is not restricted to a whole number of minutes.
 
-timezone.utcoffset(*dt*)[¶](#datetime.timezone.utcoffset "Link to this definition")
+timezone.utcoffset(*dt*)
 :   Return the fixed value specified when the [`timezone`](#datetime.timezone "datetime.timezone") instance is
     constructed.
 
@@ -2232,7 +2287,7 @@ timezone.utcoffset(*dt*)[¶](#datetime.timezone.utcoffset "Link to this definiti
 
     Changed in version 3.7: The UTC offset is not restricted to a whole number of minutes.
 
-timezone.tzname(*dt*)[¶](#datetime.timezone.tzname "Link to this definition")
+timezone.tzname(*dt*)
 :   Return the fixed value specified when the [`timezone`](#datetime.timezone "datetime.timezone") instance
     is constructed.
 
@@ -2245,47 +2300,47 @@ timezone.tzname(*dt*)[¶](#datetime.timezone.tzname "Link to this definition")
     Changed in version 3.6: Name generated from `offset=timedelta(0)` is now plain `'UTC'`, not
     `'UTC+00:00'`.
 
-timezone.dst(*dt*)[¶](#datetime.timezone.dst "Link to this definition")
+timezone.dst(*dt*)
 :   Always returns `None`.
 
-timezone.fromutc(*dt*)[¶](#datetime.timezone.fromutc "Link to this definition")
+timezone.fromutc(*dt*)
 :   Return `dt + offset`. The *dt* argument must be an aware
     [`datetime`](#datetime.datetime "datetime.datetime") instance, with `tzinfo` set to `self`.
 
 Class attributes:
 
-timezone.utc[¶](#datetime.timezone.utc "Link to this definition")
+timezone.utc
 :   The UTC time zone, `timezone(timedelta(0))`.
 
-## [`strftime()`](#datetime.datetime.strftime "datetime.datetime.strftime") and [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") Behavior[¶](#strftime-and-strptime-behavior "Link to this heading")
+## `strftime()` and `strptime()` behavior
 
 [`date`](#datetime.date "datetime.date"), [`datetime`](#datetime.datetime "datetime.datetime"), and [`time`](#datetime.time "datetime.time") objects all support a
 `strftime(format)` method, to create a string representing the time under the
 control of an explicit format string.
 
-Conversely, the [`datetime.strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") class method creates a
-[`datetime`](#datetime.datetime "datetime.datetime") object from a string representing a date and time and a
-corresponding format string.
+Conversely, the [`date.strptime()`](#datetime.date.strptime "datetime.date.strptime"), [`datetime.strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") and
+[`time.strptime()`](time.html#time.strptime "time.strptime") class methods create an object from a string
+representing the time and a corresponding format string.
 
 The table below provides a high-level comparison of [`strftime()`](#datetime.datetime.strftime "datetime.datetime.strftime")
 versus [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime"):
 
 |  | `strftime` | `strptime` |
 | --- | --- | --- |
-| Usage | Convert object to a string according to a given format | Parse a string into a [`datetime`](#datetime.datetime "datetime.datetime") object given a corresponding format |
+| Usage | Convert object to a string according to a given format | Parse a string into an object given a corresponding format |
 | Type of method | Instance method | Class method |
-| Method of | [`date`](#datetime.date "datetime.date"); [`datetime`](#datetime.datetime "datetime.datetime"); [`time`](#datetime.time "datetime.time") | [`datetime`](#datetime.datetime "datetime.datetime") |
 | Signature | `strftime(format)` | `strptime(date_string, format)` |
 
-### [`strftime()`](#datetime.datetime.strftime "datetime.datetime.strftime") and [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") Format Codes[¶](#strftime-and-strptime-format-codes "Link to this heading")
+### `strftime()` and `strptime()` format codes
 
 These methods accept format codes that can be used to parse and format dates:
 
 ```
->>> datetime.strptime('31/01/22 23:59:59.999999',
-...                   '%d/%m/%y %H:%M:%S.%f')
+>>> importdatetimeasdt
+>>> dt.datetime.strptime('31/01/22 23:59:59.999999',
+...                      '%d/%m/%y %H:%M:%S.%f')
 datetime.datetime(2022, 1, 31, 23, 59, 59, 999999)
->>> _.strftime('%a %d %b %Y, %I:%M%p')
+>>> _.strftime('%a%d %b %Y, %I:%M%p')
 'Mon 31 Jan 2022, 11:59PM'
 ```
 
@@ -2344,31 +2399,38 @@ Added in version 3.6: `%G`, `%u` and `%V` were added.
 
 Added in version 3.12: `%:z` was added.
 
-### Technical Detail[¶](#technical-detail "Link to this heading")
+### Technical detail
 
 Broadly speaking, `d.strftime(fmt)` acts like the [`time`](time.html#module-time "time: Time access and conversions.") module’s
 `time.strftime(fmt, d.timetuple())` although not all objects support a
 [`timetuple()`](#datetime.date.timetuple "datetime.date.timetuple") method.
 
-For the [`datetime.strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") class method, the default value is
-`1900-01-01T00:00:00.000`: any components not specified in the format string
-will be pulled from the default value.
+For the [`datetime.strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") and [`date.strptime()`](#datetime.date.strptime "datetime.date.strptime") class methods,
+the default value is `1900-01-01T00:00:00.000`: any components not specified
+in the format string will be pulled from the default value.
 
 Note
 
-When used to parse partial dates lacking a year, [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime")
-will raise when encountering February 29 because its default year of 1900 is
-*not* a leap year. Always add a default leap year to partial date strings
-before parsing.
+Format strings without separators can be ambiguous for parsing. For
+example, with `%Y%m%d`, the string `2026111` may be parsed either as
+`2026-11-01` or as `2026-01-11`.
+Use separators to ensure the input is parsed as intended.
+
+Note
+
+When used to parse partial dates lacking a year, [`datetime.strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime")
+and [`date.strptime()`](#datetime.date.strptime "datetime.date.strptime") will raise when encountering February 29 because
+the default year of 1900 is *not* a leap year. Always add a default leap
+year to partial date strings before parsing.
 
 ```
->>> from datetime import datetime
+>>> importdatetimeasdt
 >>> value = "2/29"
->>> datetime.strptime(value, "%m/%d")
+>>> dt.datetime.strptime(value, "%m/%d")
 Traceback (most recent call last):
 ...
-ValueError: day is out of range for month
->>> datetime.strptime(f"1904 {value}", "%Y %m/%d")
+ValueError: day 29 must be in range 1..28 for month 2 in year 1900
+>>> dt.datetime.strptime(f"1904 {value}", "%Y %m/%d")
 datetime.datetime(1904, 2, 29, 0, 0)
 ```
 
@@ -2387,7 +2449,7 @@ be used, as `time` objects have no such values. If they’re used anyway,
 1900 is substituted for the year, and 1 for the month and day.
 
 For [`date`](#datetime.date "datetime.date") objects, the format codes for hours, minutes, seconds, and
-microseconds should not be used, as [`date`](#datetime.date "datetime.date") objects have no such
+microseconds should not be used, as `date` objects have no such
 values. If they’re used anyway, 0 is substituted for them.
 
 For the same reason, handling of format strings containing Unicode code points
@@ -2433,7 +2495,7 @@ Notes:
        offset microseconds. The `ffffff` part is omitted when the offset is a
        whole number of seconds and both the `ffffff` and the `SS` part is
        omitted when the offset is a whole number of minutes. For example, if
-       [`utcoffset()`](#datetime.datetime.utcoffset "datetime.datetime.utcoffset") returns `timedelta(hours=-3, minutes=-30)`, `%z` is
+       `utcoffset()` returns `timedelta(hours=-3, minutes=-30)`, `%z` is
        replaced with the string `'-0330'`.
 
    Changed in version 3.7: The UTC offset is not restricted to a whole number of minutes.
@@ -2475,98 +2537,27 @@ Notes:
 9. When used with the [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") method, the leading zero is optional
    for formats `%d`, `%m`, `%H`, `%I`, `%M`, `%S`, `%j`, `%U`,
    `%W`, and `%V`. Format `%y` does require a leading zero.
-10. Parsing dates without a year using [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") will fail on
-    representations of February 29 as that date does not exist in the default
-    year of 1900.
+10. When parsing a month and day using [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime"), always
+    include a year in the format. If the value you need to parse lacks a year,
+    append an explicit dummy leap year. Otherwise your code will raise an
+    exception when it encounters leap day because the default year used by the
+    parser (1900) is not a leap year. Users run into that bug every leap year.
+
+    ```
+    >>> month_day = "02/29"
+    >>> dt.datetime.strptime(f"{month_day};1984", "%m/%d;%Y")  # No leap year bug.
+    datetime.datetime(1984, 2, 29, 0, 0)
+    ```
+
+    Deprecated since version 3.13, will be removed in version 3.15: [`strptime()`](#datetime.datetime.strptime "datetime.datetime.strptime") calls using a format string containing
+    a day of month without a year now emit a
+    [`DeprecationWarning`](exceptions.html#DeprecationWarning "DeprecationWarning"). In 3.15 or later we may change this into
+    an error or change the default year to a leap year. See [gh-70647](https://github.com/python/cpython/issues/70647).
 
 Footnotes
 
-[[1](#id1)]
+---
 
-If, that is, we ignore the effects of Relativity
+## Bibliography
 
-[[2](#id2)]
-
-This matches the definition of the “proleptic Gregorian” calendar in
-Dershowitz and Reingold’s book *Calendrical Calculations*,
-where it’s the base calendar for all computations. See the book for
-algorithms for converting between proleptic Gregorian ordinals and
-many other calendar systems.
-
-[[3](#id3)]
-
-See R. H. van Gent’s [guide to the mathematics of the ISO 8601 calendar](https://web.archive.org/web/20220531051136/https://webspace.science.uu.nl/~gent0113/calendar/isocalendar.htm)
-for a good explanation.
-
-### [Table of Contents](../contents.html)
-
-* [`datetime` — Basic date and time types](#)
-  + [Aware and Naive Objects](#aware-and-naive-objects)
-  + [Constants](#constants)
-  + [Available Types](#available-types)
-    - [Common Properties](#common-properties)
-    - [Determining if an Object is Aware or Naive](#determining-if-an-object-is-aware-or-naive)
-  + [`timedelta` Objects](#timedelta-objects)
-    - [Examples of usage: `timedelta`](#examples-of-usage-timedelta)
-  + [`date` Objects](#date-objects)
-    - [Examples of Usage: `date`](#examples-of-usage-date)
-  + [`datetime` Objects](#datetime-objects)
-    - [Examples of Usage: `datetime`](#examples-of-usage-datetime)
-  + [`time` Objects](#time-objects)
-    - [Examples of Usage: `time`](#examples-of-usage-time)
-  + [`tzinfo` Objects](#tzinfo-objects)
-  + [`timezone` Objects](#timezone-objects)
-  + [`strftime()` and `strptime()` Behavior](#strftime-and-strptime-behavior)
-    - [`strftime()` and `strptime()` Format Codes](#strftime-and-strptime-format-codes)
-    - [Technical Detail](#technical-detail)
-
-#### Previous topic
-
-[Data Types](datatypes.html "previous chapter")
-
-#### Next topic
-
-[`zoneinfo` — IANA time zone support](zoneinfo.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/datetime.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](zoneinfo.html "zoneinfo — IANA time zone support") |
-* [previous](datatypes.html "Data Types") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Data Types](datatypes.html) »
-* `datetime` — Basic date and time types
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`datetime` — Basic date and time types](https://docs.python.org/3/library/datetime.html)

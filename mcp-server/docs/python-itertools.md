@@ -1,55 +1,9 @@
-itertools — Functions creating iterators for efficient looping — Python 3.12.13 documentation
+# Python itertools
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
-
-* [`itertools` — Functions creating iterators for efficient looping](#)
-  + [Itertool Functions](#itertool-functions)
-  + [Itertools Recipes](#itertools-recipes)
-
-#### Previous topic
-
-[Functional Programming Modules](functional.html "previous chapter")
-
-#### Next topic
-
-[`functools` — Higher-order functions and operations on callable objects](functools.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/itertools.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](functools.html "functools — Higher-order functions and operations on callable objects") |
-* [previous](functional.html "Functional Programming Modules") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Functional Programming Modules](functional.html) »
-* `itertools` — Functions creating iterators for efficient looping
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `itertools` — Functions creating iterators for efficient looping[¶](#module-itertools "Link to this heading")
+## 1. `itertools` — Functions creating iterators for efficient looping
 
 ---
 
@@ -66,20 +20,7 @@ For instance, SML provides a tabulation tool: `tabulate(f)` which produces a
 sequence `f(0), f(1), ...`. The same effect can be achieved in Python
 by combining [`map()`](functions.html#map "map") and [`count()`](#itertools.count "itertools.count") to form `map(f, count())`.
 
-These tools and their built-in counterparts also work well with the high-speed
-functions in the [`operator`](operator.html#module-operator "operator: Functions corresponding to the standard operators.") module. For example, the multiplication
-operator can be mapped across two vectors to form an efficient dot-product:
-`sum(starmap(operator.mul, zip(vec1, vec2, strict=True)))`.
-
-**Infinite iterators:**
-
-| Iterator | Arguments | Results | Example |
-| --- | --- | --- | --- |
-| [`count()`](#itertools.count "itertools.count") | [start[, step]] | start, start+step, start+2\*step, … | `count(10) → 10 11 12 13 14 ...` |
-| [`cycle()`](#itertools.cycle "itertools.cycle") | p | p0, p1, … plast, p0, p1, … | `cycle('ABCD') → A B C D A B C D ...` |
-| [`repeat()`](#itertools.repeat "itertools.repeat") | elem [,n] | elem, elem, elem, … endlessly or up to n times | `repeat(10, 3) → 10 10 10` |
-
-**Iterators terminating on the shortest input sequence:**
+**General iterators:**
 
 | Iterator | Arguments | Results | Example |
 | --- | --- | --- | --- |
@@ -88,14 +29,17 @@ operator can be mapped across two vectors to form an efficient dot-product:
 | [`chain()`](#itertools.chain "itertools.chain") | p, q, … | p0, p1, … plast, q0, q1, … | `chain('ABC', 'DEF') → A B C D E F` |
 | [`chain.from_iterable()`](#itertools.chain.from_iterable "itertools.chain.from_iterable") | iterable | p0, p1, … plast, q0, q1, … | `chain.from_iterable(['ABC', 'DEF']) → A B C D E F` |
 | [`compress()`](#itertools.compress "itertools.compress") | data, selectors | (d[0] if s[0]), (d[1] if s[1]), … | `compress('ABCDEF', [1,0,1,0,1,1]) → A C E F` |
+| [`count()`](#itertools.count "itertools.count") | [start[, step]] | start, start+step, start+2\*step, … | `count(10) → 10 11 12 13 14 ...` |
+| [`cycle()`](#itertools.cycle "itertools.cycle") | p | p0, p1, … plast, p0, p1, … | `cycle('ABCD') → A B C D A B C D ...` |
 | [`dropwhile()`](#itertools.dropwhile "itertools.dropwhile") | predicate, seq | seq[n], seq[n+1], starting when predicate fails | `dropwhile(lambda x: x<5, [1,4,6,3,8]) → 6 3 8` |
 | [`filterfalse()`](#itertools.filterfalse "itertools.filterfalse") | predicate, seq | elements of seq where predicate(elem) fails | `filterfalse(lambda x: x<5, [1,4,6,3,8]) → 6 8` |
-| [`groupby()`](#itertools.groupby "itertools.groupby") | iterable[, key] | sub-iterators grouped by value of key(v) |  |
+| [`groupby()`](#itertools.groupby "itertools.groupby") | iterable[, key] | sub-iterators grouped by value of key(v) | `groupby(['A','B','DEF'], len) → (1, A B) (3, DEF)` |
 | [`islice()`](#itertools.islice "itertools.islice") | seq, [start,] stop [, step] | elements from seq[start:stop:step] | `islice('ABCDEFG', 2, None) → C D E F G` |
 | [`pairwise()`](#itertools.pairwise "itertools.pairwise") | iterable | (p[0], p[1]), (p[1], p[2]) | `pairwise('ABCDEFG') → AB BC CD DE EF FG` |
+| [`repeat()`](#itertools.repeat "itertools.repeat") | elem [,n] | elem, elem, elem, … endlessly or up to n times | `repeat(10, 3) → 10 10 10` |
 | [`starmap()`](#itertools.starmap "itertools.starmap") | func, seq | func(\*seq[0]), func(\*seq[1]), … | `starmap(pow, [(2,5), (3,2), (10,3)]) → 32 9 1000` |
 | [`takewhile()`](#itertools.takewhile "itertools.takewhile") | predicate, seq | seq[0], seq[1], until predicate fails | `takewhile(lambda x: x<5, [1,4,6,3,8]) → 1 4` |
-| [`tee()`](#itertools.tee "itertools.tee") | it, n | it1, it2, … itn splits one iterator into n |  |
+| [`tee()`](#itertools.tee "itertools.tee") | it, n | it1, it2, … itn splits one iterator into n | `tee('ABC', 2) → A B C, A B C` |
 | [`zip_longest()`](#itertools.zip_longest "itertools.zip_longest") | p, q, … | (p[0], q[0]), (p[1], q[1]), … | `zip_longest('ABCD', 'xy', fillvalue='-') → Ax By C- D-` |
 
 **Combinatoric iterators:**
@@ -112,15 +56,15 @@ operator can be mapped across two vectors to form an efficient dot-product:
 | `product('ABCD', repeat=2)` | `AA AB AC AD BA BB BC BD CA CB CC CD DA DB DC DD` |
 | `permutations('ABCD', 2)` | `AB AC AD BA BC BD CA CB CD DA DB DC` |
 | `combinations('ABCD', 2)` | `AB AC AD BC BD CD` |
-| `combinations_with_replacement('ABCD', 2)` | `AA AB AC AD BB BC BD CC CD DD` |
+| `combinations_with_replacement('ABCD', 2)` | `AA AB AC AD BB BC BD CC CD DD` |
 
-## Itertool Functions[¶](#itertool-functions "Link to this heading")
+## Itertool Functions
 
-The following module functions all construct and return iterators. Some provide
+The following functions all construct and return iterators. Some provide
 streams of infinite length, so they should only be accessed by functions or
 loops that truncate the stream.
 
-itertools.accumulate(*iterable*[, *function*, *\**, *initial=None*])[¶](#itertools.accumulate "Link to this definition")
+itertools.accumulate(*iterable*[, *function*, *\**, *initial=None*])
 :   Make an iterator that returns accumulated sums or accumulated
     results from other binary functions.
 
@@ -134,7 +78,7 @@ itertools.accumulate(*iterable*[, *function*, *\**, *initial=None*])[¶](#iterto
     Roughly equivalent to:
 
     ```
-    def accumulate(iterable, function=operator.add, *, initial=None):
+    defaccumulate(iterable, function=operator.add, *, initial=None):
         'Return running totals'
         # accumulate([1,2,3,4,5]) → 1 3 6 10 15
         # accumulate([1,2,3,4,5], initial=100) → 100 101 103 106 110 115
@@ -154,10 +98,11 @@ itertools.accumulate(*iterable*[, *function*, *\**, *initial=None*])[¶](#iterto
             yield total
     ```
 
-    The *function* argument can be set to [`min()`](functions.html#min "min") for a running
-    minimum, [`max()`](functions.html#max "max") for a running maximum, or [`operator.mul()`](operator.html#operator.mul "operator.mul")
-    for a running product. [Amortization tables](https://www.ramseysolutions.com/real-estate/amortization-schedule)
-    can be built by accumulating interest and applying payments:
+    To compute a running minimum, set *function* to [`min()`](functions.html#min "min").
+    For a running maximum, set *function* to [`max()`](functions.html#max "max").
+    Or for a running product, set *function* to [`operator.mul()`](operator.html#operator.mul "operator.mul").
+    To build an [amortization table](https://www.ramseysolutions.com/real-estate/amortization-schedule),
+    accumulate the interest and apply payments:
 
     ```
     >>> data = [3, 4, 6, 2, 1, 9, 0, 7, 5, 8]
@@ -181,9 +126,12 @@ itertools.accumulate(*iterable*[, *function*, *\**, *initial=None*])[¶](#iterto
 
     Changed in version 3.8: Added the optional *initial* parameter.
 
-itertools.batched(*iterable*, *n*)[¶](#itertools.batched "Link to this definition")
+itertools.batched(*iterable*, *n*, *\**, *strict=False*)
 :   Batch data from the *iterable* into tuples of length *n*. The last
     batch may be shorter than *n*.
+
+    If *strict* is true, will raise a [`ValueError`](exceptions.html#ValueError "ValueError") if the final
+    batch is shorter than *n*.
 
     Loops over the input iterable and accumulates data into tuples up to
     size *n*. The input is consumed lazily, just enough to fill a batch.
@@ -200,42 +148,46 @@ itertools.batched(*iterable*, *n*)[¶](#itertools.batched "Link to this definiti
     Roughly equivalent to:
 
     ```
-    def batched(iterable, n):
+    defbatched(iterable, n, *, strict=False):
         # batched('ABCDEFG', 3) → ABC DEF G
         if n < 1:
             raise ValueError('n must be at least one')
         iterator = iter(iterable)
         while batch := tuple(islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError('batched(): incomplete batch')
             yield batch
     ```
 
     Added in version 3.12.
 
-itertools.chain(*\*iterables*)[¶](#itertools.chain "Link to this definition")
-:   Make an iterator that returns elements from the first iterable until it is
-    exhausted, then proceeds to the next iterable, until all of the iterables are
-    exhausted. Used for treating consecutive sequences as a single sequence.
-    Roughly equivalent to:
+    Changed in version 3.13: Added the *strict* option.
+
+itertools.chain(*\*iterables*)
+:   Make an iterator that returns elements from the first iterable until
+    it is exhausted, then proceeds to the next iterable, until all of the
+    iterables are exhausted. This combines multiple data sources into a
+    single iterator. Roughly equivalent to:
 
     ```
-    def chain(*iterables):
+    defchain(*iterables):
         # chain('ABC', 'DEF') → A B C D E F
         for iterable in iterables:
             yield from iterable
     ```
 
-*classmethod* chain.from\_iterable(*iterable*)[¶](#itertools.chain.from_iterable "Link to this definition")
+*classmethod*chain.from\_iterable(*iterable*)
 :   Alternate constructor for [`chain()`](#itertools.chain "itertools.chain"). Gets chained inputs from a
     single iterable argument that is evaluated lazily. Roughly equivalent to:
 
     ```
-    def from_iterable(iterables):
+    deffrom_iterable(iterables):
         # chain.from_iterable(['ABC', 'DEF']) → A B C D E F
         for iterable in iterables:
             yield from iterable
     ```
 
-itertools.combinations(*iterable*, *r*)[¶](#itertools.combinations "Link to this definition")
+itertools.combinations(*iterable*, *r*)
 :   Return *r* length subsequences of elements from the input *iterable*.
 
     The output is a subsequence of [`product()`](#itertools.product "itertools.product") keeping only entries that
@@ -254,7 +206,7 @@ itertools.combinations(*iterable*, *r*)[¶](#itertools.combinations "Link to thi
     Roughly equivalent to:
 
     ```
-    def combinations(iterable, r):
+    defcombinations(iterable, r):
         # combinations('ABCD', 2) → AB AC AD BC BD CD
         # combinations(range(4), 3) → 012 013 023 123
 
@@ -277,7 +229,7 @@ itertools.combinations(*iterable*, *r*)[¶](#itertools.combinations "Link to thi
             yield tuple(pool[i] for i in indices)
     ```
 
-itertools.combinations\_with\_replacement(*iterable*, *r*)[¶](#itertools.combinations_with_replacement "Link to this definition")
+itertools.combinations\_with\_replacement(*iterable*, *r*)
 :   Return *r* length subsequences of elements from the input *iterable*
     allowing individual elements to be repeated more than once.
 
@@ -297,7 +249,7 @@ itertools.combinations\_with\_replacement(*iterable*, *r*)[¶](#itertools.combin
     Roughly equivalent to:
 
     ```
-    def combinations_with_replacement(iterable, r):
+    defcombinations_with_replacement(iterable, r):
         # combinations_with_replacement('ABC', 2) → AA AB AC BB BC CC
 
         pool = tuple(iterable)
@@ -319,28 +271,28 @@ itertools.combinations\_with\_replacement(*iterable*, *r*)[¶](#itertools.combin
 
     Added in version 3.1.
 
-itertools.compress(*data*, *selectors*)[¶](#itertools.compress "Link to this definition")
+itertools.compress(*data*, *selectors*)
 :   Make an iterator that returns elements from *data* where the
     corresponding element in *selectors* is true. Stops when either the
     *data* or *selectors* iterables have been exhausted. Roughly
     equivalent to:
 
     ```
-    def compress(data, selectors):
+    defcompress(data, selectors):
         # compress('ABCDEF', [1,0,1,0,1,1]) → A C E F
         return (datum for datum, selector in zip(data, selectors) if selector)
     ```
 
     Added in version 3.1.
 
-itertools.count(*start=0*, *step=1*)[¶](#itertools.count "Link to this definition")
+itertools.count(*start=0*, *step=1*)
 :   Make an iterator that returns evenly spaced values beginning with
     *start*. Can be used with [`map()`](functions.html#map "map") to generate consecutive data
     points or with [`zip()`](functions.html#zip "zip") to add sequence numbers. Roughly
     equivalent to:
 
     ```
-    def count(start=0, step=1):
+    defcount(start=0, step=1):
         # count(10) → 10 11 12 13 14 ...
         # count(2.5, 0.5) → 2.5 3.0 3.5 ...
         n = start
@@ -355,18 +307,20 @@ itertools.count(*start=0*, *step=1*)[¶](#itertools.count "Link to this definiti
 
     Changed in version 3.1: Added *step* argument and allowed non-integer arguments.
 
-itertools.cycle(*iterable*)[¶](#itertools.cycle "Link to this definition")
+itertools.cycle(*iterable*)
 :   Make an iterator returning elements from the *iterable* and saving a
     copy of each. When the iterable is exhausted, return elements from
     the saved copy. Repeats indefinitely. Roughly equivalent to:
 
     ```
-    def cycle(iterable):
+    defcycle(iterable):
         # cycle('ABCD') → A B C D A B C D A B C D ...
+
         saved = []
         for element in iterable:
             yield element
             saved.append(element)
+
         while saved:
             for element in saved:
                 yield element
@@ -375,13 +329,13 @@ itertools.cycle(*iterable*)[¶](#itertools.cycle "Link to this definition")
     This itertool may require significant auxiliary storage (depending on
     the length of the iterable).
 
-itertools.dropwhile(*predicate*, *iterable*)[¶](#itertools.dropwhile "Link to this definition")
+itertools.dropwhile(*predicate*, *iterable*)
 :   Make an iterator that drops elements from the *iterable* while the
     *predicate* is true and afterwards returns every element. Roughly
     equivalent to:
 
     ```
-    def dropwhile(predicate, iterable):
+    defdropwhile(predicate, iterable):
         # dropwhile(lambda x: x<5, [1,4,6,3,8]) → 6 3 8
 
         iterator = iter(iterable)
@@ -397,37 +351,39 @@ itertools.dropwhile(*predicate*, *iterable*)[¶](#itertools.dropwhile "Link to t
     Note this does not produce *any* output until the predicate first
     becomes false, so this itertool may have a lengthy start-up time.
 
-itertools.filterfalse(*predicate*, *iterable*)[¶](#itertools.filterfalse "Link to this definition")
+itertools.filterfalse(*predicate*, *iterable*)
 :   Make an iterator that filters elements from the *iterable* returning
     only those for which the *predicate* returns a false value. If
     *predicate* is `None`, returns the items that are false. Roughly
     equivalent to:
 
     ```
-    def filterfalse(predicate, iterable):
+    deffilterfalse(predicate, iterable):
         # filterfalse(lambda x: x<5, [1,4,6,3,8]) → 6 8
+
         if predicate is None:
             predicate = bool
+
         for x in iterable:
             if not predicate(x):
                 yield x
     ```
 
-itertools.groupby(*iterable*, *key=None*)[¶](#itertools.groupby "Link to this definition")
+itertools.groupby(*iterable*, *key=None*)
 :   Make an iterator that returns consecutive keys and groups from the *iterable*.
     The *key* is a function computing a key value for each element. If not
     specified or is `None`, *key* defaults to an identity function and returns
     the element unchanged. Generally, the iterable needs to already be sorted on
     the same key function.
 
-    The operation of [`groupby()`](#itertools.groupby "itertools.groupby") is similar to the `uniq` filter in Unix. It
+    The operation of `groupby()` is similar to the `uniq` filter in Unix. It
     generates a break or new group every time the value of the key function changes
     (which is why it is usually necessary to have sorted the data using the same key
     function). That behavior differs from SQL’s GROUP BY which aggregates common
     elements regardless of their input order.
 
     The returned group is itself an iterator that shares the underlying iterable
-    with [`groupby()`](#itertools.groupby "itertools.groupby"). Because the source is shared, when the [`groupby()`](#itertools.groupby "itertools.groupby")
+    with `groupby()`. Because the source is shared, when the `groupby()`
     object is advanced, the previous group is no longer visible. So, if that data
     is needed later, it should be stored as a list:
 
@@ -440,10 +396,10 @@ itertools.groupby(*iterable*, *key=None*)[¶](#itertools.groupby "Link to this d
         uniquekeys.append(k)
     ```
 
-    [`groupby()`](#itertools.groupby "itertools.groupby") is roughly equivalent to:
+    `groupby()` is roughly equivalent to:
 
     ```
-    def groupby(iterable, key=None):
+    defgroupby(iterable, key=None):
         # [k for k, g in groupby('AAAABBBCCDAABBB')] → A B C D A B
         # [list(g) for k, g in groupby('AAAABBBCCD')] → AAAA BBB CC D
 
@@ -451,7 +407,7 @@ itertools.groupby(*iterable*, *key=None*)[¶](#itertools.groupby "Link to this d
         iterator = iter(iterable)
         exhausted = False
 
-        def _grouper(target_key):
+        def_grouper(target_key):
             nonlocal curr_value, curr_key, exhausted
             yield curr_value
             for curr_value in iterator:
@@ -476,7 +432,7 @@ itertools.groupby(*iterable*, *key=None*)[¶](#itertools.groupby "Link to this d
                     pass
     ```
 
-itertools.islice(*iterable*, *stop*)[¶](#itertools.islice "Link to this definition")
+itertools.islice(*iterable*, *stop*)
 
 itertools.islice(*iterable*, *start*, *stop*[, *step*])
 :   Make an iterator that returns selected elements from the iterable.
@@ -486,7 +442,7 @@ itertools.islice(*iterable*, *start*, *stop*[, *step*])
     If *start* is zero or `None`, iteration starts at zero. Otherwise,
     elements from the iterable are skipped until *start* is reached.
 
-    If *stop* is `None`, iteration continues until the iterator is
+    If *stop* is `None`, iteration continues until the input is
     exhausted, if at all. Otherwise, it stops at the specified position.
 
     If *step* is `None`, the step defaults to one. Elements are returned
@@ -496,7 +452,7 @@ itertools.islice(*iterable*, *start*, *stop*[, *step*])
     Roughly equivalent to:
 
     ```
-    def islice(iterable, *args):
+    defislice(iterable, *args):
         # islice('ABCDEFG', 2) → A B
         # islice('ABCDEFG', 2, 4) → C D
         # islice('ABCDEFG', 2, None) → C D E F G
@@ -517,7 +473,11 @@ itertools.islice(*iterable*, *start*, *stop*[, *step*])
                 next_i += step
     ```
 
-itertools.pairwise(*iterable*)[¶](#itertools.pairwise "Link to this definition")
+    If the input is an iterator, then fully consuming the *islice*
+    advances the input iterator by `max(start, stop)` steps regardless
+    of the *step* value.
+
+itertools.pairwise(*iterable*)
 :   Return successive overlapping pairs taken from the input *iterable*.
 
     The number of 2-tuples in the output iterator will be one fewer than the
@@ -527,10 +487,12 @@ itertools.pairwise(*iterable*)[¶](#itertools.pairwise "Link to this definition"
     Roughly equivalent to:
 
     ```
-    def pairwise(iterable):
+    defpairwise(iterable):
         # pairwise('ABCDEFG') → AB BC CD DE EF FG
+
         iterator = iter(iterable)
         a = next(iterator, None)
+
         for b in iterator:
             yield a, b
             a = b
@@ -538,7 +500,7 @@ itertools.pairwise(*iterable*)[¶](#itertools.pairwise "Link to this definition"
 
     Added in version 3.10.
 
-itertools.permutations(*iterable*, *r=None*)[¶](#itertools.permutations "Link to this definition")
+itertools.permutations(*iterable*, *r=None*)
 :   Return successive *r* length [permutations of elements](https://www.britannica.com/science/permutation) from the *iterable*.
 
     If *r* is not specified or is `None`, then *r* defaults to the length
@@ -561,7 +523,7 @@ itertools.permutations(*iterable*, *r=None*)[¶](#itertools.permutations "Link t
     Roughly equivalent to:
 
     ```
-    def permutations(iterable, r=None):
+    defpermutations(iterable, r=None):
         # permutations('ABCD', 2) → AB AC AD BA BC BD CA CB CD DA DB DC
         # permutations(range(3)) → 012 021 102 120 201 210
 
@@ -590,8 +552,9 @@ itertools.permutations(*iterable*, *r=None*)[¶](#itertools.permutations "Link t
                 return
     ```
 
-itertools.product(*\*iterables*, *repeat=1*)[¶](#itertools.product "Link to this definition")
-:   Cartesian product of input iterables.
+itertools.product(*\*iterables*, *repeat=1*)
+:   [Cartesian product](https://en.wikipedia.org/wiki/Cartesian_product)
+    of the input iterables.
 
     Roughly equivalent to nested for-loops in a generator expression. For example,
     `product(A, B)` returns the same as `((x,y) for x in A for y in B)`.
@@ -609,10 +572,12 @@ itertools.product(*\*iterables*, *repeat=1*)[¶](#itertools.product "Link to thi
     actual implementation does not build up intermediate results in memory:
 
     ```
-    def product(*iterables, repeat=1):
+    defproduct(*iterables, repeat=1):
         # product('ABCD', 'xy') → Ax Ay Bx By Cx Cy Dx Dy
         # product(range(2), repeat=3) → 000 001 010 011 100 101 110 111
 
+        if repeat < 0:
+            raise ValueError('repeat argument cannot be negative')
         pools = [tuple(pool) for pool in iterables] * repeat
 
         result = [[]]
@@ -623,18 +588,18 @@ itertools.product(*\*iterables*, *repeat=1*)[¶](#itertools.product "Link to thi
             yield tuple(prod)
     ```
 
-    Before [`product()`](#itertools.product "itertools.product") runs, it completely consumes the input iterables,
+    Before `product()` runs, it completely consumes the input iterables,
     keeping pools of values in memory to generate the products. Accordingly,
     it is only useful with finite inputs.
 
-itertools.repeat(*object*[, *times*])[¶](#itertools.repeat "Link to this definition")
+itertools.repeat(*object*[, *times*])
 :   Make an iterator that returns *object* over and over again. Runs indefinitely
     unless the *times* argument is specified.
 
     Roughly equivalent to:
 
     ```
-    def repeat(object, times=None):
+    defrepeat(object, times=None):
         # repeat(10, 3) → 10 10 10
         if times is None:
             while True:
@@ -652,28 +617,28 @@ itertools.repeat(*object*[, *times*])[¶](#itertools.repeat "Link to this defini
     [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
     ```
 
-itertools.starmap(*function*, *iterable*)[¶](#itertools.starmap "Link to this definition")
+itertools.starmap(*function*, *iterable*)
 :   Make an iterator that computes the *function* using arguments obtained
     from the *iterable*. Used instead of [`map()`](functions.html#map "map") when argument
     parameters have already been “pre-zipped” into tuples.
 
-    The difference between [`map()`](functions.html#map "map") and [`starmap()`](#itertools.starmap "itertools.starmap") parallels the
+    The difference between [`map()`](functions.html#map "map") and `starmap()` parallels the
     distinction between `function(a,b)` and `function(*c)`. Roughly
     equivalent to:
 
     ```
-    def starmap(function, iterable):
+    defstarmap(function, iterable):
         # starmap(pow, [(2,5), (3,2), (10,3)]) → 32 9 1000
         for args in iterable:
             yield function(*args)
     ```
 
-itertools.takewhile(*predicate*, *iterable*)[¶](#itertools.takewhile "Link to this definition")
+itertools.takewhile(*predicate*, *iterable*)
 :   Make an iterator that returns elements from the *iterable* as long as
     the *predicate* is true. Roughly equivalent to:
 
     ```
-    def takewhile(predicate, iterable):
+    deftakewhile(predicate, iterable):
         # takewhile(lambda x: x<5, [1,4,6,3,8]) → 1 4
         for x in iterable:
             if not predicate(x):
@@ -688,13 +653,13 @@ itertools.takewhile(*predicate*, *iterable*)[¶](#itertools.takewhile "Link to t
     around this problem, consider using [more-itertools before\_and\_after()](https://more-itertools.readthedocs.io/en/stable/api.html#more_itertools.before_and_after)
     instead.
 
-itertools.tee(*iterable*, *n=2*)[¶](#itertools.tee "Link to this definition")
+itertools.tee(*iterable*, *n=2*)
 :   Return *n* independent iterators from a single iterable.
 
     Roughly equivalent to:
 
     ```
-    def tee(iterable, n=2):
+    deftee(iterable, n=2):
         if n < 0:
             raise ValueError
         if n == 0:
@@ -705,9 +670,9 @@ itertools.tee(*iterable*, *n=2*)[¶](#itertools.tee "Link to this definition")
             result.append(_tee(iterator))
         return tuple(result)
 
-    class _tee:
+    class_tee:
 
-        def __init__(self, iterable):
+        def__init__(self, iterable):
             it = iter(iterable)
             if isinstance(it, _tee):
                 self.iterator = it.iterator
@@ -716,10 +681,10 @@ itertools.tee(*iterable*, *n=2*)[¶](#itertools.tee "Link to this definition")
                 self.iterator = it
                 self.link = [None, None]
 
-        def __iter__(self):
+        def__iter__(self):
             return self
 
-        def __next__(self):
+        def__next__(self):
             link = self.link
             if link[1] is None:
                 link[0] = next(self.iterator)
@@ -728,16 +693,42 @@ itertools.tee(*iterable*, *n=2*)[¶](#itertools.tee "Link to this definition")
             return value
     ```
 
+    When the input *iterable* is already a tee iterator object, all
+    members of the return tuple are constructed as if they had been
+    produced by the upstream `tee()` call. This “flattening step”
+    allows nested `tee()` calls to share the same underlying data
+    chain and to have a single update step rather than a chain of calls.
+
+    The flattening property makes tee iterators efficiently peekable:
+
+    ```
+    deflookahead(tee_iterator):
+         "Return the next value without moving the input forward"
+         [forked_iterator] = tee(tee_iterator, 1)
+         return next(forked_iterator)
+    ```
+
+    ```
+    >>> iterator = iter('abcdef')
+    >>> [iterator] = tee(iterator, 1)   # Make the input peekable
+    >>> next(iterator)                  # Move the iterator forward
+    'a'
+    >>> lookahead(iterator)             # Check next value
+    'b'
+    >>> next(iterator)                  # Continue moving forward
+    'b'
+    ```
+
     `tee` iterators are not threadsafe. A [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError") may be
-    raised when simultaneously using iterators returned by the same [`tee()`](#itertools.tee "itertools.tee")
+    raised when simultaneously using iterators returned by the same `tee()`
     call, even if the original *iterable* is threadsafe.
 
     This itertool may require significant auxiliary storage (depending on how
     much temporary data needs to be stored). In general, if one iterator uses
     most or all of the data before another iterator starts, it is faster to use
-    [`list()`](stdtypes.html#list "list") instead of [`tee()`](#itertools.tee "itertools.tee").
+    [`list()`](stdtypes.html#list "list") instead of `tee()`.
 
-itertools.zip\_longest(*\*iterables*, *fillvalue=None*)[¶](#itertools.zip_longest "Link to this definition")
+itertools.zip\_longest(*\*iterables*, *fillvalue=None*)
 :   Make an iterator that aggregates elements from each of the
     *iterables*.
 
@@ -749,7 +740,7 @@ itertools.zip\_longest(*\*iterables*, *fillvalue=None*)[¶](#itertools.zip_longe
     Roughly equivalent to:
 
     ```
-    def zip_longest(*iterables, fillvalue=None):
+    defzip_longest(*iterables, fillvalue=None):
         # zip_longest('ABCD', 'xy', fillvalue='-') → Ax By C- D-
 
         iterators = list(map(iter, iterables))
@@ -772,11 +763,11 @@ itertools.zip\_longest(*\*iterables*, *fillvalue=None*)[¶](#itertools.zip_longe
             yield tuple(values)
     ```
 
-    If one of the iterables is potentially infinite, then the [`zip_longest()`](#itertools.zip_longest "itertools.zip_longest")
+    If one of the iterables is potentially infinite, then the `zip_longest()`
     function should be wrapped with something that limits the number of calls
     (for example [`islice()`](#itertools.islice "itertools.islice") or [`takewhile()`](#itertools.takewhile "itertools.takewhile")).
 
-## Itertools Recipes[¶](#itertools-recipes "Link to this heading")
+## Itertools Recipes
 
 This section shows recipes for creating an extended toolset using the existing
 itertools as building blocks.
@@ -792,7 +783,7 @@ well as with the built-in itertools such as `map()`, `filter()`,
 
 A secondary purpose of the recipes is to serve as an incubator. The
 `accumulate()`, `compress()`, and `pairwise()` itertools started out as
-recipes. Currently, the `sliding_window()`, `iter_index()`, and `sieve()`
+recipes. Currently, the `sliding_window()`, `derangements()`, and `sieve()`
 recipes are being tested to see whether they prove their worth.
 
 Substantially all of these recipes and many, many others can be installed from
@@ -811,86 +802,93 @@ is retained by preferring “vectorized” building blocks over the use of for-l
 and [generators](../glossary.html#term-generator) which incur interpreter overhead.
 
 ```
-import collections
-import contextlib
-import functools
-import math
-import operator
-import random
+fromitertoolsimport (accumulate, batched, chain, combinations, compress,
+     count, cycle, filterfalse, groupby, islice, permutations, product,
+     repeat, starmap, tee, zip_longest)
+fromcollectionsimport Counter, deque
+fromcontextlibimport suppress
+fromfunctoolsimport reduce
+frommathimport comb, isqrt, prod, sumprod
+fromoperatorimport getitem, is_not, itemgetter, mul, neg, truediv
 
-def take(n, iterable):
+# ==== Basic one liners ====
+
+deftake(n, iterable):
     "Return first n items of the iterable as a list."
     return list(islice(iterable, n))
 
-def prepend(value, iterable):
+defprepend(value, iterable):
     "Prepend a single value in front of an iterable."
     # prepend(1, [2, 3, 4]) → 1 2 3 4
     return chain([value], iterable)
 
-def tabulate(function, start=0):
-    "Return function(0), function(1), ..."
-    return map(function, count(start))
+defrunning_mean(iterable):
+    "Yield the average of all values seen so far."
+    # running_mean([8.5, 9.5, 7.5, 6.5]) → 8.5 9.0 8.5 8.0
+    return map(truediv, accumulate(iterable), count(1))
 
-def repeatfunc(func, times=None, *args):
-    "Repeat calls to func with specified arguments."
+defrepeatfunc(function, times=None, *args):
+    "Repeat calls to a function with specified arguments."
     if times is None:
-        return starmap(func, repeat(args))
-    return starmap(func, repeat(args, times))
+        return starmap(function, repeat(args))
+    return starmap(function, repeat(args, times))
 
-def flatten(list_of_lists):
+defflatten(list_of_lists):
     "Flatten one level of nesting."
     return chain.from_iterable(list_of_lists)
 
-def ncycles(iterable, n):
+defncycles(iterable, n):
     "Returns the sequence elements n times."
     return chain.from_iterable(repeat(tuple(iterable), n))
 
-def loops(n):
+defloops(n):
     "Loop n times. Like range(n) but without creating integers."
     # for _ in loops(100): ...
     return repeat(None, n)
 
-def tail(n, iterable):
+deftail(n, iterable):
     "Return an iterator over the last n items."
     # tail(3, 'ABCDEFG') → E F G
-    return iter(collections.deque(iterable, maxlen=n))
+    return iter(deque(iterable, maxlen=n))
 
-def consume(iterator, n=None):
+defconsume(iterator, n=None):
     "Advance the iterator n-steps ahead. If n is None, consume entirely."
     # Use functions that consume iterators at C speed.
     if n is None:
-        collections.deque(iterator, maxlen=0)
+        deque(iterator, maxlen=0)
     else:
         next(islice(iterator, n, n), None)
 
-def nth(iterable, n, default=None):
+defnth(iterable, n, default=None):
     "Returns the nth item or a default value."
     return next(islice(iterable, n, None), default)
 
-def quantify(iterable, predicate=bool):
+defquantify(iterable, predicate=bool):
     "Given a predicate that returns True or False, count the True results."
     return sum(map(predicate, iterable))
 
-def first_true(iterable, default=False, predicate=None):
+deffirst_true(iterable, default=False, predicate=None):
     "Returns the first true value or the *default* if there is no true value."
-    # first_true([a,b,c], x) → a or b or c or x
-    # first_true([a,b], x, f) → a if f(a) else b if f(b) else x
+    # first_true([a, b, c], x) → a or b or c or x
+    # first_true([a, b], x, f) → a if f(a) else b if f(b) else x
     return next(filter(predicate, iterable), default)
 
-def all_equal(iterable, key=None):
+defall_equal(iterable, key=None):
     "Returns True if all the elements are equal to each other."
     # all_equal('4٤௪౪໔', key=int) → True
     return len(take(2, groupby(iterable, key))) <= 1
 
-def unique_justseen(iterable, key=None):
+# ==== Data pipelines ====
+
+defunique_justseen(iterable, key=None):
     "Yield unique elements, preserving order. Remember only the element just seen."
     # unique_justseen('AAAABBBCCDAABBB') → A B C D A B
     # unique_justseen('ABBcCAD', str.casefold) → A B c A D
     if key is None:
-        return map(operator.itemgetter(0), groupby(iterable))
-    return map(next, map(operator.itemgetter(1), groupby(iterable, key)))
+        return map(itemgetter(0), groupby(iterable))
+    return map(next, map(itemgetter(1), groupby(iterable, key)))
 
-def unique_everseen(iterable, key=None):
+defunique_everseen(iterable, key=None):
     "Yield unique elements, preserving order. Remember all elements ever seen."
     # unique_everseen('AAAABBBCCDAABBB') → A B C D
     # unique_everseen('ABBcCAD', str.casefold) → A B c D
@@ -906,23 +904,24 @@ def unique_everseen(iterable, key=None):
                 seen.add(k)
                 yield element
 
-def unique(iterable, key=None, reverse=False):
-   "Yield unique elements in sorted order. Supports unhashable inputs."
-   # unique([[1, 2], [3, 4], [1, 2]]) → [1, 2] [3, 4]
-   return unique_justseen(sorted(iterable, key=key, reverse=reverse), key=key)
+defunique(iterable, key=None, reverse=False):
+    "Yield unique elements in sorted order. Supports unhashable inputs."
+    # unique([[1, 2], [3, 4], [1, 2]]) → [1, 2] [3, 4]
+    sequenced = sorted(iterable, key=key, reverse=reverse)
+    return unique_justseen(sequenced, key=key)
 
-def sliding_window(iterable, n):
+defsliding_window(iterable, n):
     "Collect data into overlapping fixed-length chunks or blocks."
-    # sliding_window('ABCDEFG', 4) → ABCD BCDE CDEF DEFG
+    # sliding_window('ABCDEFG', 3) → ABC BCD CDE DEF EFG
     iterator = iter(iterable)
-    window = collections.deque(islice(iterator, n - 1), maxlen=n)
+    window = deque(islice(iterator, n - 1), maxlen=n)
     for x in iterator:
         window.append(x)
         yield tuple(window)
 
-def grouper(iterable, n, *, incomplete='fill', fillvalue=None):
+defgrouper(iterable, n, *, incomplete='fill', fillvalue=None):
     "Collect data into non-overlapping fixed-length chunks or blocks."
-    # grouper('ABCDEFG', 3, fillvalue='x') → ABC DEF Gxx
+    # grouper('ABCDEFG', 3, fillvalue='x')       → ABC DEF Gxx
     # grouper('ABCDEFG', 3, incomplete='strict') → ABC DEF ValueError
     # grouper('ABCDEFG', 3, incomplete='ignore') → ABC DEF
     iterators = [iter(iterable)] * n
@@ -933,10 +932,10 @@ def grouper(iterable, n, *, incomplete='fill', fillvalue=None):
             return zip(*iterators, strict=True)
         case 'ignore':
             return zip(*iterators)
-        case _:
+        case_:
             raise ValueError('Expected fill, strict, or ignore')
 
-def roundrobin(*iterables):
+defroundrobin(*iterables):
     "Visit input iterables in a cycle until each is exhausted."
     # roundrobin('ABC', 'D', 'EF') → A D E B F C
     # Algorithm credited to George Sakkis
@@ -945,22 +944,23 @@ def roundrobin(*iterables):
         iterators = cycle(islice(iterators, num_active))
         yield from map(next, iterators)
 
-def partition(predicate, iterable):
-    """Partition entries into false entries and true entries.
-
-    If *predicate* is slow, consider wrapping it with functools.lru_cache().
-    """
-    # partition(is_odd, range(10)) → 0 2 4 6 8   and  1 3 5 7 9
-    t1, t2 = tee(iterable)
-    return filterfalse(predicate, t1), filter(predicate, t2)
-
-def subslices(seq):
+defsubslices(seq):
     "Return all contiguous non-empty subslices of a sequence."
     # subslices('ABCD') → A AB ABC ABCD B BC BCD C CD D
     slices = starmap(slice, combinations(range(len(seq) + 1), 2))
-    return map(operator.getitem, repeat(seq), slices)
+    return map(getitem, repeat(seq), slices)
 
-def iter_index(iterable, value, start=0, stop=None):
+defderangements(iterable, r=None):
+    "Produce r length permutations without fixed points."
+    # derangements('ABCD') → BADC BCDA BDAC CADB CDAB CDBA DABC DCAB DCBA
+    # Algorithm credited to Stefan Pochmann
+    seq = tuple(iterable)
+    pos = tuple(range(len(seq)))
+    have_moved = map(map, repeat(is_not), repeat(pos), permutations(pos, r=r))
+    valid_derangements = map(all, have_moved)
+    return compress(permutations(seq, r=r), valid_derangements)
+
+defiter_index(iterable, value, start=0, stop=None):
     "Return indices where a value occurs in a sequence or iterable."
     # iter_index('AABCADEAF', 'A') → 0 1 4 7
     seq_index = getattr(iterable, 'index', None)
@@ -972,52 +972,61 @@ def iter_index(iterable, value, start=0, stop=None):
     else:
         stop = len(iterable) if stop is None else stop
         i = start
-        with contextlib.suppress(ValueError):
+        with suppress(ValueError):
             while True:
                 yield (i := seq_index(value, i, stop))
                 i += 1
 
-def iter_except(func, exception, first=None):
+defiter_except(function, exception, first=None):
     "Convert a call-until-exception interface to an iterator interface."
     # iter_except(d.popitem, KeyError) → non-blocking dictionary iterator
-    with contextlib.suppress(exception):
+    with suppress(exception):
         if first is not None:
             yield first()
         while True:
-            yield func()
-```
+            yield function()
 
-The following recipes have a more mathematical flavor:
+# ==== Mathematical operations ====
 
-```
-def powerset(iterable):
-    "powerset([1,2,3]) → () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+defmultinomial(*counts):
+    "Number of distinct arrangements of a multiset."
+    # Counter('abracadabra').values() → 5 2 2 1 1
+    # multinomial(5, 2, 2, 1, 1) → 83160
+    return prod(map(comb, accumulate(counts), counts))
+
+defpowerset(iterable):
+    "Subsequences of the iterable from shortest to longest."
+    # powerset([1,2,3]) → () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
-def sum_of_squares(iterable):
+defsum_of_squares(iterable):
     "Add up the squares of the input values."
     # sum_of_squares([10, 20, 30]) → 1400
-    return math.sumprod(*tee(iterable))
+    return sumprod(*tee(iterable))
 
-def reshape(matrix, cols):
+# ==== Matrix operations ====
+
+defreshape(matrix, columns):
     "Reshape a 2-D matrix to have a given number of columns."
-    # reshape([(0, 1), (2, 3), (4, 5)], 3) →  (0, 1, 2), (3, 4, 5)
-    return batched(chain.from_iterable(matrix), cols)
+    # reshape([(0, 1), (2, 3), (4, 5)], 3) →  (0, 1, 2) (3, 4, 5)
+    return batched(chain.from_iterable(matrix), columns, strict=True)
 
-def transpose(matrix):
+deftranspose(matrix):
     "Swap the rows and columns of a 2-D matrix."
     # transpose([(1, 2, 3), (11, 22, 33)]) → (1, 11) (2, 22) (3, 33)
     return zip(*matrix, strict=True)
 
-def matmul(m1, m2):
+defmatmul(m1, m2):
     "Multiply two matrices."
-    # matmul([(7, 5), (3, 5)], [(2, 5), (7, 9)]) → (49, 80), (41, 60)
+    # matmul([(7, 5), (3, 5)], [(2, 5), (7, 9)]) → (49, 80) (41, 60)
     n = len(m2[0])
-    return batched(starmap(math.sumprod, product(m1, transpose(m2))), n)
+    return batched(starmap(sumprod, product(m1, transpose(m2))), n)
 
-def convolve(signal, kernel):
-    """Discrete linear convolution of two iterables.
+# ==== Polynomial arithmetic ====
+
+defconvolve(signal, kernel):
+"""Discrete linear convolution of two iterables.
     Equivalent to polynomial multiplication.
 
     Convolutions are mathematically commutative; however, the inputs are
@@ -1035,19 +1044,19 @@ def convolve(signal, kernel):
     n = len(kernel)
     padded_signal = chain(repeat(0, n-1), signal, repeat(0, n-1))
     windowed_signal = sliding_window(padded_signal, n)
-    return map(math.sumprod, repeat(kernel), windowed_signal)
+    return map(sumprod, repeat(kernel), windowed_signal)
 
-def polynomial_from_roots(roots):
-    """Compute a polynomial's coefficients from its roots.
+defpolynomial_from_roots(roots):
+"""Compute a polynomial's coefficients from its roots.
 
        (x - 5) (x + 4) (x - 3)  expands to:   x³ -4x² -17x + 60
     """
     # polynomial_from_roots([5, -4, 3]) → [1, -4, -17, 60]
-    factors = zip(repeat(1), map(operator.neg, roots))
-    return list(functools.reduce(convolve, factors, [1]))
+    factors = zip(repeat(1), map(neg, roots))
+    return list(reduce(convolve, factors, [1]))
 
-def polynomial_eval(coefficients, x):
-    """Evaluate a polynomial at a specific value.
+defpolynomial_eval(coefficients, x):
+"""Evaluate a polynomial at a specific value.
 
     Computes with better numeric stability than Horner's method.
     """
@@ -1057,10 +1066,10 @@ def polynomial_eval(coefficients, x):
     if not n:
         return type(x)(0)
     powers = map(pow, repeat(x), reversed(range(n)))
-    return math.sumprod(coefficients, powers)
+    return sumprod(coefficients, powers)
 
-def polynomial_derivative(coefficients):
-    """Compute the first derivative of a polynomial.
+defpolynomial_derivative(coefficients):
+"""Compute the first derivative of a polynomial.
 
        f(x)  =  x³ -4x² -17x + 60
        f'(x) = 3x² -8x  -17
@@ -1068,29 +1077,26 @@ def polynomial_derivative(coefficients):
     # polynomial_derivative([1, -4, -17, 60]) → [3, -8, -17]
     n = len(coefficients)
     powers = reversed(range(1, n))
-    return list(map(operator.mul, coefficients, powers))
+    return list(map(mul, coefficients, powers))
 
-def sieve(n):
+# ==== Number theory ====
+
+defsieve(n):
     "Primes less than n."
     # sieve(30) → 2 3 5 7 11 13 17 19 23 29
     if n > 2:
         yield 2
     data = bytearray((0, 1)) * (n // 2)
-    for p in iter_index(data, 1, start=3, stop=math.isqrt(n) + 1):
+    for p in iter_index(data, 1, start=3, stop=isqrt(n) + 1):
         data[p*p : n : p+p] = bytes(len(range(p*p, n, p+p)))
     yield from iter_index(data, 1, start=3)
 
-def is_prime(n):
-    "Return True if n is prime."
-    # is_prime(1_000_000_000_000_403) → True
-    return n > 1 and all(n % p for p in sieve(math.isqrt(n) + 1))
-
-def factor(n):
+deffactor(n):
     "Prime factors of n."
     # factor(99) → 3 3 11
     # factor(1_000_000_000_000_007) → 47 59 360620266859
     # factor(1_000_000_000_000_403) → 1000000000000403
-    for prime in sieve(math.isqrt(n) + 1):
+    for prime in sieve(isqrt(n) + 1):
         while not n % prime:
             yield prime
             n //= prime
@@ -1099,74 +1105,22 @@ def factor(n):
     if n > 1:
         yield n
 
-def totient(n):
+defis_prime(n):
+    "Return True if n is prime."
+    # is_prime(1_000_000_000_000_403) → True
+    return n > 1 and next(factor(n)) == n
+
+deftotient(n):
     "Count of natural numbers up to n that are coprime to n."
     # https://mathworld.wolfram.com/TotientFunction.html
     # totient(12) → 4 because len([1, 5, 7, 11]) == 4
     for prime in set(factor(n)):
         n -= n // prime
     return n
-
-def multinomial(*counts):
-    "Number of distinct arrangements of a multiset."
-    # Counter('abracadabra').values() -> 5 2 1 1 2
-    # multinomial(5, 2, 1, 1, 2) → 83160
-    return math.prod(map(math.comb, accumulate(counts), counts))
 ```
 
-### [Table of Contents](../contents.html)
+---
 
-* [`itertools` — Functions creating iterators for efficient looping](#)
-  + [Itertool Functions](#itertool-functions)
-  + [Itertools Recipes](#itertools-recipes)
+## Bibliography
 
-#### Previous topic
-
-[Functional Programming Modules](functional.html "previous chapter")
-
-#### Next topic
-
-[`functools` — Higher-order functions and operations on callable objects](functools.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/itertools.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](functools.html "functools — Higher-order functions and operations on callable objects") |
-* [previous](functional.html "Functional Programming Modules") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Functional Programming Modules](functional.html) »
-* `itertools` — Functions creating iterators for efficient looping
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`itertools` — Functions creating iterators for efficient looping](https://docs.python.org/3/library/itertools.html)

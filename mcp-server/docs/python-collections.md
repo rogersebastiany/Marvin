@@ -1,68 +1,11 @@
-collections — Container datatypes — Python 3.12.13 documentation
+# Python collections
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
+## 1. `collections` — Container datatypes
 
-* [`collections` — Container datatypes](#)
-  + [`ChainMap` objects](#chainmap-objects)
-    - [`ChainMap` Examples and Recipes](#chainmap-examples-and-recipes)
-  + [`Counter` objects](#counter-objects)
-  + [`deque` objects](#deque-objects)
-    - [`deque` Recipes](#deque-recipes)
-  + [`defaultdict` objects](#defaultdict-objects)
-    - [`defaultdict` Examples](#defaultdict-examples)
-  + [`namedtuple()` Factory Function for Tuples with Named Fields](#namedtuple-factory-function-for-tuples-with-named-fields)
-  + [`OrderedDict` objects](#ordereddict-objects)
-    - [`OrderedDict` Examples and Recipes](#ordereddict-examples-and-recipes)
-  + [`UserDict` objects](#userdict-objects)
-  + [`UserList` objects](#userlist-objects)
-  + [`UserString` objects](#userstring-objects)
-
-#### Previous topic
-
-[`calendar` — General calendar-related functions](calendar.html "previous chapter")
-
-#### Next topic
-
-[`collections.abc` — Abstract Base Classes for Containers](collections.abc.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/collections.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](collections.abc.html "collections.abc — Abstract Base Classes for Containers") |
-* [previous](calendar.html "calendar — General calendar-related functions") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Data Types](datatypes.html) »
-* `collections` — Container datatypes
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `collections` — Container datatypes[¶](#module-collections "Link to this heading")
-
-**Source code:** [Lib/collections/\_\_init\_\_.py](https://github.com/python/cpython/tree/3.12/Lib/collections/__init__.py)
+**Source code:** [Lib/collections/\_\_init\_\_.py](https://github.com/python/cpython/tree/3.14/Lib/collections/__init__.py)
 
 ---
 
@@ -82,7 +25,7 @@ Python’s general purpose built-in containers, [`dict`](stdtypes.html#dict "dic
 | [`UserList`](#collections.UserList "collections.UserList") | wrapper around list objects for easier list subclassing |
 | [`UserString`](#collections.UserString "collections.UserString") | wrapper around string objects for easier string subclassing |
 
-## [`ChainMap`](#collections.ChainMap "collections.ChainMap") objects[¶](#chainmap-objects "Link to this heading")
+## [`ChainMap`](#collections.ChainMap "collections.ChainMap") objects
 
 Added in version 3.3.
 
@@ -92,8 +35,8 @@ a new dictionary and running multiple [`update()`](stdtypes.html#dict.update "di
 
 The class can be used to simulate nested scopes and is useful in templating.
 
-*class* collections.ChainMap(*\*maps*)[¶](#collections.ChainMap "Link to this definition")
-:   A [`ChainMap`](#collections.ChainMap "collections.ChainMap") groups multiple dicts or other mappings together to
+*class*collections.ChainMap(*\*maps*)
+:   A `ChainMap` groups multiple dicts or other mappings together to
     create a single, updateable view. If no *maps* are specified, a single empty
     dictionary is provided so that a new chain always has at least one mapping.
 
@@ -103,22 +46,22 @@ The class can be used to simulate nested scopes and is useful in templating.
     Lookups search the underlying mappings successively until a key is found. In
     contrast, writes, updates, and deletions only operate on the first mapping.
 
-    A [`ChainMap`](#collections.ChainMap "collections.ChainMap") incorporates the underlying mappings by reference. So, if
+    A `ChainMap` incorporates the underlying mappings by reference. So, if
     one of the underlying mappings gets updated, those changes will be reflected
-    in [`ChainMap`](#collections.ChainMap "collections.ChainMap").
+    in `ChainMap`.
 
     All of the usual dictionary methods are supported. In addition, there is a
     *maps* attribute, a method for creating new subcontexts, and a property for
     accessing all but the first mapping:
 
-    maps[¶](#collections.ChainMap.maps "Link to this definition")
+    maps
     :   A user updateable list of mappings. The list is ordered from
         first-searched to last-searched. It is the only stored state and can
         be modified to change which mappings are searched. The list should
         always contain at least one mapping.
 
-    new\_child(*m=None*, *\*\*kwargs*)[¶](#collections.ChainMap.new_child "Link to this definition")
-    :   Returns a new [`ChainMap`](#collections.ChainMap "collections.ChainMap") containing a new map followed by
+    new\_child(*m=None*, *\*\*kwargs*)
+    :   Returns a new `ChainMap` containing a new map followed by
         all of the maps in the current instance. If `m` is specified,
         it becomes the new map at the front of the list of mappings; if not
         specified, an empty dict is used, so that a call to `d.new_child()`
@@ -131,15 +74,15 @@ The class can be used to simulate nested scopes and is useful in templating.
 
         Changed in version 3.10: Keyword arguments support was added.
 
-    parents[¶](#collections.ChainMap.parents "Link to this definition")
-    :   Property returning a new [`ChainMap`](#collections.ChainMap "collections.ChainMap") containing all of the maps in
+    parents
+    :   Property returning a new `ChainMap` containing all of the maps in
         the current instance except the first one. This is useful for skipping
         the first map in the search. Use cases are similar to those for the
         [`nonlocal`](../reference/simple_stmts.html#nonlocal) keyword used in [nested scopes](../glossary.html#term-nested-scope). The use cases also parallel those for the built-in
         [`super()`](functions.html#super "super") function. A reference to `d.parents` is equivalent to:
         `ChainMap(*d.maps[1:])`.
 
-    Note, the iteration order of a [`ChainMap`](#collections.ChainMap "collections.ChainMap") is determined by
+    Note, the iteration order of a `ChainMap` is determined by
     scanning the mappings last to first:
 
     ```
@@ -176,14 +119,14 @@ See also
   any mapping in the chain.
 * A [greatly simplified read-only version of Chainmap](https://code.activestate.com/recipes/305268/).
 
-### [`ChainMap`](#collections.ChainMap "collections.ChainMap") Examples and Recipes[¶](#chainmap-examples-and-recipes "Link to this heading")
+### [`ChainMap`](#collections.ChainMap "collections.ChainMap") Examples and Recipes
 
 This section shows various approaches to working with chained maps.
 
 Example of simulating Python’s internal lookup chain:
 
 ```
-import builtins
+importbuiltins
 pylookup = ChainMap(locals(), globals(), vars(builtins))
 ```
 
@@ -191,7 +134,7 @@ Example of letting user specified command-line arguments take precedence over
 environment variables which in turn take precedence over default values:
 
 ```
-import os, argparse
+importos,argparse
 
 defaults = {'color': 'red', 'user': 'guest'}
 
@@ -233,17 +176,17 @@ if deep writes and deletions are desired, it is easy to make a subclass that
 updates keys found deeper in the chain:
 
 ```
-class DeepChainMap(ChainMap):
+classDeepChainMap(ChainMap):
     'Variant of ChainMap that allows direct updates to inner scopes'
 
-    def __setitem__(self, key, value):
+    def__setitem__(self, key, value):
         for mapping in self.maps:
             if key in mapping:
                 mapping[key] = value
                 return
         self.maps[0][key] = value
 
-    def __delitem__(self, key):
+    def__delitem__(self, key):
         for mapping in self.maps:
             if key in mapping:
                 del mapping[key]
@@ -258,7 +201,7 @@ class DeepChainMap(ChainMap):
 DeepChainMap({'zebra': 'black', 'snake': 'red'}, {}, {'lion': 'orange'})
 ```
 
-## [`Counter`](#collections.Counter "collections.Counter") objects[¶](#counter-objects "Link to this heading")
+## [`Counter`](#collections.Counter "collections.Counter") objects
 
 A counter tool is provided to support convenient and rapid tallies.
 For example:
@@ -273,18 +216,22 @@ For example:
 Counter({'blue': 3, 'red': 2, 'green': 1})
 
 >>> # Find the ten most common words in Hamlet
->>> import re
+>>> importre
 >>> words = re.findall(r'\w+', open('hamlet.txt').read().lower())
 >>> Counter(words).most_common(10)
 [('the', 1143), ('and', 966), ('to', 762), ('of', 669), ('i', 631),
  ('you', 554),  ('a', 546), ('my', 514), ('hamlet', 471), ('in', 451)]
 ```
 
-*class* collections.Counter([*iterable-or-mapping*])[¶](#collections.Counter "Link to this definition")
-:   A [`Counter`](#collections.Counter "collections.Counter") is a [`dict`](stdtypes.html#dict "dict") subclass for counting [hashable](../glossary.html#term-hashable) objects.
+*class*collections.Counter(*\*\*kwargs*)
+
+*class*collections.Counter(*iterable*, */*, *\*\*kwargs*)
+
+*class*collections.Counter(*mapping*, */*, *\*\*kwargs*)
+:   A `Counter` is a [`dict`](stdtypes.html#dict "dict") subclass for counting [hashable](../glossary.html#term-hashable) objects.
     It is a collection where elements are stored as dictionary keys
     and their counts are stored as dictionary values. Counts are allowed to be
-    any integer value including zero or negative counts. The [`Counter`](#collections.Counter "collections.Counter")
+    any integer value including zero or negative counts. The `Counter`
     class is similar to bags or multisets in other languages.
 
     Elements are counted from an *iterable* or initialized from another
@@ -316,7 +263,7 @@ Counter({'blue': 3, 'red': 2, 'green': 1})
 
     Added in version 3.1.
 
-    Changed in version 3.7: As a [`dict`](stdtypes.html#dict "dict") subclass, [`Counter`](#collections.Counter "collections.Counter")
+    Changed in version 3.7: As a [`dict`](stdtypes.html#dict "dict") subclass, `Counter`
     inherited the capability to remember insertion order. Math operations
     on *Counter* objects also preserve order. Results are ordered
     according to when an element is first encountered in the left operand
@@ -325,10 +272,10 @@ Counter({'blue': 3, 'red': 2, 'green': 1})
     Counter objects support additional methods beyond those available for all
     dictionaries:
 
-    elements()[¶](#collections.Counter.elements "Link to this definition")
+    elements()
     :   Return an iterator over elements repeating each as many times as its
         count. Elements are returned in the order first encountered. If an
-        element’s count is less than one, [`elements()`](#collections.Counter.elements "collections.Counter.elements") will ignore it.
+        element’s count is less than one, `elements()` will ignore it.
 
         ```
         >>> c = Counter(a=4, b=2, c=0, d=-2)
@@ -336,10 +283,10 @@ Counter({'blue': 3, 'red': 2, 'green': 1})
         ['a', 'a', 'a', 'a', 'b', 'b']
         ```
 
-    most\_common([*n*])[¶](#collections.Counter.most_common "Link to this definition")
+    most\_common(*n=None*)
     :   Return a list of the *n* most common elements and their counts from the
         most common to the least. If *n* is omitted or `None`,
-        [`most_common()`](#collections.Counter.most_common "collections.Counter.most_common") returns *all* elements in the counter.
+        `most_common()` returns *all* elements in the counter.
         Elements with equal counts are ordered in the order first encountered:
 
         ```
@@ -347,7 +294,11 @@ Counter({'blue': 3, 'red': 2, 'green': 1})
         [('a', 5), ('b', 2), ('r', 2)]
         ```
 
-    subtract([*iterable-or-mapping*])[¶](#collections.Counter.subtract "Link to this definition")
+    subtract(*\*\*kwargs*)
+
+    subtract(*iterable*, */*, *\*\*kwargs*)
+
+    subtract(*mapping*, */*, *\*\*kwargs*)
     :   Elements are subtracted from an *iterable* or from another *mapping*
         (or counter). Like [`dict.update()`](stdtypes.html#dict.update "dict.update") but subtracts counts instead
         of replacing them. Both inputs and outputs may be zero or negative.
@@ -362,7 +313,7 @@ Counter({'blue': 3, 'red': 2, 'green': 1})
 
         Added in version 3.2.
 
-    total()[¶](#collections.Counter.total "Link to this definition")
+    total()
     :   Compute the sum of the counts.
 
         ```
@@ -373,13 +324,17 @@ Counter({'blue': 3, 'red': 2, 'green': 1})
 
         Added in version 3.10.
 
-    The usual dictionary methods are available for [`Counter`](#collections.Counter "collections.Counter") objects
+    The usual dictionary methods are available for `Counter` objects
     except for two which work differently for counters.
 
-    fromkeys(*iterable*)[¶](#collections.Counter.fromkeys "Link to this definition")
-    :   This class method is not implemented for [`Counter`](#collections.Counter "collections.Counter") objects.
+    fromkeys(*iterable*)
+    :   This class method is not implemented for `Counter` objects.
 
-    update([*iterable-or-mapping*])[¶](#collections.Counter.update "Link to this definition")
+    update(*\*\*kwargs*)
+
+    update(*iterable*, */*, *\*\*kwargs*)
+
+    update(*mapping*, */*, *\*\*kwargs*)
     :   Elements are counted from an *iterable* or added-in from another
         *mapping* (or counter). Like [`dict.update()`](stdtypes.html#dict.update "dict.update") but adds counts
         instead of replacing them. Also, the *iterable* is expected to be a
@@ -404,7 +359,7 @@ c.clear()                       # reset all counts
 list(c)                         # list unique elements
 set(c)                          # convert to a set
 dict(c)                         # convert to a regular dictionary
-c.items()                       # convert to a list of (elem, cnt) pairs
+c.items()                       # access the (elem, cnt) pairs
 Counter(dict(list_of_pairs))    # convert from a list of (elem, cnt) pairs
 c.most_common()[:-n-1:-1]       # n least common elements
 +c                              # remove zero and negative counts
@@ -488,9 +443,9 @@ See also
   map(Counter, combinations_with_replacement('ABC', 2)) # --> AA AB AC BB BC CC
   ```
 
-## [`deque`](#collections.deque "collections.deque") objects[¶](#deque-objects "Link to this heading")
+## [`deque`](#collections.deque "collections.deque") objects
 
-*class* collections.deque([*iterable*[, *maxlen*]])[¶](#collections.deque "Link to this definition")
+*class*collections.deque([*iterable*[, *maxlen*]])
 :   Returns a new deque object initialized left-to-right (using [`append()`](#collections.deque.append "collections.deque.append")) with
     data from *iterable*. If *iterable* is not specified, the new deque is empty.
 
@@ -514,67 +469,67 @@ See also
 
     Deque objects support the following methods:
 
-    append(*x*)[¶](#collections.deque.append "Link to this definition")
-    :   Add *x* to the right side of the deque.
+    append(*item*, */*)
+    :   Add *item* to the right side of the deque.
 
-    appendleft(*x*)[¶](#collections.deque.appendleft "Link to this definition")
-    :   Add *x* to the left side of the deque.
+    appendleft(*item*, */*)
+    :   Add *item* to the left side of the deque.
 
-    clear()[¶](#collections.deque.clear "Link to this definition")
+    clear()
     :   Remove all elements from the deque leaving it with length 0.
 
-    copy()[¶](#collections.deque.copy "Link to this definition")
+    copy()
     :   Create a shallow copy of the deque.
 
         Added in version 3.5.
 
-    count(*x*)[¶](#collections.deque.count "Link to this definition")
-    :   Count the number of deque elements equal to *x*.
+    count(*value*, */*)
+    :   Count the number of deque elements equal to *value*.
 
         Added in version 3.2.
 
-    extend(*iterable*)[¶](#collections.deque.extend "Link to this definition")
+    extend(*iterable*, */*)
     :   Extend the right side of the deque by appending elements from the iterable
         argument.
 
-    extendleft(*iterable*)[¶](#collections.deque.extendleft "Link to this definition")
+    extendleft(*iterable*, */*)
     :   Extend the left side of the deque by appending elements from *iterable*.
         Note, the series of left appends results in reversing the order of
         elements in the iterable argument.
 
-    index(*x*[, *start*[, *stop*]])[¶](#collections.deque.index "Link to this definition")
-    :   Return the position of *x* in the deque (at or after index *start*
+    index(*value*[, *start*[, *stop*]])
+    :   Return the position of *value* in the deque (at or after index *start*
         and before index *stop*). Returns the first match or raises
         [`ValueError`](exceptions.html#ValueError "ValueError") if not found.
 
         Added in version 3.5.
 
-    insert(*i*, *x*)[¶](#collections.deque.insert "Link to this definition")
-    :   Insert *x* into the deque at position *i*.
+    insert(*index*, *value*, */*)
+    :   Insert *value* into the deque at position *index*.
 
         If the insertion would cause a bounded deque to grow beyond *maxlen*,
         an [`IndexError`](exceptions.html#IndexError "IndexError") is raised.
 
         Added in version 3.5.
 
-    pop()[¶](#collections.deque.pop "Link to this definition")
+    pop()
     :   Remove and return an element from the right side of the deque. If no
         elements are present, raises an [`IndexError`](exceptions.html#IndexError "IndexError").
 
-    popleft()[¶](#collections.deque.popleft "Link to this definition")
+    popleft()
     :   Remove and return an element from the left side of the deque. If no
         elements are present, raises an [`IndexError`](exceptions.html#IndexError "IndexError").
 
-    remove(*value*)[¶](#collections.deque.remove "Link to this definition")
+    remove(*value*, */*)
     :   Remove the first occurrence of *value*. If not found, raises a
         [`ValueError`](exceptions.html#ValueError "ValueError").
 
-    reverse()[¶](#collections.deque.reverse "Link to this definition")
+    reverse()
     :   Reverse the elements of the deque in-place and then return `None`.
 
         Added in version 3.2.
 
-    rotate(*n=1*)[¶](#collections.deque.rotate "Link to this definition")
+    rotate(*n=1*, */*)
     :   Rotate the deque *n* steps to the right. If *n* is negative, rotate
         to the left.
 
@@ -584,7 +539,7 @@ See also
 
     Deque objects also provide one read-only attribute:
 
-    maxlen[¶](#collections.deque.maxlen "Link to this definition")
+    maxlen
     :   Maximum size of a deque or `None` if unbounded.
 
         Added in version 3.1.
@@ -601,7 +556,7 @@ and `__imul__()`.
 Example:
 
 ```
->>> from collections import deque
+>>> fromcollectionsimport deque
 >>> d = deque('ghi')                 # make a new deque with three items
 >>> for elem in d:                   # iterate over the deque's elements
 ...     print(elem.upper())
@@ -644,8 +599,8 @@ deque(['l', 'k', 'j', 'i', 'h', 'g'])
 >>> d.clear()                        # empty the deque
 >>> d.pop()                          # cannot pop from an empty deque
 Traceback (most recent call last):
-    File "<pyshell#6>", line 1, in -toplevel-
-        d.pop()
+File "<pyshell#6>", line 1, in -toplevel-
+    d.pop()
 IndexError: pop from an empty deque
 
 >>> d.extendleft('abc')              # extendleft() reverses the input order
@@ -653,7 +608,7 @@ IndexError: pop from an empty deque
 deque(['c', 'b', 'a'])
 ```
 
-### [`deque`](#collections.deque "collections.deque") Recipes[¶](#deque-recipes "Link to this heading")
+### [`deque`](#collections.deque "collections.deque") Recipes
 
 This section shows various approaches to working with deques.
 
@@ -661,7 +616,7 @@ Bounded length deques provide functionality similar to the `tail` filter
 in Unix:
 
 ```
-def tail(filename, n=10):
+deftail(filename, n=10):
     'Return the last n lines of a file'
     with open(filename) as f:
         return deque(f, n)
@@ -671,7 +626,7 @@ Another approach to using deques is to maintain a sequence of recently
 added elements by appending to the right and popping to the left:
 
 ```
-def moving_average(iterable, n=3):
+defmoving_average(iterable, n=3):
     # moving_average([40, 30, 50, 46, 39, 44]) --> 40.0 42.0 45.0 43.0
     # https://en.wikipedia.org/wiki/Moving_average
     it = iter(iterable)
@@ -691,7 +646,7 @@ with [`popleft()`](#collections.deque.popleft "collections.deque.popleft"); othe
 the [`rotate()`](#collections.deque.rotate "collections.deque.rotate") method:
 
 ```
-def roundrobin(*iterables):
+defroundrobin(*iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
     iterators = deque(map(iter, iterables))
     while iterators:
@@ -709,7 +664,7 @@ deletion. For example, a pure Python implementation of `del d[n]` relies on
 the `rotate()` method to position elements to be popped:
 
 ```
-def delete_nth(d, n):
+defdelete_nth(d, n):
     d.rotate(-n)
     d.popleft()
     d.rotate(n)
@@ -723,23 +678,27 @@ With minor variations on that approach, it is easy to implement Forth style
 stack manipulations such as `dup`, `drop`, `swap`, `over`, `pick`,
 `rot`, and `roll`.
 
-## [`defaultdict`](#collections.defaultdict "collections.defaultdict") objects[¶](#defaultdict-objects "Link to this heading")
+## [`defaultdict`](#collections.defaultdict "collections.defaultdict") objects
 
-*class* collections.defaultdict(*default\_factory=None*, */*[, *...*])[¶](#collections.defaultdict "Link to this definition")
-:   Return a new dictionary-like object. [`defaultdict`](#collections.defaultdict "collections.defaultdict") is a subclass of the
+*class*collections.defaultdict(*default\_factory=None*, */*, *\*\*kwargs*)
+
+*class*collections.defaultdict(*default\_factory*, *mapping*, */*, *\*\*kwargs*)
+
+*class*collections.defaultdict(*default\_factory*, *iterable*, */*, *\*\*kwargs*)
+:   Return a new dictionary-like object. `defaultdict` is a subclass of the
     built-in [`dict`](stdtypes.html#dict "dict") class. It overrides one method and adds one writable
     instance variable. The remaining functionality is the same as for the
-    [`dict`](stdtypes.html#dict "dict") class and is not documented here.
+    `dict` class and is not documented here.
 
     The first argument provides the initial value for the [`default_factory`](#collections.defaultdict.default_factory "collections.defaultdict.default_factory")
     attribute; it defaults to `None`. All remaining arguments are treated the same
     as if they were passed to the [`dict`](stdtypes.html#dict "dict") constructor, including keyword
     arguments.
 
-    [`defaultdict`](#collections.defaultdict "collections.defaultdict") objects support the following method in addition to the
+    `defaultdict` objects support the following method in addition to the
     standard [`dict`](stdtypes.html#dict "dict") operations:
 
-    \_\_missing\_\_(*key*)[¶](#collections.defaultdict.__missing__ "Link to this definition")
+    \_\_missing\_\_(*key*, */*)
     :   If the [`default_factory`](#collections.defaultdict.default_factory "collections.defaultdict.default_factory") attribute is `None`, this raises a
         [`KeyError`](exceptions.html#KeyError "KeyError") exception with the *key* as argument.
 
@@ -752,24 +711,24 @@ stack manipulations such as `dup`, `drop`, `swap`, `over`, `pick`,
 
         This method is called by the [`__getitem__()`](../reference/datamodel.html#object.__getitem__ "object.__getitem__") method of the
         [`dict`](stdtypes.html#dict "dict") class when the requested key is not found; whatever it
-        returns or raises is then returned or raised by [`__getitem__()`](../reference/datamodel.html#object.__getitem__ "object.__getitem__").
+        returns or raises is then returned or raised by `__getitem__()`.
 
-        Note that [`__missing__()`](#collections.defaultdict.__missing__ "collections.defaultdict.__missing__") is *not* called for any operations besides
+        Note that `__missing__()` is *not* called for any operations besides
         [`__getitem__()`](../reference/datamodel.html#object.__getitem__ "object.__getitem__"). This means that [`get()`](stdtypes.html#dict.get "dict.get") will, like
         normal dictionaries, return `None` as a default rather than using
         [`default_factory`](#collections.defaultdict.default_factory "collections.defaultdict.default_factory").
 
-    [`defaultdict`](#collections.defaultdict "collections.defaultdict") objects support the following instance variable:
+    `defaultdict` objects support the following instance variable:
 
-    default\_factory[¶](#collections.defaultdict.default_factory "Link to this definition")
-    :   This attribute is used by the [`__missing__()`](#collections.defaultdict.__missing__ "collections.defaultdict.__missing__") method; it is
-        initialized from the first argument to the constructor, if present, or to
-        `None`, if absent.
+    default\_factory
+    :   This attribute is used by the [`__missing__()`](#collections.defaultdict.__missing__ "collections.defaultdict.__missing__") method;
+        it is initialized from the first argument to the constructor, if present,
+        or to `None`, if absent.
 
     Changed in version 3.9: Added merge (`|`) and update (`|=`) operators, specified in
     [**PEP 584**](https://peps.python.org/pep-0584/).
 
-### [`defaultdict`](#collections.defaultdict "collections.defaultdict") Examples[¶](#defaultdict-examples "Link to this heading")
+### [`defaultdict`](#collections.defaultdict "collections.defaultdict") Examples
 
 Using [`list`](stdtypes.html#list "list") as the [`default_factory`](#collections.defaultdict.default_factory "collections.defaultdict.default_factory"), it is easy to group a
 sequence of key-value pairs into a dictionary of lists:
@@ -786,7 +745,7 @@ sequence of key-value pairs into a dictionary of lists:
 
 When each key is encountered for the first time, it is not already in the
 mapping; so an entry is automatically created using the [`default_factory`](#collections.defaultdict.default_factory "collections.defaultdict.default_factory")
-function which returns an empty [`list`](stdtypes.html#list "list"). The `list.append()`
+function which returns an empty [`list`](stdtypes.html#list "list"). The [`list.append()`](stdtypes.html#list.append "list.append")
 operation then attaches the value to the new list. When keys are encountered
 again, the look-up proceeds normally (returning the list for that key) and the
 `list.append()` operation adds another value to the list. This technique is
@@ -825,12 +784,12 @@ is to use a lambda function which can supply any constant value (not just
 zero):
 
 ```
->>> def constant_factory(value):
+>>> defconstant_factory(value):
 ...     return lambda: value
 ...
 >>> d = defaultdict(constant_factory('<missing>'))
 >>> d.update(name='John', action='ran')
->>> '%(name)s %(action)s to %(object)s' % d
+>>> '%(name)s%(action)s to %(object)s' % d
 'John ran to <missing>'
 ```
 
@@ -847,13 +806,13 @@ Setting the [`default_factory`](#collections.defaultdict.default_factory "collec
 [('blue', {2, 4}), ('red', {1, 3})]
 ```
 
-## [`namedtuple()`](#collections.namedtuple "collections.namedtuple") Factory Function for Tuples with Named Fields[¶](#namedtuple-factory-function-for-tuples-with-named-fields "Link to this heading")
+## [`namedtuple()`](#collections.namedtuple "collections.namedtuple") Factory Function for Tuples with Named Fields
 
 Named tuples assign meaning to each position in a tuple and allow for more readable,
 self-documenting code. They can be used wherever regular tuples are used, and
 they add the ability to access fields by name instead of position index.
 
-collections.namedtuple(*typename*, *field\_names*, *\**, *rename=False*, *defaults=None*, *module=None*)[¶](#collections.namedtuple "Link to this definition")
+collections.namedtuple(*typename*, *field\_names*, *\**, *rename=False*, *defaults=None*, *module=None*)
 :   Returns a new tuple subclass named *typename*. The new subclass is used to
     create tuple-like objects that have fields accessible by attribute lookup as
     well as being indexable and iterable. Instances of the subclass also have a
@@ -925,11 +884,11 @@ by the [`csv`](csv.html#module-csv "csv: Write and read tabular data to and from
 ```
 EmployeeRecord = namedtuple('EmployeeRecord', 'name, age, title, department, paygrade')
 
-import csv
+importcsv
 for emp in map(EmployeeRecord._make, csv.reader(open("employees.csv", "rb"))):
     print(emp.name, emp.title)
 
-import sqlite3
+importsqlite3
 conn = sqlite3.connect('/companydata')
 cursor = conn.cursor()
 cursor.execute('SELECT name, age, title, department, paygrade FROM employees')
@@ -941,7 +900,7 @@ In addition to the methods inherited from tuples, named tuples support
 three additional methods and two attributes. To prevent conflicts with
 field names, the method and attribute names start with an underscore.
 
-*classmethod* somenamedtuple.\_make(*iterable*)[¶](#collections.somenamedtuple._make "Link to this definition")
+*classmethod*somenamedtuple.\_make(*iterable*, */*)
 :   Class method that makes a new instance from an existing sequence or iterable.
 
     ```
@@ -950,7 +909,7 @@ field names, the method and attribute names start with an underscore.
     Point(x=11, y=22)
     ```
 
-somenamedtuple.\_asdict()[¶](#collections.somenamedtuple._asdict "Link to this definition")
+somenamedtuple.\_asdict()
 :   Return a new [`dict`](stdtypes.html#dict "dict") which maps field names to their corresponding
     values:
 
@@ -964,11 +923,11 @@ somenamedtuple.\_asdict()[¶](#collections.somenamedtuple._asdict "Link to this 
 
     Changed in version 3.8: Returns a regular [`dict`](stdtypes.html#dict "dict") instead of an [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict").
     As of Python 3.7, regular dicts are guaranteed to be ordered. If the
-    extra features of [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") are required, the suggested
+    extra features of `OrderedDict` are required, the suggested
     remediation is to cast the result to the desired type:
     `OrderedDict(nt._asdict())`.
 
-somenamedtuple.\_replace(*\*\*kwargs*)[¶](#collections.somenamedtuple._replace "Link to this definition")
+somenamedtuple.\_replace(*\*\*kwargs*)
 :   Return a new instance of the named tuple replacing specified fields with new
     values:
 
@@ -981,7 +940,12 @@ somenamedtuple.\_replace(*\*\*kwargs*)[¶](#collections.somenamedtuple._replace 
     ...     inventory[partnum] = record._replace(price=newprices[partnum], timestamp=time.now())
     ```
 
-somenamedtuple.\_fields[¶](#collections.somenamedtuple._fields "Link to this definition")
+    Named tuples are also supported by generic function [`copy.replace()`](copy.html#copy.replace "copy.replace").
+
+    Changed in version 3.13: Raise [`TypeError`](exceptions.html#TypeError "TypeError") instead of [`ValueError`](exceptions.html#ValueError "ValueError") for invalid
+    keyword arguments.
+
+somenamedtuple.\_fields
 :   Tuple of strings listing the field names. Useful for introspection
     and for creating new named tuple types from existing named tuples.
 
@@ -995,7 +959,7 @@ somenamedtuple.\_fields[¶](#collections.somenamedtuple._fields "Link to this de
     Pixel(x=11, y=22, red=128, green=255, blue=0)
     ```
 
-somenamedtuple.\_field\_defaults[¶](#collections.somenamedtuple._field_defaults "Link to this definition")
+somenamedtuple.\_field\_defaults
 :   Dictionary mapping field names to default values.
 
     ```
@@ -1028,12 +992,11 @@ functionality with a subclass. Here is how to add a calculated field and
 a fixed-width print format:
 
 ```
->>> class Point(namedtuple('Point', ['x', 'y'])):
-...     __slots__ = ()
-...     @property
-...     def hypot(self):
+>>> classPoint(namedtuple('Point', ['x', 'y'])):
+...     ...     @property
+...     defhypot(self):
 ...         return (self.x ** 2 + self.y ** 2) ** 0.5
-...     def __str__(self):
+...     def__str__(self):
 ...         return 'Point: x=%6.3f  y=%6.3f  hypot=%6.3f' % (self.x, self.y, self.hypot)
 
 >>> for p in Point(3, 4), Point(14, 5/7):
@@ -1058,10 +1021,7 @@ fields:
 ```
 >>> Book = namedtuple('Book', ['id', 'title', 'authors'])
 >>> Book.__doc__ += ': Hardcover book in active collection'
->>> Book.id.__doc__ = '13-digit ISBN'
->>> Book.title.__doc__ = 'Title of first printing'
->>> Book.authors.__doc__ = 'List of authors sorted by last name'
-```
+>>> Book.id.>>> Book.title.>>> Book.authors.```
 
 Changed in version 3.5: Property docstrings became writeable.
 
@@ -1072,7 +1032,7 @@ See also
   keyword:
 
   ```
-  class Component(NamedTuple):
+  classComponent(NamedTuple):
       part_number: int
       weight: float
       description: Optional[str] = None
@@ -1082,7 +1042,7 @@ See also
 * The [`dataclasses`](dataclasses.html#module-dataclasses "dataclasses: Generate special methods on user-defined classes.") module provides a decorator and functions for
   automatically adding generated special methods to user-defined classes.
 
-## [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") objects[¶](#ordereddict-objects "Link to this heading")
+## [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") objects
 
 Ordered dictionaries are just like regular dictionaries but have some extra
 capabilities relating to ordering operations. They have become less
@@ -1125,19 +1085,23 @@ Some differences from [`dict`](stdtypes.html#dict "dict") still remain:
   and its associated value to the leftmost (first) position.
 * Until Python 3.8, [`dict`](stdtypes.html#dict "dict") lacked a [`__reversed__()`](../reference/datamodel.html#object.__reversed__ "object.__reversed__") method.
 
-*class* collections.OrderedDict([*items*])[¶](#collections.OrderedDict "Link to this definition")
+*class*collections.OrderedDict(*\*\*kwargs*)
+
+*class*collections.OrderedDict(*mapping*, */*, *\*\*kwargs*)
+
+*class*collections.OrderedDict(*iterable*, */*, *\*\*kwargs*)
 :   Return an instance of a [`dict`](stdtypes.html#dict "dict") subclass that has methods
     specialized for rearranging dictionary order.
 
     Added in version 3.1.
 
-    popitem(*last=True*)[¶](#collections.OrderedDict.popitem "Link to this definition")
-    :   The [`popitem()`](#collections.OrderedDict.popitem "collections.OrderedDict.popitem") method for ordered dictionaries returns and removes a
+    popitem(*last=True*)
+    :   The `popitem()` method for ordered dictionaries returns and removes a
         (key, value) pair. The pairs are returned in
         LIFO order if *last* is true
         or FIFO order if false.
 
-    move\_to\_end(*key*, *last=True*)[¶](#collections.OrderedDict.move_to_end "Link to this definition")
+    move\_to\_end(*key*, *last=True*)
     :   Move an existing *key* to either end of an ordered dictionary. The item
         is moved to the right end if *last* is true (the default) or to the
         beginning if *last* is false. Raises [`KeyError`](exceptions.html#KeyError "KeyError") if the *key* does
@@ -1163,7 +1127,7 @@ and are roughly equivalent to `list(od1.items())==list(od2.items())`.
 
 Equality tests between [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") objects and other
 [`Mapping`](collections.abc.html#collections.abc.Mapping "collections.abc.Mapping") objects are order-insensitive like regular
-dictionaries. This allows [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") objects to be substituted
+dictionaries. This allows `OrderedDict` objects to be substituted
 anywhere a regular dictionary is used.
 
 Changed in version 3.5: The items, keys, and values [views](../glossary.html#term-dictionary-view)
@@ -1175,7 +1139,7 @@ method.
 
 Changed in version 3.9: Added merge (`|`) and update (`|=`) operators, specified in [**PEP 584**](https://peps.python.org/pep-0584/).
 
-### [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") Examples and Recipes[¶](#ordereddict-examples-and-recipes "Link to this heading")
+### [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") Examples and Recipes
 
 It is straightforward to create an ordered dictionary variant
 that remembers the order the keys were *last* inserted.
@@ -1183,10 +1147,10 @@ If a new entry overwrites an existing entry, the
 original insertion position is changed and moved to the end:
 
 ```
-class LastUpdatedOrderedDict(OrderedDict):
+classLastUpdatedOrderedDict(OrderedDict):
     'Store items in the order the keys were last added'
 
-    def __setitem__(self, key, value):
+    def__setitem__(self, key, value):
         super().__setitem__(key, value)
         self.move_to_end(key)
 ```
@@ -1195,19 +1159,19 @@ An [`OrderedDict`](#collections.OrderedDict "collections.OrderedDict") would als
 variants of [`functools.lru_cache()`](functools.html#functools.lru_cache "functools.lru_cache"):
 
 ```
-from collections import OrderedDict
-from time import time
+fromcollectionsimport OrderedDict
+fromtimeimport time
 
-class TimeBoundedLRU:
+classTimeBoundedLRU:
     "LRU Cache that invalidates and refreshes old entries."
 
-    def __init__(self, func, maxsize=128, maxage=30):
+    def__init__(self, func, maxsize=128, maxage=30):
         self.cache = OrderedDict()      # { args : (timestamp, result)}
         self.func = func
         self.maxsize = maxsize
         self.maxage = maxage
 
-    def __call__(self, *args):
+    def__call__(self, *args):
         if args in self.cache:
             self.cache.move_to_end(args)
             timestamp, result = self.cache[args]
@@ -1216,13 +1180,13 @@ class TimeBoundedLRU:
         result = self.func(*args)
         self.cache[args] = time(), result
         if len(self.cache) > self.maxsize:
-            self.cache.popitem(0)
+            self.cache.popitem(last=False)
         return result
 ```
 
 ```
-class MultiHitLRUCache:
-    """ LRU cache that defers caching a result until
+classMultiHitLRUCache:
+""" LRU cache that defers caching a result until
         it has been requested multiple times.
 
         To avoid flushing the LRU cache with one-time requests,
@@ -1230,7 +1194,7 @@ class MultiHitLRUCache:
 
     """
 
-    def __init__(self, func, maxsize=128, maxrequests=4096, cache_after=1):
+    def__init__(self, func, maxsize=128, maxrequests=4096, cache_after=1):
         self.requests = OrderedDict()   # { uncached_key : request_count }
         self.cache = OrderedDict()      # { cached_key : function_result }
         self.func = func
@@ -1238,7 +1202,7 @@ class MultiHitLRUCache:
         self.maxsize = maxsize          # max number of stored return values
         self.cache_after = cache_after
 
-    def __call__(self, *args):
+    def__call__(self, *args):
         if args in self.cache:
             self.cache.move_to_end(args)
             return self.cache[args]
@@ -1247,16 +1211,16 @@ class MultiHitLRUCache:
         if self.requests[args] <= self.cache_after:
             self.requests.move_to_end(args)
             if len(self.requests) > self.maxrequests:
-                self.requests.popitem(0)
+                self.requests.popitem(last=False)
         else:
             self.requests.pop(args, None)
             self.cache[args] = result
             if len(self.cache) > self.maxsize:
-                self.cache.popitem(0)
+                self.cache.popitem(last=False)
         return result
 ```
 
-## [`UserDict`](#collections.UserDict "collections.UserDict") objects[¶](#userdict-objects "Link to this heading")
+## [`UserDict`](#collections.UserDict "collections.UserDict") objects
 
 The class, [`UserDict`](#collections.UserDict "collections.UserDict") acts as a wrapper around dictionary objects.
 The need for this class has been partially supplanted by the ability to
@@ -1264,21 +1228,24 @@ subclass directly from [`dict`](stdtypes.html#dict "dict"); however, this class 
 to work with because the underlying dictionary is accessible as an
 attribute.
 
-*class* collections.UserDict([*initialdata*])[¶](#collections.UserDict "Link to this definition")
+*class*collections.UserDict(*\*\*kwargs*)
+
+*class*collections.UserDict(*mapping*, */*, *\*\*kwargs*)
+
+*class*collections.UserDict(*iterable*, */*, *\*\*kwargs*)
 :   Class that simulates a dictionary. The instance’s contents are kept in a
     regular dictionary, which is accessible via the [`data`](#collections.UserDict.data "collections.UserDict.data") attribute of
-    [`UserDict`](#collections.UserDict "collections.UserDict") instances. If *initialdata* is provided, [`data`](#collections.UserDict.data "collections.UserDict.data") is
-    initialized with its contents; note that a reference to *initialdata* will not
-    be kept, allowing it to be used for other purposes.
+    `UserDict` instances. If arguments are provided, they are used to
+    initialize `data`, like a regular dictionary.
 
     In addition to supporting the methods and operations of mappings,
-    [`UserDict`](#collections.UserDict "collections.UserDict") instances provide the following attribute:
+    `UserDict` instances provide the following attribute:
 
-    data[¶](#collections.UserDict.data "Link to this definition")
-    :   A real dictionary used to store the contents of the [`UserDict`](#collections.UserDict "collections.UserDict")
+    data
+    :   A real dictionary used to store the contents of the `UserDict`
         class.
 
-## [`UserList`](#collections.UserList "collections.UserList") objects[¶](#userlist-objects "Link to this heading")
+## [`UserList`](#collections.UserList "collections.UserList") objects
 
 This class acts as a wrapper around list objects. It is a useful base class
 for your own list-like classes which can inherit from them and override
@@ -1289,19 +1256,19 @@ The need for this class has been partially supplanted by the ability to
 subclass directly from [`list`](stdtypes.html#list "list"); however, this class can be easier
 to work with because the underlying list is accessible as an attribute.
 
-*class* collections.UserList([*list*])[¶](#collections.UserList "Link to this definition")
+*class*collections.UserList([*list*])
 :   Class that simulates a list. The instance’s contents are kept in a regular
-    list, which is accessible via the [`data`](#collections.UserList.data "collections.UserList.data") attribute of [`UserList`](#collections.UserList "collections.UserList")
+    list, which is accessible via the [`data`](#collections.UserList.data "collections.UserList.data") attribute of `UserList`
     instances. The instance’s contents are initially set to a copy of *list*,
     defaulting to the empty list `[]`. *list* can be any iterable, for
-    example a real Python list or a [`UserList`](#collections.UserList "collections.UserList") object.
+    example a real Python list or a `UserList` object.
 
     In addition to supporting the methods and operations of mutable sequences,
-    [`UserList`](#collections.UserList "collections.UserList") instances provide the following attribute:
+    `UserList` instances provide the following attribute:
 
-    data[¶](#collections.UserList.data "Link to this definition")
+    data
     :   A real [`list`](stdtypes.html#list "list") object used to store the contents of the
-        [`UserList`](#collections.UserList "collections.UserList") class.
+        `UserList` class.
 
 **Subclassing requirements:** Subclasses of [`UserList`](#collections.UserList "collections.UserList") are expected to
 offer a constructor which can be called with either no arguments or one
@@ -1315,7 +1282,7 @@ special methods supported by this class will need to be overridden; please
 consult the sources for information about the methods which need to be provided
 in that case.
 
-## [`UserString`](#collections.UserString "collections.UserString") objects[¶](#userstring-objects "Link to this heading")
+## [`UserString`](#collections.UserString "collections.UserString") objects
 
 The class, [`UserString`](#collections.UserString "collections.UserString") acts as a wrapper around string objects.
 The need for this class has been partially supplanted by the ability to
@@ -1323,88 +1290,26 @@ subclass directly from [`str`](stdtypes.html#str "str"); however, this class can
 to work with because the underlying string is accessible as an
 attribute.
 
-*class* collections.UserString(*seq*)[¶](#collections.UserString "Link to this definition")
+*class*collections.UserString(*seq*)
 :   Class that simulates a string object. The instance’s
     content is kept in a regular string object, which is accessible via the
-    [`data`](#collections.UserString.data "collections.UserString.data") attribute of [`UserString`](#collections.UserString "collections.UserString") instances. The instance’s
+    [`data`](#collections.UserString.data "collections.UserString.data") attribute of `UserString` instances. The instance’s
     contents are initially set to a copy of *seq*. The *seq* argument can
     be any object which can be converted into a string using the built-in
     [`str()`](stdtypes.html#str "str") function.
 
     In addition to supporting the methods and operations of strings,
-    [`UserString`](#collections.UserString "collections.UserString") instances provide the following attribute:
+    `UserString` instances provide the following attribute:
 
-    data[¶](#collections.UserString.data "Link to this definition")
+    data
     :   A real [`str`](stdtypes.html#str "str") object used to store the contents of the
-        [`UserString`](#collections.UserString "collections.UserString") class.
+        `UserString` class.
 
     Changed in version 3.5: New methods `__getnewargs__`, `__rmod__`, `casefold`,
     `format_map`, `isprintable`, and `maketrans`.
 
-### [Table of Contents](../contents.html)
+---
 
-* [`collections` — Container datatypes](#)
-  + [`ChainMap` objects](#chainmap-objects)
-    - [`ChainMap` Examples and Recipes](#chainmap-examples-and-recipes)
-  + [`Counter` objects](#counter-objects)
-  + [`deque` objects](#deque-objects)
-    - [`deque` Recipes](#deque-recipes)
-  + [`defaultdict` objects](#defaultdict-objects)
-    - [`defaultdict` Examples](#defaultdict-examples)
-  + [`namedtuple()` Factory Function for Tuples with Named Fields](#namedtuple-factory-function-for-tuples-with-named-fields)
-  + [`OrderedDict` objects](#ordereddict-objects)
-    - [`OrderedDict` Examples and Recipes](#ordereddict-examples-and-recipes)
-  + [`UserDict` objects](#userdict-objects)
-  + [`UserList` objects](#userlist-objects)
-  + [`UserString` objects](#userstring-objects)
+## Bibliography
 
-#### Previous topic
-
-[`calendar` — General calendar-related functions](calendar.html "previous chapter")
-
-#### Next topic
-
-[`collections.abc` — Abstract Base Classes for Containers](collections.abc.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/collections.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](collections.abc.html "collections.abc — Abstract Base Classes for Containers") |
-* [previous](calendar.html "calendar — General calendar-related functions") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Data Types](datatypes.html) »
-* `collections` — Container datatypes
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`collections` — Container datatypes](https://docs.python.org/3/library/collections.html)

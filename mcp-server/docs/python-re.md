@@ -1,72 +1,11 @@
-re — Regular expression operations — Python 3.12.13 documentation
+# Python re
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
+## 1. `re` — Regular expression operations
 
-* [`re` — Regular expression operations](#)
-  + [Regular Expression Syntax](#regular-expression-syntax)
-  + [Module Contents](#module-contents)
-    - [Flags](#flags)
-    - [Functions](#functions)
-    - [Exceptions](#exceptions)
-  + [Regular Expression Objects](#regular-expression-objects)
-  + [Match Objects](#match-objects)
-  + [Regular Expression Examples](#regular-expression-examples)
-    - [Checking for a Pair](#checking-for-a-pair)
-    - [Simulating scanf()](#simulating-scanf)
-    - [search() vs. match()](#search-vs-match)
-    - [Making a Phonebook](#making-a-phonebook)
-    - [Text Munging](#text-munging)
-    - [Finding all Adverbs](#finding-all-adverbs)
-    - [Finding all Adverbs and their Positions](#finding-all-adverbs-and-their-positions)
-    - [Raw String Notation](#raw-string-notation)
-    - [Writing a Tokenizer](#writing-a-tokenizer)
-
-#### Previous topic
-
-[`string` — Common string operations](string.html "previous chapter")
-
-#### Next topic
-
-[`difflib` — Helpers for computing deltas](difflib.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/re.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](difflib.html "difflib — Helpers for computing deltas") |
-* [previous](string.html "string — Common string operations") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Text Processing Services](text.html) »
-* `re` — Regular expression operations
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `re` — Regular expression operations[¶](#module-re "Link to this heading")
-
-**Source code:** [Lib/re/](https://github.com/python/cpython/tree/3.12/Lib/re/)
+**Source code:** [Lib/re/](https://github.com/python/cpython/tree/3.14/Lib/re/)
 
 ---
 
@@ -108,10 +47,10 @@ fine-tuning parameters.
 See also
 
 The third-party [regex](https://pypi.org/project/regex/) module,
-which has an API compatible with the standard library [`re`](#module-re "re: Regular expression operations.") module,
+which has an API compatible with the standard library `re` module,
 but offers additional functionality and a more thorough Unicode support.
 
-## Regular Expression Syntax[¶](#regular-expression-syntax "Link to this heading")
+## Regular Expression Syntax
 
 A regular expression (or RE) specifies a set of strings that matches it; the
 functions in this module let you check if a particular string matches a given
@@ -129,7 +68,7 @@ and implementation of regular expressions, consult the Friedl book [[Frie09]](#f
 or almost any textbook about compiler construction.
 
 A brief explanation of the format of regular expressions follows. For further
-information and a gentler presentation, consult the [Regular Expression HOWTO](../howto/regex.html#regex-howto).
+information and a gentler presentation, consult the [Regular expression HOWTO](../howto/regex.html#regex-howto).
 
 Regular expressions can contain both special and ordinary characters. Most
 ordinary characters, like `'A'`, `'a'`, or `'0'`, are the simplest regular
@@ -164,7 +103,7 @@ The special characters are:
     string, and in [`MULTILINE`](#re.MULTILINE "re.MULTILINE") mode also matches before a newline. `foo`
     matches both ‘foo’ and ‘foobar’, while the regular expression `foo$` matches
     only ‘foo’. More interestingly, searching for `foo.$` in `'foo1\nfoo2\n'`
-    matches ‘foo2’ normally, but ‘foo1’ in [`MULTILINE`](#re.MULTILINE "re.MULTILINE") mode; searching for
+    matches ‘foo2’ normally, but ‘foo1’ in `MULTILINE` mode; searching for
     a single `$` in `'foo\n'` will find two (empty) matches: one just before
     the newline, and one at the end of the string.
 
@@ -271,12 +210,21 @@ The special characters are:
       `[0-9A-Fa-f]` will match any hexadecimal digit. If `-` is escaped (e.g.
       `[a\-z]`) or if it’s placed as the first or last character
       (e.g. `[-a]` or `[a-]`), it will match a literal `'-'`.
-    * Special characters lose their special meaning inside sets. For example,
+    * Special characters except backslash lose their special meaning inside sets.
+      For example,
       `[(+*)]` will match any of the literal characters `'('`, `'+'`,
       `'*'`, or `')'`.
 
-    * Character classes such as `\w` or `\S` (defined below) are also accepted
-      inside a set, although the characters they match depend on the [flags](#flags) used.
+    * Backslash either escapes characters which have special meaning in a set
+      such as `'-'`, `']'`, `'^'` and `'\\'` itself or signals
+      a special sequence which represents a single character such as
+      `\xa0` or `\n` or a character class such as `\w` or `\S`
+      (defined below).
+      Note that `\b` represents a single “backspace” character,
+      not a word boundary as outside a set, and numeric escapes
+      such as `\1` are always octal escapes, not group references.
+      Special sequences which do not match a single character such as `\A`
+      and `\z` are not allowed.
 
     * Characters that are not within a range can be matched by *complementing*
       the set. If the first character of the set is `'^'`, all the characters
@@ -286,7 +234,7 @@ The special characters are:
       the set.
     * To match a literal `']'` inside a set, precede it with a backslash, or
       place it at the beginning of the set. For example, both `[()[\]{}]` and
-      `[]()[{}]` will match a right bracket, as well as left bracket, braces,
+      `[{}]` will match a right bracket, as well as left bracket, braces,
       and parentheses.
 
     * Support of nested sets and set operations as in [Unicode Technical
@@ -449,7 +397,7 @@ The special characters are:
     [`search()`](#re.search "re.search") function rather than the [`match()`](#re.match "re.match") function:
 
     ```
-    >>> import re
+    >>> importre
     >>> m = re.search('(?<=abc)def', 'abcdef')
     >>> m.group(0)
     'def'
@@ -534,11 +482,7 @@ character `'$'`.
     Word boundaries are determined by the current locale
     if the [`LOCALE`](#re.LOCALE "re.LOCALE") flag is used.
 
-    Note
-
-    Note that `\B` does not match an empty string, which differs from
-    RE implementations in other programming languages such as Perl.
-    This behavior is kept for compatibility reasons.
+    Changed in version 3.14: `\B` now matches empty input string.
 
 `\d`
 :   For Unicode (str) patterns:
@@ -603,8 +547,13 @@ character `'$'`.
     matches characters which are neither alphanumeric in the current locale
     nor the underscore.
 
-`\Z`
+`\z`
 :   Matches only at the end of the string.
+
+    Added in version 3.14.
+
+`\Z`
+:   The same as `\z`. For compatibility with old Python versions.
 
 Most of the [escape sequences](../reference/lexical_analysis.html#escape-sequences) supported by Python
 string literals are also accepted by the regular expression parser:
@@ -636,26 +585,26 @@ Changed in version 3.6: Unknown escapes consisting of `'\'` and an ASCII letter 
 Changed in version 3.8: The `'\N{name}'` escape sequence has been added. As in string literals,
 it expands to the named Unicode character (e.g. `'\N{EM DASH}'`).
 
-## Module Contents[¶](#module-contents "Link to this heading")
+## Module Contents
 
 The module defines several functions, constants, and an exception. Some of the
 functions are simplified versions of the full featured methods for compiled
 regular expressions. Most non-trivial applications always use the compiled
 form.
 
-### Flags[¶](#flags "Link to this heading")
+### Flags
 
 Changed in version 3.6: Flag constants are now instances of [`RegexFlag`](#re.RegexFlag "re.RegexFlag"), which is a subclass of
 [`enum.IntFlag`](enum.html#enum.IntFlag "enum.IntFlag").
 
-*class* re.RegexFlag[¶](#re.RegexFlag "Link to this definition")
+*class*re.RegexFlag
 :   An [`enum.IntFlag`](enum.html#enum.IntFlag "enum.IntFlag") class containing the regex options listed below.
 
     Added in version 3.11: - added to `__all__`
 
-re.A[¶](#re.A "Link to this definition")
+re.A
 
-re.ASCII[¶](#re.ASCII "Link to this definition")
+re.ASCII
 :   Make `\w`, `\W`, `\b`, `\B`, `\d`, `\D`, `\s` and `\S`
     perform ASCII-only matching instead of full Unicode matching. This is only
     meaningful for Unicode (str) patterns, and is ignored for bytes patterns.
@@ -670,14 +619,14 @@ re.ASCII[¶](#re.ASCII "Link to this definition")
     and Unicode matching isn’t allowed for bytes patterns.
     [`UNICODE`](#re.UNICODE "re.UNICODE") and the inline flag `(?u)` are similarly redundant.
 
-re.DEBUG[¶](#re.DEBUG "Link to this definition")
+re.DEBUG
 :   Display debug information about compiled expression.
 
     No corresponding inline flag.
 
-re.I[¶](#re.I "Link to this definition")
+re.I
 
-re.IGNORECASE[¶](#re.IGNORECASE "Link to this definition")
+re.IGNORECASE
 :   Perform case-insensitive matching;
     expressions like `[A-Z]` will also match lowercase letters.
     Full Unicode matching (such as `Ü` matching `ü`)
@@ -696,9 +645,9 @@ re.IGNORECASE[¶](#re.IGNORECASE "Link to this definition")
     If the [`ASCII`](#re.ASCII "re.ASCII") flag is used, only letters ‘a’ to ‘z’
     and ‘A’ to ‘Z’ are matched.
 
-re.L[¶](#re.L "Link to this definition")
+re.L
 
-re.LOCALE[¶](#re.LOCALE "Link to this definition")
+re.LOCALE
 :   Make `\w`, `\W`, `\b`, `\B` and case-insensitive matching
     dependent on the current locale.
     This flag can be used only with bytes patterns.
@@ -721,9 +670,9 @@ re.LOCALE[¶](#re.LOCALE "Link to this definition")
     no longer depend on the locale at compile time.
     Only the locale at matching time affects the result of matching.
 
-re.M[¶](#re.M "Link to this definition")
+re.M
 
-re.MULTILINE[¶](#re.MULTILINE "Link to this definition")
+re.MULTILINE
 :   When specified, the pattern character `'^'` matches at the beginning of the
     string and at the beginning of each line (immediately following each newline);
     and the pattern character `'$'` matches at the end of the string and at the
@@ -733,30 +682,30 @@ re.MULTILINE[¶](#re.MULTILINE "Link to this definition")
 
     Corresponds to the inline flag `(?m)`.
 
-re.NOFLAG[¶](#re.NOFLAG "Link to this definition")
+re.NOFLAG
 :   Indicates no flag being applied, the value is `0`. This flag may be used
     as a default value for a function keyword argument or as a base value that
     will be conditionally ORed with other flags. Example of use as a default
     value:
 
     ```
-    def myfunc(text, flag=re.NOFLAG):
+    defmyfunc(text, flag=re.NOFLAG):
         return re.match(text, flag)
     ```
 
     Added in version 3.11.
 
-re.S[¶](#re.S "Link to this definition")
+re.S
 
-re.DOTALL[¶](#re.DOTALL "Link to this definition")
+re.DOTALL
 :   Make the `'.'` special character match any character at all, including a
     newline; without this flag, `'.'` will match anything *except* a newline.
 
     Corresponds to the inline flag `(?s)`.
 
-re.U[¶](#re.U "Link to this definition")
+re.U
 
-re.UNICODE[¶](#re.UNICODE "Link to this definition")
+re.UNICODE
 :   In Python 3, Unicode characters are matched by default
     for `str` patterns.
     This flag is therefore redundant with **no effect**
@@ -764,9 +713,9 @@ re.UNICODE[¶](#re.UNICODE "Link to this definition")
 
     See [`ASCII`](#re.ASCII "re.ASCII") to restrict matching to ASCII characters instead.
 
-re.X[¶](#re.X "Link to this definition")
+re.X
 
-re.VERBOSE[¶](#re.VERBOSE "Link to this definition")
+re.VERBOSE
 :   This flag allows you to write regular expressions that look nicer and are
     more readable by allowing you to visually separate logical sections of the
     pattern and add comments. Whitespace within the pattern is ignored, except
@@ -789,9 +738,9 @@ re.VERBOSE[¶](#re.VERBOSE "Link to this definition")
 
     Corresponds to the inline flag `(?x)`.
 
-### Functions[¶](#functions "Link to this heading")
+### Functions
 
-re.compile(*pattern*, *flags=0*)[¶](#re.compile "Link to this definition")
+re.compile(*pattern*, *flags=0*)
 :   Compile a regular expression pattern into a [regular expression object](#re-objects), which can be used for matching using its
     [`match()`](#re.Pattern.match "re.Pattern.match"), [`search()`](#re.Pattern.search "re.Pattern.search") and other methods, described
     below.
@@ -824,7 +773,7 @@ re.compile(*pattern*, *flags=0*)[¶](#re.compile "Link to this definition")
     programs that use only a few regular expressions at a time needn’t worry
     about compiling regular expressions.
 
-re.search(*pattern*, *string*, *flags=0*)[¶](#re.search "Link to this definition")
+re.search(*pattern*, *string*, *flags=0*)
 :   Scan through *string* looking for the first location where the regular expression
     *pattern* produces a match, and return a corresponding [`Match`](#re.Match "re.Match"). Return
     `None` if no position in the string matches the pattern; note that this is
@@ -834,7 +783,7 @@ re.search(*pattern*, *string*, *flags=0*)[¶](#re.search "Link to this definitio
     Values can be any of the [flags](#flags) variables, combined using bitwise OR
     (the `|` operator).
 
-re.match(*pattern*, *string*, *flags=0*)[¶](#re.match "Link to this definition")
+re.match(*pattern*, *string*, *flags=0*)
 :   If zero or more characters at the beginning of *string* match the regular
     expression *pattern*, return a corresponding [`Match`](#re.Match "re.Match"). Return
     `None` if the string does not match the pattern; note that this is
@@ -850,7 +799,7 @@ re.match(*pattern*, *string*, *flags=0*)[¶](#re.match "Link to this definition"
     Values can be any of the [flags](#flags) variables, combined using bitwise OR
     (the `|` operator).
 
-re.fullmatch(*pattern*, *string*, *flags=0*)[¶](#re.fullmatch "Link to this definition")
+re.fullmatch(*pattern*, *string*, *flags=0*)
 :   If the whole *string* matches the regular expression *pattern*, return a
     corresponding [`Match`](#re.Match "re.Match"). Return `None` if the string does not match
     the pattern; note that this is different from a zero-length match.
@@ -861,7 +810,7 @@ re.fullmatch(*pattern*, *string*, *flags=0*)[¶](#re.fullmatch "Link to this def
 
     Added in version 3.4.
 
-re.split(*pattern*, *string*, *maxsplit=0*, *flags=0*)[¶](#re.split "Link to this definition")
+re.split(*pattern*, *string*, *maxsplit=0*, *flags=0*)
 :   Split *string* by the occurrences of *pattern*. If capturing parentheses are
     used in *pattern*, then the text of all groups in the pattern are also returned
     as part of the resulting list. If *maxsplit* is nonzero, at most *maxsplit*
@@ -873,7 +822,7 @@ re.split(*pattern*, *string*, *maxsplit=0*, *flags=0*)[¶](#re.split "Link to th
     ['Words', 'words', 'words', '']
     >>> re.split(r'(\W+)', 'Words, words, words.')
     ['Words', ', ', 'words', ', ', 'words', '.', '']
-    >>> re.split(r'\W+', 'Words, words, words.', 1)
+    >>> re.split(r'\W+', 'Words, words, words.', maxsplit=1)
     ['Words', 'words, words.']
     >>> re.split('[a-f]+', '0a3B9', flags=re.IGNORECASE)
     ['0', '3', '9']
@@ -891,8 +840,8 @@ re.split(*pattern*, *string*, *maxsplit=0*, *flags=0*)[¶](#re.split "Link to th
     That way, separator components are always found at the same relative
     indices within the result list.
 
-    Empty matches for the pattern split the string only when not adjacent
-    to a previous empty match.
+    Adjacent empty matches are not possible, but an empty match can occur
+    immediately after a non-empty match.
 
     ```
     >>> re.split(r'\b', 'Words, words, words.')
@@ -911,7 +860,11 @@ re.split(*pattern*, *string*, *maxsplit=0*, *flags=0*)[¶](#re.split "Link to th
 
     Changed in version 3.7: Added support of splitting on a pattern that could match an empty string.
 
-re.findall(*pattern*, *string*, *flags=0*)[¶](#re.findall "Link to this definition")
+    Deprecated since version 3.13: Passing *maxsplit* and *flags* as positional arguments is deprecated.
+    In future Python versions they will be
+    [keyword-only parameters](../glossary.html#keyword-only-parameter).
+
+re.findall(*pattern*, *string*, *flags=0*)
 :   Return all non-overlapping matches of *pattern* in *string*, as a list of
     strings or tuples. The *string* is scanned left-to-right, and matches
     are returned in the order found. Empty matches are included in the result.
@@ -936,7 +889,7 @@ re.findall(*pattern*, *string*, *flags=0*)[¶](#re.findall "Link to this definit
 
     Changed in version 3.7: Non-empty matches can now start just after a previous empty match.
 
-re.finditer(*pattern*, *string*, *flags=0*)[¶](#re.finditer "Link to this definition")
+re.finditer(*pattern*, *string*, *flags=0*)
 :   Return an [iterator](../glossary.html#term-iterator) yielding [`Match`](#re.Match "re.Match") objects over
     all non-overlapping matches for the RE *pattern* in *string*. The *string*
     is scanned left-to-right, and matches are returned in the order found. Empty
@@ -948,7 +901,7 @@ re.finditer(*pattern*, *string*, *flags=0*)[¶](#re.finditer "Link to this defin
 
     Changed in version 3.7: Non-empty matches can now start just after a previous empty match.
 
-re.sub(*pattern*, *repl*, *string*, *count=0*, *flags=0*)[¶](#re.sub "Link to this definition")
+re.sub(*pattern*, *repl*, *string*, *count=0*, *flags=0*)
 :   Return the string obtained by replacing the leftmost non-overlapping occurrences
     of *pattern* in *string* by the replacement *repl*. If the pattern isn’t found,
     *string* is returned unchanged. *repl* can be a string or a function; if it is
@@ -972,7 +925,7 @@ re.sub(*pattern*, *repl*, *string*, *count=0*, *flags=0*)[¶](#re.sub "Link to t
     the replacement string. For example:
 
     ```
-    >>> def dashrepl(matchobj):
+    >>> defdashrepl(matchobj):
     ...     if matchobj.group(0) == '-': return ' '
     ...     else: return '-'
     ...
@@ -986,9 +939,12 @@ re.sub(*pattern*, *repl*, *string*, *count=0*, *flags=0*)[¶](#re.sub "Link to t
 
     The optional argument *count* is the maximum number of pattern occurrences to be
     replaced; *count* must be a non-negative integer. If omitted or zero, all
-    occurrences will be replaced. Empty matches for the pattern are replaced only
-    when not adjacent to a previous empty match, so `sub('x*', '-', 'abxd')` returns
-    `'-a-b--d-'`.
+    occurrences will be replaced.
+
+    Adjacent empty matches are not possible, but an empty match can occur
+    immediately after a non-empty match.
+    As a result, `sub('x*', '-', 'abxd')` returns `'-a-b--d-'`
+    instead of `'-a-b-d-'`.
 
     In string-type *repl* arguments, in addition to the character escapes and
     backreferences described above,
@@ -1013,27 +969,25 @@ re.sub(*pattern*, *repl*, *string*, *count=0*, *flags=0*)[¶](#re.sub "Link to t
 
     Changed in version 3.7: Unknown escapes in *repl* consisting of `'\'` and an ASCII letter
     now are errors.
-
-    Changed in version 3.7: Empty matches for the pattern are replaced when adjacent to a previous
-    non-empty match.
+    An empty match can occur immediately after a non-empty match.
 
     Changed in version 3.12: Group *id* can only contain ASCII digits.
     In [`bytes`](stdtypes.html#bytes "bytes") replacement strings, group *name* can only contain bytes
     in the ASCII range (`b'\x00'`-`b'\x7f'`).
 
-re.subn(*pattern*, *repl*, *string*, *count=0*, *flags=0*)[¶](#re.subn "Link to this definition")
+    Deprecated since version 3.13: Passing *count* and *flags* as positional arguments is deprecated.
+    In future Python versions they will be
+    [keyword-only parameters](../glossary.html#keyword-only-parameter).
+
+re.subn(*pattern*, *repl*, *string*, *count=0*, *flags=0*)
 :   Perform the same operation as [`sub()`](#re.sub "re.sub"), but return a tuple `(new_string,
     number_of_subs_made)`.
-
-    Changed in version 3.1: Added the optional flags argument.
-
-    Changed in version 3.5: Unmatched groups are replaced with an empty string.
 
     The expression’s behaviour can be modified by specifying a *flags* value.
     Values can be any of the [flags](#flags) variables, combined using bitwise OR
     (the `|` operator).
 
-re.escape(*pattern*)[¶](#re.escape "Link to this definition")
+re.escape(*pattern*)
 :   Escape special characters in *pattern*.
     This is useful if you want to match an arbitrary literal string that may
     have regular expression metacharacters in it. For example:
@@ -1068,44 +1022,47 @@ re.escape(*pattern*)[¶](#re.escape "Link to this definition")
     `'/'`, `':'`, `';'`, `'<'`, `'='`, `'>'`, `'@'`, and
     `` "`" `` are no longer escaped.
 
-re.purge()[¶](#re.purge "Link to this definition")
+re.purge()
 :   Clear the regular expression cache.
 
-### Exceptions[¶](#exceptions "Link to this heading")
+### Exceptions
 
-*exception* re.error(*msg*, *pattern=None*, *pos=None*)[¶](#re.error "Link to this definition")
+*exception*re.PatternError(*msg*, *pattern=None*, *pos=None*)
 :   Exception raised when a string passed to one of the functions here is not a
     valid regular expression (for example, it might contain unmatched parentheses)
     or when some other error occurs during compilation or matching. It is never an
-    error if a string contains no match for a pattern. The error instance has
+    error if a string contains no match for a pattern. The `PatternError` instance has
     the following additional attributes:
 
-    msg[¶](#re.error.msg "Link to this definition")
+    msg
     :   The unformatted error message.
 
-    pattern[¶](#re.error.pattern "Link to this definition")
+    pattern
     :   The regular expression pattern.
 
-    pos[¶](#re.error.pos "Link to this definition")
+    pos
     :   The index in *pattern* where compilation failed (may be `None`).
 
-    lineno[¶](#re.error.lineno "Link to this definition")
+    lineno
     :   The line corresponding to *pos* (may be `None`).
 
-    colno[¶](#re.error.colno "Link to this definition")
+    colno
     :   The column corresponding to *pos* (may be `None`).
 
     Changed in version 3.5: Added additional attributes.
 
-## Regular Expression Objects[¶](#regular-expression-objects "Link to this heading")
+    Changed in version 3.13: `PatternError` was originally named `error`; the latter is kept as an alias for
+    backward compatibility.
 
-*class* re.Pattern[¶](#re.Pattern "Link to this definition")
+## Regular Expression Objects
+
+*class*re.Pattern
 :   Compiled regular expression object returned by [`re.compile()`](#re.compile "re.compile").
 
     Changed in version 3.9: [`re.Pattern`](#re.Pattern "re.Pattern") supports `[]` to indicate a Unicode (str) or bytes pattern.
     See [Generic Alias Type](stdtypes.html#types-genericalias).
 
-Pattern.search(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.search "Link to this definition")
+Pattern.search(*string*[, *pos*[, *endpos*]])
 :   Scan through *string* looking for the first location where this regular
     expression produces a match, and return a corresponding [`Match`](#re.Match "re.Match").
     Return `None` if no position in the string matches the pattern; note that
@@ -1131,7 +1088,7 @@ Pattern.search(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.search "Link to th
     >>> pattern.search("dog", 1)  # No match; search doesn't include the "d"
     ```
 
-Pattern.match(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.match "Link to this definition")
+Pattern.match(*string*[, *pos*[, *endpos*]])
 :   If zero or more characters at the *beginning* of *string* match this regular
     expression, return a corresponding [`Match`](#re.Match "re.Match"). Return `None` if the
     string does not match the pattern; note that this is different from a
@@ -1150,7 +1107,7 @@ Pattern.match(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.match "Link to this
     If you want to locate a match anywhere in *string*, use
     [`search()`](#re.Pattern.search "re.Pattern.search") instead (see also [search() vs. match()](#search-vs-match)).
 
-Pattern.fullmatch(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.fullmatch "Link to this definition")
+Pattern.fullmatch(*string*[, *pos*[, *endpos*]])
 :   If the whole *string* matches this regular expression, return a corresponding
     [`Match`](#re.Match "re.Match"). Return `None` if the string does not match the pattern;
     note that this is different from a zero-length match.
@@ -1168,45 +1125,45 @@ Pattern.fullmatch(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.fullmatch "Link
 
     Added in version 3.4.
 
-Pattern.split(*string*, *maxsplit=0*)[¶](#re.Pattern.split "Link to this definition")
+Pattern.split(*string*, *maxsplit=0*)
 :   Identical to the [`split()`](#re.split "re.split") function, using the compiled pattern.
 
-Pattern.findall(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.findall "Link to this definition")
+Pattern.findall(*string*[, *pos*[, *endpos*]])
 :   Similar to the [`findall()`](#re.findall "re.findall") function, using the compiled pattern, but
     also accepts optional *pos* and *endpos* parameters that limit the search
     region like for [`search()`](#re.search "re.search").
 
-Pattern.finditer(*string*[, *pos*[, *endpos*]])[¶](#re.Pattern.finditer "Link to this definition")
+Pattern.finditer(*string*[, *pos*[, *endpos*]])
 :   Similar to the [`finditer()`](#re.finditer "re.finditer") function, using the compiled pattern, but
     also accepts optional *pos* and *endpos* parameters that limit the search
     region like for [`search()`](#re.search "re.search").
 
-Pattern.sub(*repl*, *string*, *count=0*)[¶](#re.Pattern.sub "Link to this definition")
+Pattern.sub(*repl*, *string*, *count=0*)
 :   Identical to the [`sub()`](#re.sub "re.sub") function, using the compiled pattern.
 
-Pattern.subn(*repl*, *string*, *count=0*)[¶](#re.Pattern.subn "Link to this definition")
+Pattern.subn(*repl*, *string*, *count=0*)
 :   Identical to the [`subn()`](#re.subn "re.subn") function, using the compiled pattern.
 
-Pattern.flags[¶](#re.Pattern.flags "Link to this definition")
+Pattern.flags
 :   The regex matching flags. This is a combination of the flags given to
     [`compile()`](#re.compile "re.compile"), any `(?...)` inline flags in the pattern, and implicit
     flags such as [`UNICODE`](#re.UNICODE "re.UNICODE") if the pattern is a Unicode string.
 
-Pattern.groups[¶](#re.Pattern.groups "Link to this definition")
+Pattern.groups
 :   The number of capturing groups in the pattern.
 
-Pattern.groupindex[¶](#re.Pattern.groupindex "Link to this definition")
+Pattern.groupindex
 :   A dictionary mapping any symbolic group names defined by `(?P<id>)` to group
     numbers. The dictionary is empty if no symbolic groups were used in the
     pattern.
 
-Pattern.pattern[¶](#re.Pattern.pattern "Link to this definition")
+Pattern.pattern
 :   The pattern string from which the pattern object was compiled.
 
 Changed in version 3.7: Added support of [`copy.copy()`](copy.html#copy.copy "copy.copy") and [`copy.deepcopy()`](copy.html#copy.deepcopy "copy.deepcopy"). Compiled
 regular expression objects are considered atomic.
 
-## Match Objects[¶](#match-objects "Link to this heading")
+## Match Objects
 
 Match objects always have a boolean value of `True`.
 Since [`match()`](#re.Pattern.match "re.Pattern.match") and [`search()`](#re.Pattern.search "re.Pattern.search") return `None`
@@ -1219,13 +1176,13 @@ if match:
     process(match)
 ```
 
-*class* re.Match[¶](#re.Match "Link to this definition")
+*class*re.Match
 :   Match object returned by successful `match`es and `search`es.
 
     Changed in version 3.9: [`re.Match`](#re.Match "re.Match") supports `[]` to indicate a Unicode (str) or bytes match.
     See [Generic Alias Type](stdtypes.html#types-genericalias).
 
-Match.expand(*template*)[¶](#re.Match.expand "Link to this definition")
+Match.expand(*template*)
 :   Return the string obtained by doing backslash substitution on the template
     string *template*, as done by the [`sub()`](#re.Pattern.sub "re.Pattern.sub") method.
     Escapes such as `\n` are converted to the appropriate characters,
@@ -1236,15 +1193,15 @@ Match.expand(*template*)[¶](#re.Match.expand "Link to this definition")
 
     Changed in version 3.5: Unmatched groups are replaced with an empty string.
 
-Match.group([*group1*, *...*])[¶](#re.Match.group "Link to this definition")
+Match.group([*group1*, *...*])
 :   Returns one or more subgroups of the match. If there is a single argument, the
     result is a single string; if there are multiple arguments, the result is a
     tuple with one item per argument. Without arguments, *group1* defaults to zero
     (the whole match is returned). If a *groupN* argument is zero, the corresponding
-    return value is the entire matching string; if it is in the inclusive range
-    [1..99], it is the string matching the corresponding parenthesized group. If a
-    group number is negative or larger than the number of groups defined in the
-    pattern, an [`IndexError`](exceptions.html#IndexError "IndexError") exception is raised. If a group is contained in a
+    return value is the entire matching string; if it is a positive integer, it is
+    the string matching the corresponding parenthesized group. If a group number is
+    negative or larger than the number of groups defined in the pattern, an
+    [`IndexError`](exceptions.html#IndexError "IndexError") exception is raised. If a group is contained in a
     part of the pattern that did not match, the corresponding result is `None`.
     If a group is contained in a part of the pattern that matched multiple times,
     the last match is returned.
@@ -1293,7 +1250,7 @@ Match.group([*group1*, *...*])[¶](#re.Match.group "Link to this definition")
     'c3'
     ```
 
-Match.\_\_getitem\_\_(*g*)[¶](#re.Match.__getitem__ "Link to this definition")
+Match.\_\_getitem\_\_(*g*)
 :   This is identical to `m.group(g)`. This allows easier access to
     an individual group from a match:
 
@@ -1319,7 +1276,7 @@ Match.\_\_getitem\_\_(*g*)[¶](#re.Match.__getitem__ "Link to this definition")
 
     Added in version 3.6.
 
-Match.groups(*default=None*)[¶](#re.Match.groups "Link to this definition")
+Match.groups(*default=None*)
 :   Return a tuple containing all the subgroups of the match, from 1 up to however
     many groups are in the pattern. The *default* argument is used for groups that
     did not participate in the match; it defaults to `None`.
@@ -1344,7 +1301,7 @@ Match.groups(*default=None*)[¶](#re.Match.groups "Link to this definition")
     ('24', '0')
     ```
 
-Match.groupdict(*default=None*)[¶](#re.Match.groupdict "Link to this definition")
+Match.groupdict(*default=None*)
 :   Return a dictionary containing all the *named* subgroups of the match, keyed by
     the subgroup name. The *default* argument is used for groups that did not
     participate in the match; it defaults to `None`. For example:
@@ -1355,9 +1312,9 @@ Match.groupdict(*default=None*)[¶](#re.Match.groupdict "Link to this definition
     {'first_name': 'Malcolm', 'last_name': 'Reynolds'}
     ```
 
-Match.start([*group*])[¶](#re.Match.start "Link to this definition")
+Match.start([*group*])
 
-Match.end([*group*])[¶](#re.Match.end "Link to this definition")
+Match.end([*group*])
 :   Return the indices of the start and end of the substring matched by *group*;
     *group* defaults to zero (meaning the whole matched substring). Return `-1` if
     *group* exists but did not contribute to the match. For a match object *m*, and
@@ -1382,51 +1339,51 @@ Match.end([*group*])[¶](#re.Match.end "Link to this definition")
     'tony@tiger.net'
     ```
 
-Match.span([*group*])[¶](#re.Match.span "Link to this definition")
+Match.span([*group*])
 :   For a match *m*, return the 2-tuple `(m.start(group), m.end(group))`. Note
     that if *group* did not contribute to the match, this is `(-1, -1)`.
     *group* defaults to zero, the entire match.
 
-Match.pos[¶](#re.Match.pos "Link to this definition")
+Match.pos
 :   The value of *pos* which was passed to the [`search()`](#re.Pattern.search "re.Pattern.search") or
     [`match()`](#re.Pattern.match "re.Pattern.match") method of a [regex object](#re-objects). This is
     the index into the string at which the RE engine started looking for a match.
 
-Match.endpos[¶](#re.Match.endpos "Link to this definition")
+Match.endpos
 :   The value of *endpos* which was passed to the [`search()`](#re.Pattern.search "re.Pattern.search") or
     [`match()`](#re.Pattern.match "re.Pattern.match") method of a [regex object](#re-objects). This is
     the index into the string beyond which the RE engine will not go.
 
-Match.lastindex[¶](#re.Match.lastindex "Link to this definition")
+Match.lastindex
 :   The integer index of the last matched capturing group, or `None` if no group
     was matched at all. For example, the expressions `(a)b`, `((a)(b))`, and
     `((ab))` will have `lastindex == 1` if applied to the string `'ab'`, while
     the expression `(a)(b)` will have `lastindex == 2`, if applied to the same
     string.
 
-Match.lastgroup[¶](#re.Match.lastgroup "Link to this definition")
+Match.lastgroup
 :   The name of the last matched capturing group, or `None` if the group didn’t
     have a name, or if no group was matched at all.
 
-Match.re[¶](#re.Match.re "Link to this definition")
+Match.re
 :   The [regular expression object](#re-objects) whose [`match()`](#re.Pattern.match "re.Pattern.match") or
     [`search()`](#re.Pattern.search "re.Pattern.search") method produced this match instance.
 
-Match.string[¶](#re.Match.string "Link to this definition")
+Match.string
 :   The string passed to [`match()`](#re.Pattern.match "re.Pattern.match") or [`search()`](#re.Pattern.search "re.Pattern.search").
 
 Changed in version 3.7: Added support of [`copy.copy()`](copy.html#copy.copy "copy.copy") and [`copy.deepcopy()`](copy.html#copy.deepcopy "copy.deepcopy"). Match objects
 are considered atomic.
 
-## Regular Expression Examples[¶](#regular-expression-examples "Link to this heading")
+## Regular Expression Examples
 
-### Checking for a Pair[¶](#checking-for-a-pair "Link to this heading")
+### Checking for a Pair
 
 In this example, we’ll use the following helper function to display match
 objects a little more gracefully:
 
 ```
-def displaymatch(match):
+defdisplaymatch(match):
     if match is None:
         return None
     return '<Match: %r, groups=%r>' % (match.group(), match.groups())
@@ -1473,14 +1430,14 @@ To find out what card the pair consists of, one could use the
 >>> pair.match("718ak").group(1)
 Traceback (most recent call last):
   File "<pyshell#23>", line 1, in <module>
-    re.match(r".*(.).*\1", "718ak").group(1)
+re.match(r".*(.).*\1", "718ak").group(1)
 AttributeError: 'NoneType' object has no attribute 'group'
 
 >>> pair.match("354aa").group(1)
 'a'
 ```
 
-### Simulating scanf()[¶](#simulating-scanf "Link to this heading")
+### Simulating scanf()
 
 Python does not currently have an equivalent to `scanf()`. Regular
 expressions are generally more powerful, though also more verbose, than
@@ -1518,47 +1475,7 @@ The equivalent regular expression would be
 (\S+) - (\d+) errors, (\d+) warnings
 ```
 
-### search() vs. match()[¶](#search-vs-match "Link to this heading")
-
-Python offers different primitive operations based on regular expressions:
-
-* [`re.match()`](#re.match "re.match") checks for a match only at the beginning of the string
-* [`re.search()`](#re.search "re.search") checks for a match anywhere in the string
-  (this is what Perl does by default)
-* [`re.fullmatch()`](#re.fullmatch "re.fullmatch") checks for entire string to be a match
-
-For example:
-
-```
->>> re.match("c", "abcdef")    # No match
->>> re.search("c", "abcdef")   # Match
-<re.Match object; span=(2, 3), match='c'>
->>> re.fullmatch("p.*n", "python") # Match
-<re.Match object; span=(0, 6), match='python'>
->>> re.fullmatch("r.*n", "python") # No match
-```
-
-Regular expressions beginning with `'^'` can be used with [`search()`](#re.search "re.search") to
-restrict the match at the beginning of the string:
-
-```
->>> re.match("c", "abcdef")    # No match
->>> re.search("^c", "abcdef")  # No match
->>> re.search("^a", "abcdef")  # Match
-<re.Match object; span=(0, 1), match='a'>
-```
-
-Note however that in [`MULTILINE`](#re.MULTILINE "re.MULTILINE") mode [`match()`](#re.match "re.match") only matches at the
-beginning of the string, whereas using [`search()`](#re.search "re.search") with a regular expression
-beginning with `'^'` will match at the beginning of each line.
-
-```
->>> re.match("X", "A\nB\nX", re.MULTILINE)  # No match
->>> re.search("^X", "A\nB\nX", re.MULTILINE)  # Match
-<re.Match object; span=(4, 5), match='X'>
-```
-
-### Making a Phonebook[¶](#making-a-phonebook "Link to this heading")
+### Making a Phonebook
 
 [`split()`](#re.split "re.split") splits a string into a list delimited by the passed pattern. The
 method is invaluable for converting textual data into data structures that can be
@@ -1595,7 +1512,7 @@ number, and address. We use the `maxsplit` parameter of [`split()`](#re.split "r
 because the address has spaces, our splitting pattern, in it:
 
 ```
->>> [re.split(":? ", entry, 3) for entry in entries]
+>>> [re.split(":? ", entry, maxsplit=3) for entry in entries]
 [['Ross', 'McFluff', '834.345.1254', '155 Elm Street'],
 ['Ronald', 'Heathmore', '892.345.3428', '436 Finley Avenue'],
 ['Frank', 'Burger', '925.541.7625', '662 South Dogwood Way'],
@@ -1607,22 +1524,22 @@ occur in the result list. With a `maxsplit` of `4`, we could separate the
 house number from the street name:
 
 ```
->>> [re.split(":? ", entry, 4) for entry in entries]
+>>> [re.split(":? ", entry, maxsplit=4) for entry in entries]
 [['Ross', 'McFluff', '834.345.1254', '155', 'Elm Street'],
 ['Ronald', 'Heathmore', '892.345.3428', '436', 'Finley Avenue'],
 ['Frank', 'Burger', '925.541.7625', '662', 'South Dogwood Way'],
 ['Heather', 'Albrecht', '548.326.4584', '919', 'Park Place']]
 ```
 
-### Text Munging[¶](#text-munging "Link to this heading")
+### Text Munging
 
 [`sub()`](#re.sub "re.sub") replaces every occurrence of a pattern with a string or the
-result of a function. This example demonstrates using [`sub()`](#re.sub "re.sub") with
+result of a function. This example demonstrates using `sub()` with
 a function to “munge” text, or randomize the order of all the characters
 in each word of a sentence except for the first and last characters:
 
 ```
->>> def repl(m):
+>>> defrepl(m):
 ...     inner_word = list(m.group(2))
 ...     random.shuffle(inner_word)
 ...     return m.group(1) + "".join(inner_word) + m.group(3)
@@ -1634,11 +1551,11 @@ in each word of a sentence except for the first and last characters:
 'Pofsroser Aodlambelk, plasee reoprt yuor asnebces potlmrpy.'
 ```
 
-### Finding all Adverbs[¶](#finding-all-adverbs "Link to this heading")
+### Finding all Adverbs
 
 [`findall()`](#re.findall "re.findall") matches *all* occurrences of a pattern, not just the first
 one as [`search()`](#re.search "re.search") does. For example, if a writer wanted to
-find all of the adverbs in some text, they might use [`findall()`](#re.findall "re.findall") in
+find all of the adverbs in some text, they might use `findall()` in
 the following manner:
 
 ```
@@ -1647,13 +1564,13 @@ the following manner:
 ['carefully', 'quickly']
 ```
 
-### Finding all Adverbs and their Positions[¶](#finding-all-adverbs-and-their-positions "Link to this heading")
+### Finding all Adverbs and their Positions
 
 If one wants more information about all matches of a pattern than the matched
 text, [`finditer()`](#re.finditer "re.finditer") is useful as it provides [`Match`](#re.Match "re.Match") objects
 instead of strings. Continuing with the previous example, if a writer wanted
 to find all of the adverbs *and their positions* in some text, they would use
-[`finditer()`](#re.finditer "re.finditer") in the following manner:
+`finditer()` in the following manner:
 
 ```
 >>> text = "He was carefully disguised but captured quickly by police."
@@ -1663,7 +1580,7 @@ to find all of the adverbs *and their positions* in some text, they would use
 40-47: quickly
 ```
 
-### Raw String Notation[¶](#raw-string-notation "Link to this heading")
+### Raw String Notation
 
 Raw string notation (`r"text"`) keeps regular expressions sane. Without it,
 every backslash (`'\'`) in a regular expression would have to be prefixed with
@@ -1689,7 +1606,7 @@ functionally identical:
 <re.Match object; span=(0, 1), match='\\'>
 ```
 
-### Writing a Tokenizer[¶](#writing-a-tokenizer "Link to this heading")
+### Writing a Tokenizer
 
 A [tokenizer or scanner](https://en.wikipedia.org/wiki/Lexical_analysis)
 analyzes a string to categorize groups of characters. This is a useful first
@@ -1700,16 +1617,16 @@ to combine those into a single master regular expression and to loop over
 successive matches:
 
 ```
-from typing import NamedTuple
-import re
+fromtypingimport NamedTuple
+importre
 
-class Token(NamedTuple):
+classToken(NamedTuple):
     type: str
     value: str
     line: int
     column: int
 
-def tokenize(code):
+deftokenize(code):
     keywords = {'IF', 'THEN', 'ENDIF', 'FOR', 'NEXT', 'GOSUB', 'RETURN'}
     token_specification = [
         ('NUMBER',   r'\d+(\.\d*)?'),  # Integer or decimal number
@@ -1784,74 +1701,8 @@ Media, 2009. The third edition of the book no longer covers Python at all,
 but the first edition covered writing good regular expression patterns in
 great detail.
 
-### [Table of Contents](../contents.html)
+---
 
-* [`re` — Regular expression operations](#)
-  + [Regular Expression Syntax](#regular-expression-syntax)
-  + [Module Contents](#module-contents)
-    - [Flags](#flags)
-    - [Functions](#functions)
-    - [Exceptions](#exceptions)
-  + [Regular Expression Objects](#regular-expression-objects)
-  + [Match Objects](#match-objects)
-  + [Regular Expression Examples](#regular-expression-examples)
-    - [Checking for a Pair](#checking-for-a-pair)
-    - [Simulating scanf()](#simulating-scanf)
-    - [search() vs. match()](#search-vs-match)
-    - [Making a Phonebook](#making-a-phonebook)
-    - [Text Munging](#text-munging)
-    - [Finding all Adverbs](#finding-all-adverbs)
-    - [Finding all Adverbs and their Positions](#finding-all-adverbs-and-their-positions)
-    - [Raw String Notation](#raw-string-notation)
-    - [Writing a Tokenizer](#writing-a-tokenizer)
+## Bibliography
 
-#### Previous topic
-
-[`string` — Common string operations](string.html "previous chapter")
-
-#### Next topic
-
-[`difflib` — Helpers for computing deltas](difflib.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/re.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](difflib.html "difflib — Helpers for computing deltas") |
-* [previous](string.html "string — Common string operations") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Text Processing Services](text.html) »
-* `re` — Regular expression operations
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`re` — Regular expression operations](https://docs.python.org/3/library/re.html)

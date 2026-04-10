@@ -1,76 +1,11 @@
-logging — Logging facility for Python — Python 3.12.13 documentation
+# Python logging
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
+## 1. `logging` — Logging facility for Python
 
-* [`logging` — Logging facility for Python](#)
-  + [Logger Objects](#logger-objects)
-  + [Logging Levels](#logging-levels)
-  + [Handler Objects](#handler-objects)
-  + [Formatter Objects](#formatter-objects)
-  + [Filter Objects](#filter-objects)
-  + [LogRecord Objects](#logrecord-objects)
-  + [LogRecord attributes](#logrecord-attributes)
-  + [LoggerAdapter Objects](#loggeradapter-objects)
-  + [Thread Safety](#thread-safety)
-  + [Module-Level Functions](#module-level-functions)
-  + [Module-Level Attributes](#module-level-attributes)
-  + [Integration with the warnings module](#integration-with-the-warnings-module)
-
-#### Previous topic
-
-[`getopt` — C-style parser for command line options](getopt.html "previous chapter")
-
-#### Next topic
-
-[`logging.config` — Logging configuration](logging.config.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/logging.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](logging.config.html "logging.config — Logging configuration") |
-* [previous](getopt.html "getopt — C-style parser for command line options") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Generic Operating System Services](allos.html) »
-* `logging` — Logging facility for Python
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `logging` — Logging facility for Python[¶](#module-logging "Link to this heading")
-
-**Source code:** [Lib/logging/\_\_init\_\_.py](https://github.com/python/cpython/tree/3.12/Lib/logging/__init__.py)
-
-Important
-
-This page contains the API reference information. For tutorial
-information and discussion of more advanced topics, see
-
-* [Basic Tutorial](../howto/logging.html#logging-basic-tutorial)
-* [Advanced Tutorial](../howto/logging.html#logging-advanced-tutorial)
-* [Logging Cookbook](../howto/logging-cookbook.html#logging-cookbook)
+**Source code:** [Lib/logging/\_\_init\_\_.py](https://github.com/python/cpython/tree/3.14/Lib/logging/__init__.py)
 
 ---
 
@@ -86,26 +21,25 @@ Here’s a simple example of idiomatic usage:
 
 ```
 # myapp.py
-import logging
-import mylib
+importlogging
+importmylib
 logger = logging.getLogger(__name__)
 
-def main():
+defmain():
     logging.basicConfig(filename='myapp.log', level=logging.INFO)
     logger.info('Started')
     mylib.do_something()
     logger.info('Finished')
 
-if __name__ == '__main__':
-    main()
+if     main()
 ```
 
 ```
 # mylib.py
-import logging
+importlogging
 logger = logging.getLogger(__name__)
 
-def do_something():
+defdo_something():
     logger.info('Doing something')
 ```
 
@@ -147,7 +81,7 @@ methods, are listed in the sections below.
   to output.
 * Formatters specify the layout of log records in the final output.
 
-## Logger Objects[¶](#logger-objects "Link to this heading")
+## Logger Objects
 
 Loggers have the following attributes and methods. Note that Loggers should
 *NEVER* be instantiated directly, but always through the module-level function
@@ -165,8 +99,8 @@ and identical to it if you organise your loggers on a per-module basis using
 the recommended construction `logging.getLogger(__name__)`. That’s because
 in a module, `__name__` is the module’s name in the Python package namespace.
 
-*class* logging.Logger[¶](#logging.Logger "Link to this definition")
-:   name[¶](#logging.Logger.name "Link to this definition")
+*class*logging.Logger
+:   name
     :   This is the logger’s name, and is the value that was passed to [`getLogger()`](#logging.getLogger "logging.getLogger")
         to obtain the logger.
 
@@ -174,7 +108,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
         This attribute should be treated as read-only.
 
-    level[¶](#logging.Logger.level "Link to this definition")
+    level
     :   The threshold of this logger, as set by the [`setLevel()`](#logging.Logger.setLevel "logging.Logger.setLevel") method.
 
         Note
@@ -182,7 +116,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         Do not set this attribute directly - always use [`setLevel()`](#logging.Logger.setLevel "logging.Logger.setLevel"),
         which has checks for the level passed to it.
 
-    parent[¶](#logging.Logger.parent "Link to this definition")
+    parent
     :   The parent logger of this logger. It may change based on later instantiation
         of loggers which are higher up in the namespace hierarchy.
 
@@ -190,7 +124,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
         This value should be treated as read-only.
 
-    propagate[¶](#logging.Logger.propagate "Link to this definition")
+    propagate
     :   If this attribute evaluates to true, events logged to this logger will be
         passed to the handlers of higher level (ancestor) loggers, in addition to
         any handlers attached to this logger. Messages are passed directly to the
@@ -222,7 +156,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         scenario is to attach handlers only to the root logger, and to let
         propagation take care of the rest.
 
-    handlers[¶](#logging.Logger.handlers "Link to this definition")
+    handlers
     :   The list of handlers directly attached to this logger instance.
 
         Note
@@ -231,7 +165,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         the [`addHandler()`](#logging.Logger.addHandler "logging.Logger.addHandler") and [`removeHandler()`](#logging.Logger.removeHandler "logging.Logger.removeHandler") methods, which use locks to ensure
         thread-safe operation.
 
-    disabled[¶](#logging.Logger.disabled "Link to this definition")
+    disabled
     :   This attribute disables handling of any events. It is set to `False` in the
         initializer, and only changed by logging configuration code.
 
@@ -239,7 +173,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
         This attribute should be treated as read-only.
 
-    setLevel(*level*)[¶](#logging.Logger.setLevel "Link to this definition")
+    setLevel(*level*)
     :   Sets the threshold for this logger to *level*. Logging messages which are less
         severe than *level* will be ignored; logging messages which have severity *level*
         or higher will be emitted by whichever handler or handlers service this logger,
@@ -269,21 +203,21 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         as integers, and methods such as e.g. [`getEffectiveLevel()`](#logging.Logger.getEffectiveLevel "logging.Logger.getEffectiveLevel") and
         [`isEnabledFor()`](#logging.Logger.isEnabledFor "logging.Logger.isEnabledFor") will return/expect to be passed integers.
 
-    isEnabledFor(*level*)[¶](#logging.Logger.isEnabledFor "Link to this definition")
+    isEnabledFor(*level*)
     :   Indicates if a message of severity *level* would be processed by this logger.
         This method checks first the module-level level set by
         `logging.disable(level)` and then the logger’s effective level as determined
         by [`getEffectiveLevel()`](#logging.Logger.getEffectiveLevel "logging.Logger.getEffectiveLevel").
 
-    getEffectiveLevel()[¶](#logging.Logger.getEffectiveLevel "Link to this definition")
+    getEffectiveLevel()
     :   Indicates the effective level for this logger. If a value other than
         [`NOTSET`](#logging.NOTSET "logging.NOTSET") has been set using [`setLevel()`](#logging.Logger.setLevel "logging.Logger.setLevel"), it is returned. Otherwise,
         the hierarchy is traversed towards the root until a value other than
-        [`NOTSET`](#logging.NOTSET "logging.NOTSET") is found, and that value is returned. The value returned is
+        `NOTSET` is found, and that value is returned. The value returned is
         an integer, typically one of [`logging.DEBUG`](#logging.DEBUG "logging.DEBUG"), [`logging.INFO`](#logging.INFO "logging.INFO")
         etc.
 
-    getChild(*suffix*)[¶](#logging.Logger.getChild "Link to this definition")
+    getChild(*suffix*)
     :   Returns a logger which is a descendant to this logger, as determined by the suffix.
         Thus, `logging.getLogger('abc').getChild('def.ghi')` would return the same
         logger as would be returned by `logging.getLogger('abc.def.ghi')`. This is a
@@ -292,7 +226,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
         Added in version 3.2.
 
-    getChildren()[¶](#logging.Logger.getChildren "Link to this definition")
+    getChildren()
     :   Returns a set of loggers which are immediate children of this logger. So for
         example `logging.getLogger().getChildren()` might return a set containing
         loggers named `foo` and `bar`, but a logger named `foo.bar` wouldn’t be
@@ -302,7 +236,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
         Added in version 3.12.
 
-    debug(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.debug "Link to this definition")
+    debug(*msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with level [`DEBUG`](#logging.DEBUG "logging.DEBUG") on this logger. The *msg* is the
         message format string, and the *args* are the arguments which are merged into
         *msg* using the string formatting operator. (Note that this means that you can
@@ -315,7 +249,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         If *exc\_info* does not evaluate as false, it causes exception information to be
         added to the logging message. If an exception tuple (in the format returned by
         [`sys.exc_info()`](sys.html#sys.exc_info "sys.exc_info")) or an exception instance is provided, it is used;
-        otherwise, [`sys.exc_info()`](sys.html#sys.exc_info "sys.exc_info") is called to get the exception information.
+        otherwise, `sys.exc_info()` is called to get the exception information.
 
         The second optional keyword argument is *stack\_info*, which defaults to
         `False`. If true, stack information is added to the logging
@@ -353,7 +287,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         incorporated into logged messages. For example:
 
         ```
-        FORMAT = '%(asctime)s %(clientip)-15s %(user)-8s %(message)s'
+        FORMAT = '%(asctime)s%(clientip)-15s%(user)-8s%(message)s'
         logging.basicConfig(format=FORMAT)
         d = {'clientip': '192.168.0.1', 'user': 'fbloggs'}
         logger = logging.getLogger('tcpserver')
@@ -394,11 +328,11 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
         Changed in version 3.8: The *stacklevel* parameter was added.
 
-    info(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.info "Link to this definition")
+    info(*msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with level [`INFO`](#logging.INFO "logging.INFO") on this logger. The arguments are
         interpreted as for [`debug()`](#logging.debug "logging.debug").
 
-    warning(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.warning "Link to this definition")
+    warning(*msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with level [`WARNING`](#logging.WARNING "logging.WARNING") on this logger. The arguments are
         interpreted as for [`debug()`](#logging.debug "logging.debug").
 
@@ -408,43 +342,43 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         identical to `warning`. As `warn` is deprecated, please do not use
         it - use `warning` instead.
 
-    error(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.error "Link to this definition")
+    error(*msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with level [`ERROR`](#logging.ERROR "logging.ERROR") on this logger. The arguments are
         interpreted as for [`debug()`](#logging.debug "logging.debug").
 
-    critical(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.critical "Link to this definition")
+    critical(*msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with level [`CRITICAL`](#logging.CRITICAL "logging.CRITICAL") on this logger. The arguments are
         interpreted as for [`debug()`](#logging.debug "logging.debug").
 
-    log(*level*, *msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.log "Link to this definition")
+    log(*level*, *msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with integer level *level* on this logger. The other arguments are
         interpreted as for [`debug()`](#logging.debug "logging.debug").
 
-    exception(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.Logger.exception "Link to this definition")
+    exception(*msg*, *\*args*, *\*\*kwargs*)
     :   Logs a message with level [`ERROR`](#logging.ERROR "logging.ERROR") on this logger. The arguments are
         interpreted as for [`debug()`](#logging.debug "logging.debug"). Exception info is added to the logging
         message. This method should only be called from an exception handler.
 
-    addFilter(*filter*)[¶](#logging.Logger.addFilter "Link to this definition")
+    addFilter(*filter*)
     :   Adds the specified filter *filter* to this logger.
 
-    removeFilter(*filter*)[¶](#logging.Logger.removeFilter "Link to this definition")
+    removeFilter(*filter*)
     :   Removes the specified filter *filter* from this logger.
 
-    filter(*record*)[¶](#logging.Logger.filter "Link to this definition")
+    filter(*record*)
     :   Apply this logger’s filters to the record and return `True` if the
         record is to be processed. The filters are consulted in turn, until one of
         them returns a false value. If none of them return a false value, the record
         will be processed (passed to handlers). If one returns a false value, no
         further processing of the record occurs.
 
-    addHandler(*hdlr*)[¶](#logging.Logger.addHandler "Link to this definition")
+    addHandler(*hdlr*)
     :   Adds the specified handler *hdlr* to this logger.
 
-    removeHandler(*hdlr*)[¶](#logging.Logger.removeHandler "Link to this definition")
+    removeHandler(*hdlr*)
     :   Removes the specified handler *hdlr* from this logger.
 
-    findCaller(*stack\_info=False*, *stacklevel=1*)[¶](#logging.Logger.findCaller "Link to this definition")
+    findCaller(*stack\_info=False*, *stacklevel=1*)
     :   Finds the caller’s source filename and line number. Returns the filename, line
         number, function name and stack information as a 4-element tuple. The stack
         information is returned as `None` unless *stack\_info* is `True`.
@@ -456,17 +390,17 @@ in a module, `__name__` is the module’s name in the Python package namespace.
         in the event log refers not to the helper/wrapper code, but to the code that
         calls it.
 
-    handle(*record*)[¶](#logging.Logger.handle "Link to this definition")
+    handle(*record*)
     :   Handles a record by passing it to all handlers associated with this logger and
         its ancestors (until a false value of *propagate* is found). This method is used
         for unpickled records received from a socket, as well as those created locally.
         Logger-level filtering is applied using [`filter()`](#logging.Logger.filter "logging.Logger.filter").
 
-    makeRecord(*name*, *level*, *fn*, *lno*, *msg*, *args*, *exc\_info*, *func=None*, *extra=None*, *sinfo=None*)[¶](#logging.Logger.makeRecord "Link to this definition")
+    makeRecord(*name*, *level*, *fn*, *lno*, *msg*, *args*, *exc\_info*, *func=None*, *extra=None*, *sinfo=None*)
     :   This is a factory method which can be overridden in subclasses to create
         specialized [`LogRecord`](#logging.LogRecord "logging.LogRecord") instances.
 
-    hasHandlers()[¶](#logging.Logger.hasHandlers "Link to this definition")
+    hasHandlers()
     :   Checks to see if this logger has any handlers configured. This is done by
         looking for handlers in this logger and its parents in the logger hierarchy.
         Returns `True` if a handler was found, else `False`. The method stops searching
@@ -478,7 +412,7 @@ in a module, `__name__` is the module’s name in the Python package namespace.
 
     Changed in version 3.7: Loggers can now be pickled and unpickled.
 
-## Logging Levels[¶](#logging-levels "Link to this heading")
+## Logging Levels
 
 The numeric values of logging levels are given in the following table. These are
 primarily of interest if you want to define your own levels, and need them to
@@ -488,37 +422,37 @@ name is lost.
 
 | Level | Numeric value | What it means / When to use it |
 | --- | --- | --- |
-| logging.NOTSET[¶](#logging.NOTSET "Link to this definition") | 0 | When set on a logger, indicates that ancestor loggers are to be consulted to determine the effective level. If that still resolves to `NOTSET`, then all events are logged. When set on a handler, all events are handled. |
-| logging.DEBUG[¶](#logging.DEBUG "Link to this definition") | 10 | Detailed information, typically only of interest to a developer trying to diagnose a problem. |
-| logging.INFO[¶](#logging.INFO "Link to this definition") | 20 | Confirmation that things are working as expected. |
-| logging.WARNING[¶](#logging.WARNING "Link to this definition") | 30 | An indication that something unexpected happened, or that a problem might occur in the near future (e.g. ‘disk space low’). The software is still working as expected. |
-| logging.ERROR[¶](#logging.ERROR "Link to this definition") | 40 | Due to a more serious problem, the software has not been able to perform some function. |
-| logging.CRITICAL[¶](#logging.CRITICAL "Link to this definition") | 50 | A serious error, indicating that the program itself may be unable to continue running. |
+| logging.NOTSET | 0 | When set on a logger, indicates that ancestor loggers are to be consulted to determine the effective level. If that still resolves to `NOTSET`, then all events are logged. When set on a handler, all events are handled. |
+| logging.DEBUG | 10 | Detailed information, typically only of interest to a developer trying to diagnose a problem. |
+| logging.INFO | 20 | Confirmation that things are working as expected. |
+| logging.WARNING | 30 | An indication that something unexpected happened, or that a problem might occur in the near future (e.g. ‘disk space low’). The software is still working as expected. |
+| logging.ERROR | 40 | Due to a more serious problem, the software has not been able to perform some function. |
+| logging.CRITICAL | 50 | A serious error, indicating that the program itself may be unable to continue running. |
 
-## Handler Objects[¶](#handler-objects "Link to this heading")
+## Handler Objects
 
 Handlers have the following attributes and methods. Note that [`Handler`](#logging.Handler "logging.Handler")
 is never instantiated directly; this class acts as a base for more useful
 subclasses. However, the `__init__()` method in subclasses needs to call
 [`Handler.__init__()`](#logging.Handler.__init__ "logging.Handler.__init__").
 
-*class* logging.Handler[¶](#logging.Handler "Link to this definition")
-:   \_\_init\_\_(*level=NOTSET*)[¶](#logging.Handler.__init__ "Link to this definition")
-    :   Initializes the [`Handler`](#logging.Handler "logging.Handler") instance by setting its level, setting the list
+*class*logging.Handler
+:   \_\_init\_\_(*level=NOTSET*)
+    :   Initializes the `Handler` instance by setting its level, setting the list
         of filters to the empty list and creating a lock (using [`createLock()`](#logging.Handler.createLock "logging.Handler.createLock")) for
         serializing access to an I/O mechanism.
 
-    createLock()[¶](#logging.Handler.createLock "Link to this definition")
+    createLock()
     :   Initializes a thread lock which can be used to serialize access to underlying
         I/O functionality which may not be threadsafe.
 
-    acquire()[¶](#logging.Handler.acquire "Link to this definition")
+    acquire()
     :   Acquires the thread lock created with [`createLock()`](#logging.Handler.createLock "logging.Handler.createLock").
 
-    release()[¶](#logging.Handler.release "Link to this definition")
+    release()
     :   Releases the thread lock acquired with [`acquire()`](#logging.Handler.acquire "logging.Handler.acquire").
 
-    setLevel(*level*)[¶](#logging.Handler.setLevel "Link to this definition")
+    setLevel(*level*)
     :   Sets the threshold for this handler to *level*. Logging messages which are
         less severe than *level* will be ignored. When a handler is created, the
         level is set to [`NOTSET`](#logging.NOTSET "logging.NOTSET") (which causes all messages to be
@@ -530,41 +464,41 @@ subclasses. However, the `__init__()` method in subclasses needs to call
         level such as ‘INFO’ as an alternative to the integer constants
         such as [`INFO`](#logging.INFO "logging.INFO").
 
-    setFormatter(*fmt*)[¶](#logging.Handler.setFormatter "Link to this definition")
+    setFormatter(*fmt*)
     :   Sets the formatter for this handler to *fmt*.
         The *fmt* argument must be a [`Formatter`](#logging.Formatter "logging.Formatter") instance or `None`.
 
-    addFilter(*filter*)[¶](#logging.Handler.addFilter "Link to this definition")
+    addFilter(*filter*)
     :   Adds the specified filter *filter* to this handler.
 
-    removeFilter(*filter*)[¶](#logging.Handler.removeFilter "Link to this definition")
+    removeFilter(*filter*)
     :   Removes the specified filter *filter* from this handler.
 
-    filter(*record*)[¶](#logging.Handler.filter "Link to this definition")
+    filter(*record*)
     :   Apply this handler’s filters to the record and return `True` if the
         record is to be processed. The filters are consulted in turn, until one of
         them returns a false value. If none of them return a false value, the record
         will be emitted. If one returns a false value, the handler will not emit the
         record.
 
-    flush()[¶](#logging.Handler.flush "Link to this definition")
+    flush()
     :   Ensure all logging output has been flushed. This version does nothing and is
         intended to be implemented by subclasses.
 
-    close()[¶](#logging.Handler.close "Link to this definition")
+    close()
     :   Tidy up any resources used by the handler. This version does no output
         but removes the handler from an internal map of handlers, which is used
         for handler lookup by name.
 
-        Subclasses should ensure that this gets called from overridden [`close()`](#logging.Handler.close "logging.Handler.close")
+        Subclasses should ensure that this gets called from overridden `close()`
         methods.
 
-    handle(*record*)[¶](#logging.Handler.handle "Link to this definition")
+    handle(*record*)
     :   Conditionally emits the specified logging record, depending on filters which may
         have been added to the handler. Wraps the actual emission of the record with
         acquisition/release of the I/O thread lock.
 
-    handleError(*record*)[¶](#logging.Handler.handleError "Link to this definition")
+    handleError(*record*)
     :   This method should be called from handlers when an exception is encountered
         during an [`emit()`](#logging.Handler.emit "logging.Handler.emit") call. If the module-level attribute
         [`raiseExceptions`](#logging.raiseExceptions "logging.raiseExceptions") is `False`, exceptions get silently ignored. This is
@@ -572,14 +506,14 @@ subclasses. However, the `__init__()` method in subclasses needs to call
         errors in the logging system, they are more interested in application
         errors. You could, however, replace this with a custom handler if you wish.
         The specified record is the one which was being processed when the exception
-        occurred. (The default value of [`raiseExceptions`](#logging.raiseExceptions "logging.raiseExceptions") is `True`, as that is
+        occurred. (The default value of `raiseExceptions` is `True`, as that is
         more useful during development).
 
-    format(*record*)[¶](#logging.Handler.format "Link to this definition")
+    format(*record*)
     :   Do formatting for a record - if a formatter is set, use it. Otherwise, use the
         default formatter for the module.
 
-    emit(*record*)[¶](#logging.Handler.emit "Link to this definition")
+    emit(*record*)
     :   Do whatever it takes to actually log the specified logging record. This version
         is intended to be implemented by subclasses and so raises a
         [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError").
@@ -603,9 +537,9 @@ subclasses. However, the `__init__()` method in subclasses needs to call
 
 For a list of handlers included as standard, see [`logging.handlers`](logging.handlers.html#module-logging.handlers "logging.handlers: Handlers for the logging module.").
 
-## Formatter Objects[¶](#formatter-objects "Link to this heading")
+## Formatter Objects
 
-*class* logging.Formatter(*fmt=None*, *datefmt=None*, *style='%'*, *validate=True*, *\**, *defaults=None*)[¶](#logging.Formatter "Link to this definition")
+*class*logging.Formatter(*fmt=None*, *datefmt=None*, *style='%'*, *validate=True*, *\**, *defaults=None*)
 :   Responsible for converting a [`LogRecord`](#logging.LogRecord "logging.LogRecord") to an output string
     to be interpreted by a human or external system.
 
@@ -616,14 +550,13 @@ For a list of handlers included as standard, see [`logging.handlers`](logging.ha
           [LogRecord attributes](#logrecord-attributes).
           If not specified, `'%(message)s'` is used,
           which is just the logged message.
-        * **datefmt** ([*str*](stdtypes.html#str "str")) – A format string in the given *style* for
-          the date/time portion of the logged output.
+        * **datefmt** ([*str*](stdtypes.html#str "str")) – A format string for the date/time portion of the logged output.
           If not specified, the default described in [`formatTime()`](#logging.Formatter.formatTime "logging.Formatter.formatTime") is used.
         * **style** ([*str*](stdtypes.html#str "str")) – Can be one of `'%'`, `'{'` or `'$'` and determines
           how the format string will be merged with its data: using one of
           [printf-style String Formatting](stdtypes.html#old-string-formatting) (`%`), [`str.format()`](stdtypes.html#str.format "str.format") (`{`)
           or [`string.Template`](string.html#string.Template "string.Template") (`$`). This only applies to
-          *fmt* and *datefmt* (e.g. `'%(message)s'` versus `'{message}'`),
+          *fmt* (e.g. `'%(message)s'` versus `'{message}'`),
           not to the actual log messages passed to the logging methods.
           However, there are [other ways](../howto/logging-cookbook.html#formatting-styles)
           to use `{`- and `$`-formatting for log messages.
@@ -640,7 +573,7 @@ For a list of handlers included as standard, see [`logging.handlers`](logging.ha
 
     Changed in version 3.10: Added the *defaults* parameter.
 
-    format(*record*)[¶](#logging.Formatter.format "Link to this definition")
+    format(*record*)
     :   The record’s attribute dictionary is used as the operand to a string
         formatting operation. Returns the resulting string. Before formatting the
         dictionary, a couple of preparatory steps are carried out. The *message*
@@ -651,7 +584,7 @@ For a list of handlers included as standard, see [`logging.handlers`](logging.ha
         that the formatted exception information is cached in attribute
         *exc\_text*. This is useful because the exception information can be
         pickled and sent across the wire, but you should be careful if you have
-        more than one [`Formatter`](#logging.Formatter "logging.Formatter") subclass which customizes the formatting
+        more than one `Formatter` subclass which customizes the formatting
         of exception information. In this case, you will have to clear the cached
         value (by setting the *exc\_text* attribute to `None`) after a formatter
         has done its formatting, so that the next formatter to handle the event
@@ -660,7 +593,7 @@ For a list of handlers included as standard, see [`logging.handlers`](logging.ha
         If stack information is available, it’s appended after the exception
         information, using [`formatStack()`](#logging.Formatter.formatStack "logging.Formatter.formatStack") to transform it if necessary.
 
-    formatTime(*record*, *datefmt=None*)[¶](#logging.Formatter.formatTime "Link to this definition")
+    formatTime(*record*, *datefmt=None*)
     :   This method should be called from [`format()`](functions.html#format "format") by a formatter which
         wants to make use of a formatted time. This method can be overridden in
         formatters to provide for any specific requirement, but the basic behavior
@@ -668,13 +601,13 @@ For a list of handlers included as standard, see [`logging.handlers`](logging.ha
         [`time.strftime()`](time.html#time.strftime "time.strftime") to format the creation time of the
         record. Otherwise, the format ‘%Y-%m-%d %H:%M:%S,uuu’ is used, where the
         uuu part is a millisecond value and the other letters are as per the
-        [`time.strftime()`](time.html#time.strftime "time.strftime") documentation. An example time in this format is
+        `time.strftime()` documentation. An example time in this format is
         `2003-01-23 00:29:50,411`. The resulting string is returned.
 
         This function uses a user-configurable function to convert the creation
         time to a tuple. By default, [`time.localtime()`](time.html#time.localtime "time.localtime") is used; to change
         this for a particular formatter instance, set the `converter` attribute
-        to a function with the same signature as [`time.localtime()`](time.html#time.localtime "time.localtime") or
+        to a function with the same signature as `time.localtime()` or
         [`time.gmtime()`](time.html#time.gmtime "time.gmtime"). To change it for all formatters, for example if you
         want all logging times to be shown in GMT, set the `converter`
         attribute in the `Formatter` class.
@@ -693,43 +626,43 @@ For a list of handlers included as standard, see [`logging.handlers`](logging.ha
 
         Changed in version 3.9: The `default_msec_format` can be `None`.
 
-    formatException(*exc\_info*)[¶](#logging.Formatter.formatException "Link to this definition")
+    formatException(*exc\_info*)
     :   Formats the specified exception information (a standard exception tuple as
         returned by [`sys.exc_info()`](sys.html#sys.exc_info "sys.exc_info")) as a string. This default implementation
         just uses [`traceback.print_exception()`](traceback.html#traceback.print_exception "traceback.print_exception"). The resulting string is
         returned.
 
-    formatStack(*stack\_info*)[¶](#logging.Formatter.formatStack "Link to this definition")
+    formatStack(*stack\_info*)
     :   Formats the specified stack information (a string as returned by
         [`traceback.print_stack()`](traceback.html#traceback.print_stack "traceback.print_stack"), but with the last newline removed) as a
         string. This default implementation just returns the input value.
 
-*class* logging.BufferingFormatter(*linefmt=None*)[¶](#logging.BufferingFormatter "Link to this definition")
+*class*logging.BufferingFormatter(*linefmt=None*)
 :   A base formatter class suitable for subclassing when you want to format a
     number of records. You can pass a [`Formatter`](#logging.Formatter "logging.Formatter") instance which you want
     to use to format each line (that corresponds to a single record). If not
     specified, the default formatter (which just outputs the event message) is
     used as the line formatter.
 
-    formatHeader(*records*)[¶](#logging.BufferingFormatter.formatHeader "Link to this definition")
+    formatHeader(*records*)
     :   Return a header for a list of *records*. The base implementation just
         returns the empty string. You will need to override this method if you
         want specific behaviour, e.g. to show the count of records, a title or a
         separator line.
 
-    formatFooter(*records*)[¶](#logging.BufferingFormatter.formatFooter "Link to this definition")
+    formatFooter(*records*)
     :   Return a footer for a list of *records*. The base implementation just
         returns the empty string. You will need to override this method if you
         want specific behaviour, e.g. to show the count of records or a separator
         line.
 
-    format(*records*)[¶](#logging.BufferingFormatter.format "Link to this definition")
+    format(*records*)
     :   Return formatted text for a list of *records*. The base implementation
         just returns the empty string if there are no records; otherwise, it
         returns the concatenation of the header, each record formatted with the
         line formatter, and the footer.
 
-## Filter Objects[¶](#filter-objects "Link to this heading")
+## Filter Objects
 
 `Filters` can be used by `Handlers` and `Loggers` for more sophisticated
 filtering than is provided by levels. The base filter class only allows events
@@ -738,12 +671,12 @@ initialized with ‘A.B’ will allow events logged by loggers ‘A.B’, ‘A.B
 ‘A.B.C.D’, ‘A.B.D’ etc. but not ‘A.BB’, ‘B.A.B’ etc. If initialized with the
 empty string, all events are passed.
 
-*class* logging.Filter(*name=''*)[¶](#logging.Filter "Link to this definition")
-:   Returns an instance of the [`Filter`](#logging.Filter "logging.Filter") class. If *name* is specified, it
+*class*logging.Filter(*name=''*)
+:   Returns an instance of the `Filter` class. If *name* is specified, it
     names a logger which, together with its children, will have its events allowed
     through the filter. If *name* is the empty string, allows every event.
 
-    filter(*record*)[¶](#logging.Filter.filter "Link to this definition")
+    filter(*record*)
     :   Is the specified record to be logged? Returns false for no, true for
         yes. Filters can either modify log records in-place or return a completely
         different record instance which will replace the original
@@ -766,7 +699,7 @@ object has a `filter` attribute: if it does, it’s assumed to be a
 `Filter` and its [`filter()`](#logging.Filter.filter "logging.Filter.filter") method is called. Otherwise, it’s
 assumed to be a callable and called with the record as the single
 parameter. The returned value should conform to that returned by
-[`filter()`](#logging.Filter.filter "logging.Filter.filter").
+`filter()`.
 
 Changed in version 3.12: You can now return a [`LogRecord`](#logging.LogRecord "logging.LogRecord") instance from filters to replace
 the log record rather than modifying it in place. This allows filters attached to
@@ -782,14 +715,14 @@ the [`LogRecord`](#logging.LogRecord "logging.LogRecord") being processed. Obvio
 to be done with some care, but it does allow the injection of contextual
 information into logs (see [Using Filters to impart contextual information](../howto/logging-cookbook.html#filters-contextual)).
 
-## LogRecord Objects[¶](#logrecord-objects "Link to this heading")
+## LogRecord Objects
 
 [`LogRecord`](#logging.LogRecord "logging.LogRecord") instances are created automatically by the [`Logger`](#logging.Logger "logging.Logger")
 every time something is logged, and can be created manually via
 [`makeLogRecord()`](#logging.makeLogRecord "logging.makeLogRecord") (for example, from a pickled event received over the
 wire).
 
-*class* logging.LogRecord(*name*, *level*, *pathname*, *lineno*, *msg*, *args*, *exc\_info*, *func=None*, *sinfo=None*)[¶](#logging.LogRecord "Link to this definition")
+*class*logging.LogRecord(*name*, *level*, *pathname*, *lineno*, *msg*, *args*, *exc\_info*, *func=None*, *sinfo=None*)
 :   Contains all the information pertinent to the event being logged.
 
     The primary information is passed in *msg* and *args*,
@@ -817,7 +750,7 @@ wire).
           or an arbitrary object (see [Using arbitrary objects as messages](../howto/logging.html#arbitrary-object-messages)).
         * **args** ([*tuple*](stdtypes.html#tuple "tuple") *|* [*dict*](stdtypes.html#dict "dict")*[*[*str*](stdtypes.html#str "str")*,* [*Any*](typing.html#typing.Any "typing.Any")*]*) – Variable data to merge into the *msg* argument
           to obtain the event description.
-        * **exc\_info** ([*tuple*](stdtypes.html#tuple "tuple")*[*[*type*](functions.html#type "type")*[*[*BaseException*](exceptions.html#BaseException "BaseException")*]**,* [*BaseException*](exceptions.html#BaseException "BaseException")*,* [*types.TracebackType*](types.html#types.TracebackType "types.TracebackType")*]* *|* *None*) – An exception tuple with the current exception information,
+        * **exc\_info** ([*tuple*](stdtypes.html#tuple "tuple")*[*[*type*](functions.html#type "type")*[*[*BaseException*](exceptions.html#BaseException "BaseException")*]**,* *BaseException**,* [*types.TracebackType*](types.html#types.TracebackType "types.TracebackType")*]* *|* *None*) – An exception tuple with the current exception information,
           as returned by [`sys.exc_info()`](sys.html#sys.exc_info "sys.exc_info"),
           or `None` if no exception information is available.
         * **func** ([*str*](stdtypes.html#str "str") *|* *None*) – The name of the function or method
@@ -826,26 +759,26 @@ wire).
           from the base of the stack in the current thread,
           up to the logging call.
 
-    getMessage()[¶](#logging.LogRecord.getMessage "Link to this definition")
-    :   Returns the message for this [`LogRecord`](#logging.LogRecord "logging.LogRecord") instance after merging any
+    getMessage()
+    :   Returns the message for this `LogRecord` instance after merging any
         user-supplied arguments with the message. If the user-supplied message
         argument to the logging call is not a string, [`str()`](stdtypes.html#str "str") is called on it to
         convert it to a string. This allows use of user-defined classes as
         messages, whose `__str__` method can return the actual format string to
         be used.
 
-    Changed in version 3.2: The creation of a [`LogRecord`](#logging.LogRecord "logging.LogRecord") has been made more configurable by
+    Changed in version 3.2: The creation of a `LogRecord` has been made more configurable by
     providing a factory which is used to create the record. The factory can be
     set using [`getLogRecordFactory()`](#logging.getLogRecordFactory "logging.getLogRecordFactory") and [`setLogRecordFactory()`](#logging.setLogRecordFactory "logging.setLogRecordFactory")
     (see this for the factory’s signature).
 
     This functionality can be used to inject your own values into a
-    [`LogRecord`](#logging.LogRecord "logging.LogRecord") at creation time. You can use the following pattern:
+    `LogRecord` at creation time. You can use the following pattern:
 
     ```
     old_factory = logging.getLogRecordFactory()
 
-    def record_factory(*args, **kwargs):
+    defrecord_factory(*args, **kwargs):
         record = old_factory(*args, **kwargs)
         record.custom_attribute = 0xdecafbad
         return record
@@ -858,7 +791,7 @@ wire).
     overwrite the standard attributes listed above, there should be no
     surprises.
 
-## LogRecord attributes[¶](#logrecord-attributes "Link to this heading")
+## LogRecord attributes
 
 The LogRecord has a number of attributes, most of which are derived from the
 parameters to the constructor. (Note that the names do not always correspond
@@ -884,8 +817,9 @@ the options available to you.
 | --- | --- | --- |
 | args | You shouldn’t need to format this yourself. | The tuple of arguments merged into `msg` to produce `message`, or a dict whose values are used for the merge (when there is only one argument, and it is a dictionary). |
 | asctime | `%(asctime)s` | Human-readable time when the [`LogRecord`](#logging.LogRecord "logging.LogRecord") was created. By default this is of the form ‘2003-07-08 16:49:45,896’ (the numbers after the comma are millisecond portion of the time). |
-| created | `%(created)f` | Time when the [`LogRecord`](#logging.LogRecord "logging.LogRecord") was created (as returned by [`time.time()`](time.html#time.time "time.time")). |
+| created | `%(created)f` | Time when the [`LogRecord`](#logging.LogRecord "logging.LogRecord") was created (as returned by [`time.time_ns()`](time.html#time.time_ns "time.time_ns") / 1e9). |
 | exc\_info | You shouldn’t need to format this yourself. | Exception tuple (à la `sys.exc_info`) or, if no exception has occurred, `None`. |
+| exc\_text | You shouldn’t need to format this yourself. | Exception information formatted as a string. This is set when [`Formatter.format()`](#logging.Formatter.format "logging.Formatter.format") is invoked, or `None` if no exception has occurred. |
 | filename | `%(filename)s` | Filename portion of `pathname`. |
 | funcName | `%(funcName)s` | Name of function containing the logging call. |
 | levelname | `%(levelname)s` | Text logging level for the message (`'DEBUG'`, `'INFO'`, `'WARNING'`, `'ERROR'`, `'CRITICAL'`). |
@@ -909,49 +843,58 @@ Changed in version 3.1: *processName* was added.
 
 Changed in version 3.12: *taskName* was added.
 
-## LoggerAdapter Objects[¶](#loggeradapter-objects "Link to this heading")
+## LoggerAdapter Objects
 
 [`LoggerAdapter`](#logging.LoggerAdapter "logging.LoggerAdapter") instances are used to conveniently pass contextual
 information into logging calls. For a usage example, see the section on
 [adding contextual information to your logging output](../howto/logging-cookbook.html#context-info).
 
-*class* logging.LoggerAdapter(*logger*, *extra*)[¶](#logging.LoggerAdapter "Link to this definition")
-:   Returns an instance of [`LoggerAdapter`](#logging.LoggerAdapter "logging.LoggerAdapter") initialized with an
-    underlying [`Logger`](#logging.Logger "logging.Logger") instance and a dict-like object.
+*class*logging.LoggerAdapter(*logger*, *extra=None*, *merge\_extra=False*)
+:   Returns an instance of `LoggerAdapter` initialized with an
+    underlying [`Logger`](#logging.Logger "logging.Logger") instance, an optional dict-like object (*extra*),
+    and an optional boolean (*merge\_extra*) indicating whether or not
+    the *extra* argument of individual log calls should be merged with
+    the `LoggerAdapter` extra.
+    The default behavior is to ignore the *extra* argument of individual log
+    calls and only use the one of the `LoggerAdapter` instance
 
-    process(*msg*, *kwargs*)[¶](#logging.LoggerAdapter.process "Link to this definition")
+    process(*msg*, *kwargs*)
     :   Modifies the message and/or keyword arguments passed to a logging call in
         order to insert contextual information. This implementation takes the object
         passed as *extra* to the constructor and adds it to *kwargs* using key
         ‘extra’. The return value is a (*msg*, *kwargs*) tuple which has the
         (possibly modified) versions of the arguments passed in.
 
-    manager[¶](#logging.LoggerAdapter.manager "Link to this definition")
+    manager
     :   Delegates to the underlying `manager` on *logger*.
 
-    \_log[¶](#logging.LoggerAdapter._log "Link to this definition")
+    \_log
     :   Delegates to the underlying `_log()` method on *logger*.
 
-    In addition to the above, [`LoggerAdapter`](#logging.LoggerAdapter "logging.LoggerAdapter") supports the following
+    In addition to the above, `LoggerAdapter` supports the following
     methods of [`Logger`](#logging.Logger "logging.Logger"): [`debug()`](#logging.Logger.debug "logging.Logger.debug"), [`info()`](#logging.Logger.info "logging.Logger.info"),
     [`warning()`](#logging.Logger.warning "logging.Logger.warning"), [`error()`](#logging.Logger.error "logging.Logger.error"), [`exception()`](#logging.Logger.exception "logging.Logger.exception"),
     [`critical()`](#logging.Logger.critical "logging.Logger.critical"), [`log()`](#logging.Logger.log "logging.Logger.log"), [`isEnabledFor()`](#logging.Logger.isEnabledFor "logging.Logger.isEnabledFor"),
     [`getEffectiveLevel()`](#logging.Logger.getEffectiveLevel "logging.Logger.getEffectiveLevel"), [`setLevel()`](#logging.Logger.setLevel "logging.Logger.setLevel") and
     [`hasHandlers()`](#logging.Logger.hasHandlers "logging.Logger.hasHandlers"). These methods have the same signatures as their
-    counterparts in [`Logger`](#logging.Logger "logging.Logger"), so you can use the two types of instances
+    counterparts in `Logger`, so you can use the two types of instances
     interchangeably.
 
     Changed in version 3.2: The [`isEnabledFor()`](#logging.Logger.isEnabledFor "logging.Logger.isEnabledFor"), [`getEffectiveLevel()`](#logging.Logger.getEffectiveLevel "logging.Logger.getEffectiveLevel"),
     [`setLevel()`](#logging.Logger.setLevel "logging.Logger.setLevel") and [`hasHandlers()`](#logging.Logger.hasHandlers "logging.Logger.hasHandlers") methods were added
-    to [`LoggerAdapter`](#logging.LoggerAdapter "logging.LoggerAdapter"). These methods delegate to the underlying logger.
+    to `LoggerAdapter`. These methods delegate to the underlying logger.
 
     Changed in version 3.6: Attribute `manager` and method `_log()` were added, which
     delegate to the underlying logger and allow adapters to be nested.
 
-## Thread Safety[¶](#thread-safety "Link to this heading")
+    Changed in version 3.10: The *extra* argument is now optional.
+
+    Changed in version 3.13: The *merge\_extra* parameter was added.
+
+## Thread Safety
 
 The logging module is intended to be thread-safe without any special work
-needing to be done by its clients. It achieves this though using threading
+needing to be done by its clients. It achieves this through using threading
 locks; there is one lock to serialize access to the module’s shared data, and
 each handler also creates a lock to serialize access to its underlying I/O.
 
@@ -960,12 +903,12 @@ module, you may not be able to use logging from within such handlers. This is
 because lock implementations in the [`threading`](threading.html#module-threading "threading: Thread-based parallelism.") module are not always
 re-entrant, and so cannot be invoked from such signal handlers.
 
-## Module-Level Functions[¶](#module-level-functions "Link to this heading")
+## Module-Level Functions
 
 In addition to the classes described above, there are a number of module-level
 functions.
 
-logging.getLogger(*name=None*)[¶](#logging.getLogger "Link to this definition")
+logging.getLogger(*name=None*)
 :   Return a logger with the specified name or, if name is `None`, return the
     root logger of the hierarchy. If specified, the name is typically a
     dot-separated hierarchical name like *‘a’*, *‘a.b’* or *‘a.b.c.d’*. Choice
@@ -977,18 +920,18 @@ logging.getLogger(*name=None*)[¶](#logging.getLogger "Link to this definition")
     This means that logger instances never need to be passed between different parts
     of an application.
 
-logging.getLoggerClass()[¶](#logging.getLoggerClass "Link to this definition")
+logging.getLoggerClass()
 :   Return either the standard [`Logger`](#logging.Logger "logging.Logger") class, or the last class passed to
     [`setLoggerClass()`](#logging.setLoggerClass "logging.setLoggerClass"). This function may be called from within a new class
-    definition, to ensure that installing a customized [`Logger`](#logging.Logger "logging.Logger") class will
+    definition, to ensure that installing a customized `Logger` class will
     not undo customizations already applied by other code. For example:
 
     ```
-    class MyLogger(logging.getLoggerClass()):
+    classMyLogger(logging.getLoggerClass()):
         # ... override behaviour here
     ```
 
-logging.getLogRecordFactory()[¶](#logging.getLogRecordFactory "Link to this definition")
+logging.getLogRecordFactory()
 :   Return a callable which is used to create a [`LogRecord`](#logging.LogRecord "logging.LogRecord").
 
     Added in version 3.2: This function has been provided, along with [`setLogRecordFactory()`](#logging.setLogRecordFactory "logging.setLogRecordFactory"),
@@ -998,7 +941,7 @@ logging.getLogRecordFactory()[¶](#logging.getLogRecordFactory "Link to this def
     See [`setLogRecordFactory()`](#logging.setLogRecordFactory "logging.setLogRecordFactory") for more information about the how the
     factory is called.
 
-logging.debug(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.debug "Link to this definition")
+logging.debug(*msg*, *\*args*, *\*\*kwargs*)
 :   This is a convenience function that calls [`Logger.debug()`](#logging.Logger.debug "logging.Logger.debug"), on the root
     logger. The handling of the arguments is in every way identical
     to what is described in that method.
@@ -1011,13 +954,13 @@ logging.debug(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.debug "Link to this de
     most programs will want to carefully and explicitly control the logging
     configuration, and should therefore prefer creating a module-level logger and
     calling [`Logger.debug()`](#logging.Logger.debug "logging.Logger.debug") (or other level-specific methods) on it, as
-    described at the beginnning of this documentation.
+    described at the beginning of this documentation.
 
-logging.info(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.info "Link to this definition")
+logging.info(*msg*, *\*args*, *\*\*kwargs*)
 :   Logs a message with level [`INFO`](#logging.INFO "logging.INFO") on the root logger. The arguments and behavior
     are otherwise the same as for [`debug()`](#logging.debug "logging.debug").
 
-logging.warning(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.warning "Link to this definition")
+logging.warning(*msg*, *\*args*, *\*\*kwargs*)
 :   Logs a message with level [`WARNING`](#logging.WARNING "logging.WARNING") on the root logger. The arguments and behavior
     are otherwise the same as for [`debug()`](#logging.debug "logging.debug").
 
@@ -1027,24 +970,24 @@ logging.warning(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.warning "Link to thi
     identical to `warning`. As `warn` is deprecated, please do not use
     it - use `warning` instead.
 
-logging.error(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.error "Link to this definition")
+logging.error(*msg*, *\*args*, *\*\*kwargs*)
 :   Logs a message with level [`ERROR`](#logging.ERROR "logging.ERROR") on the root logger. The arguments and behavior
     are otherwise the same as for [`debug()`](#logging.debug "logging.debug").
 
-logging.critical(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.critical "Link to this definition")
+logging.critical(*msg*, *\*args*, *\*\*kwargs*)
 :   Logs a message with level [`CRITICAL`](#logging.CRITICAL "logging.CRITICAL") on the root logger. The arguments and behavior
     are otherwise the same as for [`debug()`](#logging.debug "logging.debug").
 
-logging.exception(*msg*, *\*args*, *\*\*kwargs*)[¶](#logging.exception "Link to this definition")
+logging.exception(*msg*, *\*args*, *\*\*kwargs*)
 :   Logs a message with level [`ERROR`](#logging.ERROR "logging.ERROR") on the root logger. The arguments and behavior
     are otherwise the same as for [`debug()`](#logging.debug "logging.debug"). Exception info is added to the logging
     message. This function should only be called from an exception handler.
 
-logging.log(*level*, *msg*, *\*args*, *\*\*kwargs*)[¶](#logging.log "Link to this definition")
+logging.log(*level*, *msg*, *\*args*, *\*\*kwargs*)
 :   Logs a message with level *level* on the root logger. The arguments and behavior
     are otherwise the same as for [`debug()`](#logging.debug "logging.debug").
 
-logging.disable(*level=CRITICAL*)[¶](#logging.disable "Link to this definition")
+logging.disable(*level=CRITICAL*)
 :   Provides an overriding level *level* for all loggers which takes precedence over
     the logger’s own level. When the need arises to temporarily throttle logging
     output down across the whole application, this function can be useful. Its
@@ -1064,7 +1007,7 @@ logging.disable(*level=CRITICAL*)[¶](#logging.disable "Link to this definition"
     Changed in version 3.7: The *level* parameter was defaulted to level `CRITICAL`. See
     [bpo-28524](https://bugs.python.org/issue?@action=redirect&bpo=28524) for more information about this change.
 
-logging.addLevelName(*level*, *levelName*)[¶](#logging.addLevelName "Link to this definition")
+logging.addLevelName(*level*, *levelName*)
 :   Associates level *level* with text *levelName* in an internal dictionary, which is
     used to map numeric levels to a textual representation, for example when a
     [`Formatter`](#logging.Formatter "logging.Formatter") formats a message. This function can also be used to define
@@ -1077,14 +1020,14 @@ logging.addLevelName(*level*, *levelName*)[¶](#logging.addLevelName "Link to th
     If you are thinking of defining your own levels, please see the
     section on [Custom Levels](../howto/logging.html#custom-levels).
 
-logging.getLevelNamesMapping()[¶](#logging.getLevelNamesMapping "Link to this definition")
+logging.getLevelNamesMapping()
 :   Returns a mapping from level names to their corresponding logging levels. For example, the
     string “CRITICAL” maps to [`CRITICAL`](#logging.CRITICAL "logging.CRITICAL"). The returned mapping is copied from an internal
     mapping on each call to this function.
 
     Added in version 3.11.
 
-logging.getLevelName(*level*)[¶](#logging.getLevelName "Link to this definition")
+logging.getLevelName(*level*)
 :   Returns the textual or numeric representation of logging level *level*.
 
     If *level* is one of the predefined levels [`CRITICAL`](#logging.CRITICAL "logging.CRITICAL"), [`ERROR`](#logging.ERROR "logging.ERROR"),
@@ -1114,28 +1057,28 @@ logging.getLevelName(*level*)[¶](#logging.getLevelName "Link to this definition
     This undocumented behaviour was considered a mistake, and was removed in
     Python 3.4, but reinstated in 3.4.2 due to retain backward compatibility.
 
-logging.getHandlerByName(*name*)[¶](#logging.getHandlerByName "Link to this definition")
+logging.getHandlerByName(*name*)
 :   Returns a handler with the specified *name*, or `None` if there is no handler
     with that name.
 
     Added in version 3.12.
 
-logging.getHandlerNames()[¶](#logging.getHandlerNames "Link to this definition")
+logging.getHandlerNames()
 :   Returns an immutable set of all known handler names.
 
     Added in version 3.12.
 
-logging.makeLogRecord(*attrdict*)[¶](#logging.makeLogRecord "Link to this definition")
+logging.makeLogRecord(*attrdict*)
 :   Creates and returns a new [`LogRecord`](#logging.LogRecord "logging.LogRecord") instance whose attributes are
     defined by *attrdict*. This function is useful for taking a pickled
-    [`LogRecord`](#logging.LogRecord "logging.LogRecord") attribute dictionary, sent over a socket, and reconstituting
-    it as a [`LogRecord`](#logging.LogRecord "logging.LogRecord") instance at the receiving end.
+    `LogRecord` attribute dictionary, sent over a socket, and reconstituting
+    it as a `LogRecord` instance at the receiving end.
 
-logging.basicConfig(*\*\*kwargs*)[¶](#logging.basicConfig "Link to this definition")
+logging.basicConfig(*\*\*kwargs*)
 :   Does basic configuration for the logging system by creating a
     [`StreamHandler`](logging.handlers.html#logging.StreamHandler "logging.StreamHandler") with a default [`Formatter`](#logging.Formatter "logging.Formatter") and adding it to the
     root logger. The functions [`debug()`](#logging.debug "logging.debug"), [`info()`](#logging.info "logging.info"), [`warning()`](#logging.warning "logging.warning"),
-    [`error()`](#logging.error "logging.error") and [`critical()`](#logging.critical "logging.critical") will call [`basicConfig()`](#logging.basicConfig "logging.basicConfig") automatically
+    [`error()`](#logging.error "logging.error") and [`critical()`](#logging.critical "logging.critical") will call `basicConfig()` automatically
     if no handlers are defined for the root logger.
 
     This function does nothing if the root logger already has handlers
@@ -1177,7 +1120,7 @@ logging.basicConfig(*\*\*kwargs*)[¶](#logging.basicConfig "Link to this definit
 
     Changed in version 3.9: The *encoding* and *errors* arguments were added.
 
-logging.shutdown()[¶](#logging.shutdown "Link to this definition")
+logging.shutdown()
 :   Informs the logging system to perform an orderly shutdown by flushing and
     closing all handlers. This should be called at application exit and no
     further use of the logging system should be made after this call.
@@ -1186,7 +1129,7 @@ logging.shutdown()[¶](#logging.shutdown "Link to this definition")
     handler (see [`atexit`](atexit.html#module-atexit "atexit: Register and execute cleanup functions.")), so normally there’s no need to do that
     manually.
 
-logging.setLoggerClass(*klass*)[¶](#logging.setLoggerClass "Link to this definition")
+logging.setLoggerClass(*klass*)
 :   Tells the logging system to use the class *klass* when instantiating a logger.
     The class should define `__init__()` such that only a name argument is
     required, and the `__init__()` should call `Logger.__init__()`. This
@@ -1195,7 +1138,7 @@ logging.setLoggerClass(*klass*)[¶](#logging.setLoggerClass "Link to this defini
     time, do not instantiate loggers directly using the subclass: continue to use
     the [`logging.getLogger()`](#logging.getLogger "logging.getLogger") API to get your loggers.
 
-logging.setLogRecordFactory(*factory*)[¶](#logging.setLogRecordFactory "Link to this definition")
+logging.setLogRecordFactory(*factory*)
 :   Set a callable which is used to create a [`LogRecord`](#logging.LogRecord "logging.LogRecord").
 
     Parameters:
@@ -1241,9 +1184,9 @@ logging.setLogRecordFactory(*factory*)[¶](#logging.setLogRecordFactory "Link to
     > kwargs:
     > :   Additional keyword arguments.
 
-## Module-Level Attributes[¶](#module-level-attributes "Link to this heading")
+## Module-Level Attributes
 
-logging.lastResort[¶](#logging.lastResort "Link to this definition")
+logging.lastResort
 :   A “handler of last resort” is available through this attribute. This
     is a [`StreamHandler`](logging.handlers.html#logging.StreamHandler "logging.StreamHandler") writing to `sys.stderr` with a level of
     `WARNING`, and is used to handle logging events in the absence of any
@@ -1254,22 +1197,22 @@ logging.lastResort[¶](#logging.lastResort "Link to this definition")
 
     Added in version 3.2.
 
-logging.raiseExceptions[¶](#logging.raiseExceptions "Link to this definition")
+logging.raiseExceptions
 :   Used to see if exceptions during handling should be propagated.
 
     Default: `True`.
 
-    If [`raiseExceptions`](#logging.raiseExceptions "logging.raiseExceptions") is `False`,
+    If `raiseExceptions` is `False`,
     exceptions get silently ignored. This is what is mostly wanted
     for a logging system - most users will not care about errors in
     the logging system, they are more interested in application errors.
 
-## Integration with the warnings module[¶](#integration-with-the-warnings-module "Link to this heading")
+## Integration with the warnings module
 
-The [`captureWarnings()`](#logging.captureWarnings "logging.captureWarnings") function can be used to integrate [`logging`](#module-logging "logging: Flexible event logging system for applications.")
+The [`captureWarnings()`](#logging.captureWarnings "logging.captureWarnings") function can be used to integrate `logging`
 with the [`warnings`](warnings.html#module-warnings "warnings: Issue warning messages and control their disposition.") module.
 
-logging.captureWarnings(*capture*)[¶](#logging.captureWarnings "Link to this definition")
+logging.captureWarnings(*capture*)
 :   This function is used to turn the capture of warnings by logging on and
     off.
 
@@ -1295,74 +1238,13 @@ Module [`logging.handlers`](logging.handlers.html#module-logging.handlers "loggi
     library.
 
 [Original Python logging package](https://old.red-dove.com/python_logging.html)
-:   This is the original source for the [`logging`](#module-logging "logging: Flexible event logging system for applications.") package. The version of the
+:   This is the original source for the `logging` package. The version of the
     package available from this site is suitable for use with Python 1.5.2, 2.1.x
-    and 2.2.x, which do not include the [`logging`](#module-logging "logging: Flexible event logging system for applications.") package in the standard
+    and 2.2.x, which do not include the `logging` package in the standard
     library.
 
-### [Table of Contents](../contents.html)
+---
 
-* [`logging` — Logging facility for Python](#)
-  + [Logger Objects](#logger-objects)
-  + [Logging Levels](#logging-levels)
-  + [Handler Objects](#handler-objects)
-  + [Formatter Objects](#formatter-objects)
-  + [Filter Objects](#filter-objects)
-  + [LogRecord Objects](#logrecord-objects)
-  + [LogRecord attributes](#logrecord-attributes)
-  + [LoggerAdapter Objects](#loggeradapter-objects)
-  + [Thread Safety](#thread-safety)
-  + [Module-Level Functions](#module-level-functions)
-  + [Module-Level Attributes](#module-level-attributes)
-  + [Integration with the warnings module](#integration-with-the-warnings-module)
+## Bibliography
 
-#### Previous topic
-
-[`getopt` — C-style parser for command line options](getopt.html "previous chapter")
-
-#### Next topic
-
-[`logging.config` — Logging configuration](logging.config.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/logging.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](logging.config.html "logging.config — Logging configuration") |
-* [previous](getopt.html "getopt — C-style parser for command line options") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Generic Operating System Services](allos.html) »
-* `logging` — Logging facility for Python
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`logging` — Logging facility for Python](https://docs.python.org/3/library/logging.html)

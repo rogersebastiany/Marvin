@@ -1,66 +1,21 @@
-functools — Higher-order functions and operations on callable objects — Python 3.12.13 documentation
+# Python functools
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
-
-Theme
-Auto
-Light
-Dark
-
-### [Table of Contents](../contents.html)
-
-* [`functools` — Higher-order functions and operations on callable objects](#)
-  + [`partial` Objects](#partial-objects)
-
-#### Previous topic
-
-[`itertools` — Functions creating iterators for efficient looping](itertools.html "previous chapter")
-
-#### Next topic
-
-[`operator` — Standard operators as functions](operator.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/functools.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](operator.html "operator — Standard operators as functions") |
-* [previous](itertools.html "itertools — Functions creating iterators for efficient looping") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Functional Programming Modules](functional.html) »
-* `functools` — Higher-order functions and operations on callable objects
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `functools` — Higher-order functions and operations on callable objects[¶](#module-functools "Link to this heading")
-
-**Source code:** [Lib/functools.py](https://github.com/python/cpython/tree/3.12/Lib/functools.py)
 
 ---
 
-The [`functools`](#module-functools "functools: Higher-order functions and operations on callable objects.") module is for higher-order functions: functions that act on
+## 1. `functools` — Higher-order functions and operations on callable objects
+
+**Source code:** [Lib/functools.py](https://github.com/python/cpython/tree/3.14/Lib/functools.py)
+
+---
+
+The `functools` module is for higher-order functions: functions that act on
 or return other functions. In general, any callable object can be treated as a
 function for the purposes of this module.
 
-The [`functools`](#module-functools "functools: Higher-order functions and operations on callable objects.") module defines the following functions:
+The `functools` module defines the following functions:
 
-@functools.cache(*user\_function*)[¶](#functools.cache "Link to this definition")
+@functools.cache(*user\_function*)
 :   Simple lightweight unbounded function cache. Sometimes called
     [“memoize”](https://en.wikipedia.org/wiki/Memoization).
 
@@ -73,14 +28,14 @@ The [`functools`](#module-functools "functools: Higher-order functions and opera
 
     ```
     @cache
-    def factorial(n):
+    deffactorial(n):
         return n * factorial(n-1) if n else 1
 
-    >>> factorial(10)      # no previously cached result, makes 11 recursive calls
+    >>> factorial(10)   # no previously cached result, makes 11 recursive calls
     3628800
-    >>> factorial(5)       # just looks up cached value result
+    >>> factorial(5)    # no new calls, just returns the cached result
     120
-    >>> factorial(12)      # makes two new recursive calls, the other 10 are cached
+    >>> factorial(12)   # two new recursive calls, factorial(10) is cached
     479001600
     ```
 
@@ -94,7 +49,7 @@ The [`functools`](#module-functools "functools: Higher-order functions and opera
 
     Added in version 3.9.
 
-@functools.cached\_property(*func*)[¶](#functools.cached_property "Link to this definition")
+@functools.cached\_property(*func*)
 :   Transform a method of a class into a property whose value is computed once
     and then cached as a normal attribute for the life of the instance. Similar
     to [`property()`](functions.html#property "property"), with the addition of caching. Useful for expensive
@@ -103,17 +58,17 @@ The [`functools`](#module-functools "functools: Higher-order functions and opera
     Example:
 
     ```
-    class DataSet:
+    classDataSet:
 
-        def __init__(self, sequence_of_numbers):
+        def__init__(self, sequence_of_numbers):
             self._data = tuple(sequence_of_numbers)
 
         @cached_property
-        def stdev(self):
+        defstdev(self):
             return statistics.stdev(self._data)
     ```
 
-    The mechanics of [`cached_property()`](#functools.cached_property "functools.cached_property") are somewhat different from
+    The mechanics of `cached_property()` are somewhat different from
     [`property()`](functions.html#property "property"). A regular property blocks attribute writes unless a
     setter is defined. In contrast, a *cached\_property* allows writes.
 
@@ -146,9 +101,9 @@ The [`functools`](#module-functools "functools: Higher-order functions and opera
     (as such classes don’t provide a `__dict__` attribute at all).
 
     If a mutable mapping is not available or if space-efficient key sharing is
-    desired, an effect similar to [`cached_property()`](#functools.cached_property "functools.cached_property") can also be achieved by
+    desired, an effect similar to `cached_property()` can also be achieved by
     stacking [`property()`](functions.html#property "property") on top of [`lru_cache()`](#functools.lru_cache "functools.lru_cache"). See
-    [How do I cache method calls?](../faq/programming.html#faq-cache-method-calls) for more details on how this differs from [`cached_property()`](#functools.cached_property "functools.cached_property").
+    [How do I cache method calls?](../faq/programming.html#faq-cache-method-calls) for more details on how this differs from `cached_property()`.
 
     Added in version 3.8.
 
@@ -158,7 +113,7 @@ The [`functools`](#module-functools "functools: Higher-order functions and opera
     per-instance, which could result in unacceptably high lock contention. In
     Python 3.12+ this locking is removed.
 
-functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definition")
+functools.cmp\_to\_key(*func*)
 :   Transform an old-style comparison function to a [key function](../glossary.html#term-key-function). Used
     with tools that accept key functions (such as [`sorted()`](functions.html#sorted "sorted"), [`min()`](functions.html#min "min"),
     [`max()`](functions.html#max "max"), [`heapq.nlargest()`](heapq.html#heapq.nlargest "heapq.nlargest"), [`heapq.nsmallest()`](heapq.html#heapq.nsmallest "heapq.nsmallest"),
@@ -181,7 +136,7 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
 
     Added in version 3.2.
 
-@functools.lru\_cache(*user\_function*)[¶](#functools.lru_cache "Link to this definition")
+@functools.lru\_cache(*user\_function*)
 
 @functools.lru\_cache(*maxsize=128*, *typed=False*)
 :   Decorator to wrap a function with a memoizing callable that saves up to the
@@ -210,7 +165,7 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
 
     ```
     @lru_cache
-    def count_vowels(sentence):
+    defcount_vowels(sentence):
         return sum(sentence.count(vowel) for vowel in 'AEIOUaeiou')
     ```
 
@@ -225,7 +180,7 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
 
     Note, type specificity applies only to the function’s immediate arguments
     rather than their contents. The scalar arguments, `Decimal(42)` and
-    `Fraction(42)` are be treated as distinct calls with distinct results.
+    `Fraction(42)` are treated as distinct calls with distinct results.
     In contrast, the tuple arguments `('answer', Decimal(42))` and
     `('answer', Fraction(42))` are treated as equivalent.
 
@@ -268,7 +223,7 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
 
     ```
     @lru_cache(maxsize=32)
-    def get_pep(num):
+    defget_pep(num):
         'Retrieve text of a Python Enhancement Proposal'
         resource = f'https://peps.python.org/pep-{num:04d}'
         try:
@@ -293,7 +248,7 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
 
     ```
     @lru_cache(maxsize=None)
-    def fib(n):
+    deffib(n):
         if n < 2:
             return n
         return fib(n-1) + fib(n-2)
@@ -313,29 +268,29 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
 
     Changed in version 3.9: Added the function `cache_parameters()`
 
-@functools.total\_ordering[¶](#functools.total_ordering "Link to this definition")
+@functools.total\_ordering
 :   Given a class defining one or more rich comparison ordering methods, this
     class decorator supplies the rest. This simplifies the effort involved
     in specifying all of the possible rich comparison operations:
 
-    The class must define one of `__lt__()`, `__le__()`,
-    `__gt__()`, or `__ge__()`.
-    In addition, the class should supply an `__eq__()` method.
+    The class must define one of [`__lt__()`](../reference/datamodel.html#object.__lt__ "object.__lt__"), [`__le__()`](../reference/datamodel.html#object.__le__ "object.__le__"),
+    [`__gt__()`](../reference/datamodel.html#object.__gt__ "object.__gt__"), or [`__ge__()`](../reference/datamodel.html#object.__ge__ "object.__ge__").
+    In addition, the class should supply an [`__eq__()`](../reference/datamodel.html#object.__eq__ "object.__eq__") method.
 
     For example:
 
     ```
     @total_ordering
-    class Student:
-        def _is_valid_operand(self, other):
+    classStudent:
+        def_is_valid_operand(self, other):
             return (hasattr(other, "lastname") and
                     hasattr(other, "firstname"))
-        def __eq__(self, other):
+        def__eq__(self, other):
             if not self._is_valid_operand(other):
                 return NotImplemented
             return ((self.lastname.lower(), self.firstname.lower()) ==
                     (other.lastname.lower(), other.firstname.lower()))
-        def __lt__(self, other):
+        def__lt__(self, other):
             if not self._is_valid_operand(other):
                 return NotImplemented
             return ((self.lastname.lower(), self.firstname.lower()) <
@@ -363,7 +318,14 @@ functools.cmp\_to\_key(*func*)[¶](#functools.cmp_to_key "Link to this definitio
     Changed in version 3.4: Returning `NotImplemented` from the underlying comparison function for
     unrecognised types is now supported.
 
-functools.partial(*func*, */*, *\*args*, *\*\*keywords*)[¶](#functools.partial "Link to this definition")
+functools.Placeholder
+:   A singleton object used as a sentinel to reserve a place
+    for positional arguments when calling [`partial()`](#functools.partial "functools.partial")
+    and [`partialmethod()`](#functools.partialmethod "functools.partialmethod").
+
+    Added in version 3.14.
+
+functools.partial(*func*, */*, *\*args*, *\*\*keywords*)
 :   Return a new [partial object](#partial-objects) which when called
     will behave like *func* called with the positional arguments *args*
     and keyword arguments *keywords*. If more arguments are supplied to the
@@ -372,32 +334,70 @@ functools.partial(*func*, */*, *\*args*, *\*\*keywords*)[¶](#functools.partial 
     Roughly equivalent to:
 
     ```
-    def partial(func, /, *args, **keywords):
-        def newfunc(*fargs, **fkeywords):
-            newkeywords = {**keywords, **fkeywords}
-            return func(*args, *fargs, **newkeywords)
+    defpartial(func, /, *args, **keywords):
+        defnewfunc(*more_args, **more_keywords):
+            return func(*args, *more_args, **(keywords | more_keywords))
         newfunc.func = func
         newfunc.args = args
         newfunc.keywords = keywords
         return newfunc
     ```
 
-    The [`partial()`](#functools.partial "functools.partial") is used for partial function application which “freezes”
+    The `partial()` function is used for partial function application which “freezes”
     some portion of a function’s arguments and/or keywords resulting in a new object
-    with a simplified signature. For example, [`partial()`](#functools.partial "functools.partial") can be used to create
+    with a simplified signature. For example, `partial()` can be used to create
     a callable that behaves like the [`int()`](functions.html#int "int") function where the *base* argument
-    defaults to two:
+    defaults to `2`:
 
     ```
-    >>> from functools import partial
     >>> basetwo = partial(int, base=2)
-    >>> basetwo.__doc__ = 'Convert base 2 string to an int.'
-    >>> basetwo('10010')
+    >>> basetwo.    >>> basetwo('10010')
     18
     ```
 
-*class* functools.partialmethod(*func*, */*, *\*args*, *\*\*keywords*)[¶](#functools.partialmethod "Link to this definition")
-:   Return a new [`partialmethod`](#functools.partialmethod "functools.partialmethod") descriptor which behaves
+    If [`Placeholder`](#functools.Placeholder "functools.Placeholder") sentinels are present in *args*, they will be filled first
+    when `partial()` is called. This makes it possible to pre-fill any positional
+    argument with a call to `partial()`; without `Placeholder`,
+    only the chosen number of leading positional arguments can be pre-filled.
+
+    If any `Placeholder` sentinels are present, all must be filled at call time:
+
+    ```
+    >>> say_to_world = partial(print, Placeholder, Placeholder, "world!")
+    >>> say_to_world('Hello', 'dear')
+    Hello dear world!
+    ```
+
+    Calling `say_to_world('Hello')` raises a [`TypeError`](exceptions.html#TypeError "TypeError"), because
+    only one positional argument is provided, but there are two placeholders
+    that must be filled in.
+
+    If `partial()` is applied to an existing `partial()` object,
+    `Placeholder` sentinels of the input object are filled in with
+    new positional arguments.
+    A placeholder can be retained by inserting a new
+    `Placeholder` sentinel to the place held by a previous `Placeholder`:
+
+    ```
+    >>> fromfunctoolsimport partial, Placeholder as _
+    >>> remove = partial(str.replace, _, _, '')
+    >>> message = 'Hello, dear dear world!'
+    >>> remove(message, ' dear')
+    'Hello, world!'
+    >>> remove_dear = partial(remove, _, ' dear')
+    >>> remove_dear(message)
+    'Hello, world!'
+    >>> remove_first_dear = partial(remove_dear, _, 1)
+    >>> remove_first_dear(message)
+    'Hello, dear world!'
+    ```
+
+    `Placeholder` cannot be passed to `partial()` as a keyword argument.
+
+    Changed in version 3.14: Added support for [`Placeholder`](#functools.Placeholder "functools.Placeholder") in positional arguments.
+
+*class*functools.partialmethod(*func*, */*, *\*args*, *\*\*keywords*)
+:   Return a new `partialmethod` descriptor which behaves
     like [`partial`](#functools.partial "functools.partial") except that it is designed to be used as a method
     definition rather than being directly callable.
 
@@ -405,8 +405,8 @@ functools.partial(*func*, */*, *\*args*, *\*\*keywords*)[¶](#functools.partial 
     like normal functions, are handled as descriptors).
 
     When *func* is a descriptor (such as a normal Python function,
-    [`classmethod()`](functions.html#classmethod "classmethod"), [`staticmethod()`](functions.html#staticmethod "staticmethod"), `abstractmethod()` or
-    another instance of [`partialmethod`](#functools.partialmethod "functools.partialmethod")), calls to `__get__` are
+    [`classmethod()`](functions.html#classmethod "classmethod"), [`staticmethod()`](functions.html#staticmethod "staticmethod"), [`abstractmethod()`](abc.html#abc.abstractmethod "abc.abstractmethod") or
+    another instance of `partialmethod`), calls to `__get__` are
     delegated to the underlying descriptor, and an appropriate
     [partial object](#partial-objects) returned as the result.
 
@@ -414,18 +414,18 @@ functools.partial(*func*, */*, *\*args*, *\*\*keywords*)[¶](#functools.partial 
     created dynamically. This behaves like a normal Python function when
     used as a method: the *self* argument will be inserted as the first
     positional argument, even before the *args* and *keywords* supplied to
-    the [`partialmethod`](#functools.partialmethod "functools.partialmethod") constructor.
+    the `partialmethod` constructor.
 
     Example:
 
     ```
-    >>> class Cell:
-    ...     def __init__(self):
+    >>> classCell:
+    ...     def__init__(self):
     ...         self._alive = False
     ...     @property
-    ...     def alive(self):
+    ...     defalive(self):
     ...         return self._alive
-    ...     def set_state(self, state):
+    ...     defset_state(self, state):
     ...         self._alive = bool(state)
     ...     set_alive = partialmethod(set_state, True)
     ...     set_dead = partialmethod(set_state, False)
@@ -440,25 +440,27 @@ functools.partial(*func*, */*, *\*args*, *\*\*keywords*)[¶](#functools.partial 
 
     Added in version 3.4.
 
-functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce "Link to this definition")
+functools.reduce(*function*, *iterable*, */*[, *initial*])
 :   Apply *function* of two arguments cumulatively to the items of *iterable*, from
     left to right, so as to reduce the iterable to a single value. For example,
     `reduce(lambda x, y: x+y, [1, 2, 3, 4, 5])` calculates `((((1+2)+3)+4)+5)`.
     The left argument, *x*, is the accumulated value and the right argument, *y*, is
-    the update value from the *iterable*. If the optional *initializer* is present,
+    the update value from the *iterable*. If the optional *initial* is present,
     it is placed before the items of the iterable in the calculation, and serves as
-    a default when the iterable is empty. If *initializer* is not given and
+    a default when the iterable is empty. If *initial* is not given and
     *iterable* contains only one item, the first item is returned.
 
     Roughly equivalent to:
 
     ```
-    def reduce(function, iterable, initializer=None):
+    initial_missing = object()
+
+    defreduce(function, iterable, /, initial=initial_missing):
         it = iter(iterable)
-        if initializer is None:
+        if initial is initial_missing:
             value = next(it)
         else:
-            value = initializer
+            value = initial
         for element in it:
             value = function(value, element)
         return value
@@ -467,7 +469,9 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
     See [`itertools.accumulate()`](itertools.html#itertools.accumulate "itertools.accumulate") for an iterator that yields all intermediate
     values.
 
-@functools.singledispatch[¶](#functools.singledispatch "Link to this definition")
+    Changed in version 3.14: *initial* is now supported as a keyword argument.
+
+@functools.singledispatch
 :   Transform a function into a [single-dispatch](../glossary.html#term-single-dispatch) [generic function](../glossary.html#term-generic-function).
 
     To define a generic function, decorate it with the `@singledispatch`
@@ -475,9 +479,9 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
     dispatch happens on the type of the first argument:
 
     ```
-    >>> from functools import singledispatch
+    >>> fromfunctoolsimport singledispatch
     >>> @singledispatch
-    ... def fun(arg, verbose=False):
+    ... deffun(arg, verbose=False):
     ...     if verbose:
     ...         print("Let me just say,", end=" ")
     ...     print(arg)
@@ -490,31 +494,31 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
 
     ```
     >>> @fun.register
-    ... def _(arg: int, verbose=False):
+    ... def_(arg: int, verbose=False):
     ...     if verbose:
     ...         print("Strength in numbers, eh?", end=" ")
     ...     print(arg)
     ...
     >>> @fun.register
-    ... def _(arg: list, verbose=False):
+    ... def_(arg: list, verbose=False):
     ...     if verbose:
     ...         print("Enumerate this:")
     ...     for i, elem in enumerate(arg):
     ...         print(i, elem)
     ```
 
-    [`types.UnionType`](types.html#types.UnionType "types.UnionType") and [`typing.Union`](typing.html#typing.Union "typing.Union") can also be used:
+    [`typing.Union`](typing.html#typing.Union "typing.Union") can also be used:
 
     ```
     >>> @fun.register
-    ... def _(arg: int | float, verbose=False):
+    ... def_(arg: int | float, verbose=False):
     ...     if verbose:
     ...         print("Strength in numbers, eh?", end=" ")
     ...     print(arg)
     ...
-    >>> from typing import Union
+    >>> fromtypingimport Union
     >>> @fun.register
-    ... def _(arg: Union[list, set], verbose=False):
+    ... def_(arg: Union[list, set], verbose=False):
     ...     if verbose:
     ...         print("Enumerate this:")
     ...     for i, elem in enumerate(arg):
@@ -527,7 +531,7 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
 
     ```
     >>> @fun.register(complex)
-    ... def _(arg, verbose=False):
+    ... def_(arg, verbose=False):
     ...     if verbose:
     ...         print("Better than complicated.", end=" ")
     ...     print(arg.real, arg.imag)
@@ -541,7 +545,7 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
 
     ```
     >>> @fun.register(list)
-    ... def _(arg: list[int], verbose=False):
+    ... def_(arg: list[int], verbose=False):
     ...     if verbose:
     ...         print("Enumerate this:")
     ...     for i, elem in enumerate(arg):
@@ -557,23 +561,23 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
     runtime impact.
 
     To enable registering [lambdas](../glossary.html#term-lambda) and pre-existing functions,
-    the `register()` attribute can also be used in a functional form:
+    the [`register()`](#functools.singledispatch.register "functools.singledispatch.register") attribute can also be used in a functional form:
 
     ```
-    >>> def nothing(arg, verbose=False):
+    >>> defnothing(arg, verbose=False):
     ...     print("Nothing.")
     ...
     >>> fun.register(type(None), nothing)
     ```
 
-    The `register()` attribute returns the undecorated function. This
+    The [`register()`](#functools.singledispatch.register "functools.singledispatch.register") attribute returns the undecorated function. This
     enables decorator stacking, [`pickling`](pickle.html#module-pickle "pickle: Convert Python objects to streams of bytes and back."), and the creation
     of unit tests for each variant independently:
 
     ```
     >>> @fun.register(float)
     ... @fun.register(Decimal)
-    ... def fun_num(arg, verbose=False):
+    ... deffun_num(arg, verbose=False):
     ...     if verbose:
     ...         print("Half of your number:", end=" ")
     ...     print(arg / 2)
@@ -615,9 +619,9 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
     implementation:
 
     ```
-    >>> from collections.abc import Mapping
+    >>> fromcollections.abcimport Mapping
     >>> @fun.register
-    ... def _(arg: Mapping, verbose=False):
+    ... def_(arg: Mapping, verbose=False):
     ...     if verbose:
     ...         print("Keys & Values")
     ...     for key, value in arg.items():
@@ -653,31 +657,31 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
 
     Added in version 3.4.
 
-    Changed in version 3.7: The `register()` attribute now supports using type annotations.
+    Changed in version 3.7: The [`register()`](#functools.singledispatch.register "functools.singledispatch.register") attribute now supports using type annotations.
 
-    Changed in version 3.11: The `register()` attribute now supports [`types.UnionType`](types.html#types.UnionType "types.UnionType")
-    and [`typing.Union`](typing.html#typing.Union "typing.Union") as type annotations.
+    Changed in version 3.11: The [`register()`](#functools.singledispatch.register "functools.singledispatch.register") attribute now supports
+    [`typing.Union`](typing.html#typing.Union "typing.Union") as a type annotation.
 
-*class* functools.singledispatchmethod(*func*)[¶](#functools.singledispatchmethod "Link to this definition")
+*class*functools.singledispatchmethod(*func*)
 :   Transform a method into a [single-dispatch](../glossary.html#term-single-dispatch) [generic function](../glossary.html#term-generic-function).
 
     To define a generic method, decorate it with the `@singledispatchmethod`
-    decorator. When defining a function using `@singledispatchmethod`, note
+    decorator. When defining a method using `@singledispatchmethod`, note
     that the dispatch happens on the type of the first non-*self* or non-*cls*
     argument:
 
     ```
-    class Negator:
+    classNegator:
         @singledispatchmethod
-        def neg(self, arg):
+        defneg(self, arg):
             raise NotImplementedError("Cannot negate a")
 
         @neg.register
-        def _(self, arg: int):
+        def_(self, arg: int):
             return -arg
 
         @neg.register
-        def _(self, arg: bool):
+        def_(self, arg: bool):
             return not arg
     ```
 
@@ -688,30 +692,29 @@ functools.reduce(*function*, *iterable*[, *initializer*])[¶](#functools.reduce 
     the class, rather than an instance of the class:
 
     ```
-    class Negator:
+    classNegator:
         @singledispatchmethod
         @classmethod
-        def neg(cls, arg):
+        defneg(cls, arg):
             raise NotImplementedError("Cannot negate a")
 
         @neg.register
         @classmethod
-        def _(cls, arg: int):
+        def_(cls, arg: int):
             return -arg
 
         @neg.register
         @classmethod
-        def _(cls, arg: bool):
+        def_(cls, arg: bool):
             return not arg
     ```
 
     The same pattern can be used for other similar decorators:
-    [`@staticmethod`](functions.html#staticmethod "staticmethod"),
-    [`@abstractmethod`](abc.html#abc.abstractmethod "abc.abstractmethod"), and others.
+    [`@staticmethod`](functions.html#staticmethod "staticmethod"), [`@~abc.abstractmethod`](abc.html#abc.abstractmethod "abc.abstractmethod"), and others.
 
     Added in version 3.8.
 
-functools.update\_wrapper(*wrapper*, *wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*, *updated=WRAPPER\_UPDATES*)[¶](#functools.update_wrapper "Link to this definition")
+functools.update\_wrapper(*wrapper*, *wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*, *updated=WRAPPER\_UPDATES*)
 :   Update a *wrapper* function to look like the *wrapped* function. The optional
     arguments are tuples to specify which attributes of the original function are
     assigned directly to the matching attributes on the wrapper function and which
@@ -735,7 +738,7 @@ functools.update\_wrapper(*wrapper*, *wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*,
     definition rather than the original function definition, which is typically less
     than helpful.
 
-    [`update_wrapper()`](#functools.update_wrapper "functools.update_wrapper") may be used with callables other than functions. Any
+    `update_wrapper()` may be used with callables other than functions. Any
     attributes named in *assigned* or *updated* that are missing from the object
     being wrapped are ignored (i.e. this function will not attempt to set them
     on the wrapper function). [`AttributeError`](exceptions.html#AttributeError "AttributeError") is still raised if the
@@ -751,24 +754,24 @@ functools.update\_wrapper(*wrapper*, *wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*,
 
     Changed in version 3.12: The [`__type_params__`](../reference/datamodel.html#function.__type_params__ "function.__type_params__") attribute is now copied by default.
 
-@functools.wraps(*wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*, *updated=WRAPPER\_UPDATES*)[¶](#functools.wraps "Link to this definition")
+@functools.wraps(*wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*, *updated=WRAPPER\_UPDATES*)
 :   This is a convenience function for invoking [`update_wrapper()`](#functools.update_wrapper "functools.update_wrapper") as a
     function decorator when defining a wrapper function. It is equivalent to
     `partial(update_wrapper, wrapped=wrapped, assigned=assigned, updated=updated)`.
     For example:
 
     ```
-    >>> from functools import wraps
-    >>> def my_decorator(f):
+    >>> fromfunctoolsimport wraps
+    >>> defmy_decorator(f):
     ...     @wraps(f)
-    ...     def wrapper(*args, **kwds):
+    ...     defwrapper(*args, **kwds):
     ...         print('Calling decorated function')
     ...         return f(*args, **kwds)
     ...     return wrapper
     ...
     >>> @my_decorator
-    ... def example():
-    ...     """Docstring"""
+    ... defexample():
+    ... """Docstring"""
     ...     print('Called example function')
     ...
     >>> example()
@@ -784,83 +787,30 @@ functools.update\_wrapper(*wrapper*, *wrapped*, *assigned=WRAPPER\_ASSIGNMENTS*,
     would have been `'wrapper'`, and the docstring of the original `example()`
     would have been lost.
 
-## [`partial`](#functools.partial "functools.partial") Objects[¶](#partial-objects "Link to this heading")
+## [`partial`](#functools.partial "functools.partial") Objects
 
 [`partial`](#functools.partial "functools.partial") objects are callable objects created by [`partial()`](#functools.partial "functools.partial"). They
 have three read-only attributes:
 
-partial.func[¶](#functools.partial.func "Link to this definition")
+partial.func
 :   A callable object or function. Calls to the [`partial`](#functools.partial "functools.partial") object will be
     forwarded to [`func`](#functools.partial.func "functools.partial.func") with new arguments and keywords.
 
-partial.args[¶](#functools.partial.args "Link to this definition")
+partial.args
 :   The leftmost positional arguments that will be prepended to the positional
     arguments provided to a [`partial`](#functools.partial "functools.partial") object call.
 
-partial.keywords[¶](#functools.partial.keywords "Link to this definition")
+partial.keywords
 :   The keyword arguments that will be supplied when the [`partial`](#functools.partial "functools.partial") object is
     called.
 
-[`partial`](#functools.partial "functools.partial") objects are like [function objects](../reference/datamodel.html#user-defined-funcs)
-in that they are callable, weak referenceable, and can have attributes.
-There are some important differences. For instance, the
-[`__name__`](../reference/datamodel.html#function.__name__ "function.__name__") and [`function.__doc__`](../reference/datamodel.html#function.__doc__ "function.__doc__") attributes
-are not created automatically. Also, [`partial`](#functools.partial "functools.partial") objects defined in
-classes behave like static methods and do not transform into bound methods
-during instance attribute look-up.
+[`partial`](#functools.partial "functools.partial") objects are like [function objects](../reference/datamodel.html#user-defined-funcs) in that they are
+callable, weak referenceable, and can have attributes. There are some important
+differences. For instance, the [`__name__`](stdtypes.html#definition.__name__ "definition.__name__") and [`__doc__`](stdtypes.html#definition.__doc__ "definition.__doc__") attributes
+are not created automatically.
 
-### [Table of Contents](../contents.html)
+---
 
-* [`functools` — Higher-order functions and operations on callable objects](#)
-  + [`partial` Objects](#partial-objects)
+## Bibliography
 
-#### Previous topic
-
-[`itertools` — Functions creating iterators for efficient looping](itertools.html "previous chapter")
-
-#### Next topic
-
-[`operator` — Standard operators as functions](operator.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/functools.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](operator.html "operator — Standard operators as functions") |
-* [previous](itertools.html "itertools — Functions creating iterators for efficient looping") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Functional Programming Modules](functional.html) »
-* `functools` — Higher-order functions and operations on callable objects
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`functools` — Higher-order functions and operations on callable objects](https://docs.python.org/3/library/functools.html)

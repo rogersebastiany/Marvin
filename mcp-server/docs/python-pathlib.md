@@ -1,72 +1,13 @@
-pathlib — Object-oriented filesystem paths — Python 3.12.13 documentation
+# Python pathlib
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
-
-* [`pathlib` — Object-oriented filesystem paths](#)
-  + [Basic use](#basic-use)
-  + [Pure paths](#pure-paths)
-    - [General properties](#general-properties)
-    - [Operators](#operators)
-    - [Accessing individual parts](#accessing-individual-parts)
-    - [Methods and properties](#methods-and-properties)
-  + [Concrete paths](#concrete-paths)
-    - [Expanding and resolving paths](#expanding-and-resolving-paths)
-    - [Querying file type and status](#querying-file-type-and-status)
-    - [Reading and writing files](#reading-and-writing-files)
-    - [Reading directories](#reading-directories)
-    - [Creating files and directories](#creating-files-and-directories)
-    - [Renaming and deleting](#renaming-and-deleting)
-    - [Permissions and ownership](#permissions-and-ownership)
-  + [Correspondence to tools in the `os` module](#correspondence-to-tools-in-the-os-module)
-
-#### Previous topic
-
-[File and Directory Access](filesys.html "previous chapter")
-
-#### Next topic
-
-[`os.path` — Common pathname manipulations](os.path.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/pathlib.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](os.path.html "os.path — Common pathname manipulations") |
-* [previous](filesys.html "File and Directory Access") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [File and Directory Access](filesys.html) »
-* `pathlib` — Object-oriented filesystem paths
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `pathlib` — Object-oriented filesystem paths[¶](#module-pathlib "Link to this heading")
+## 1. `pathlib` — Object-oriented filesystem paths
 
 Added in version 3.4.
 
-**Source code:** [Lib/pathlib.py](https://github.com/python/cpython/tree/3.12/Lib/pathlib.py)
+**Source code:** [Lib/pathlib/](https://github.com/python/cpython/tree/3.14/Lib/pathlib/)
 
 ---
 
@@ -98,12 +39,12 @@ See also
 For low-level path manipulation on strings, you can also use the
 [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") module.
 
-## Basic use[¶](#basic-use "Link to this heading")
+## Basic use
 
 Importing the main class:
 
 ```
->>> from pathlib import Path
+>>> frompathlibimport Path
 ```
 
 Listing subdirectories:
@@ -152,13 +93,21 @@ Opening a file:
 '#!/bin/bash\n'
 ```
 
-## Pure paths[¶](#pure-paths "Link to this heading")
+## Exceptions
+
+*exception*pathlib.UnsupportedOperation
+:   An exception inheriting [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") that is raised when an
+    unsupported operation is called on a path object.
+
+    Added in version 3.13.
+
+## Pure paths
 
 Pure path objects provide path-handling operations which don’t actually
 access a filesystem. There are three ways to access these classes, which
 we also call *flavours*:
 
-*class* pathlib.PurePath(*\*pathsegments*)[¶](#pathlib.PurePath "Link to this definition")
+*class*pathlib.PurePath(*\*pathsegments*)
 :   A generic class that represents the system’s path flavour (instantiating
     it creates either a [`PurePosixPath`](#pathlib.PurePosixPath "pathlib.PurePosixPath") or a [`PureWindowsPath`](#pathlib.PureWindowsPath "pathlib.PureWindowsPath")):
 
@@ -228,7 +177,7 @@ we also call *flavours*:
 
     Changed in version 3.6: Added support for the [`os.PathLike`](os.html#os.PathLike "os.PathLike") interface.
 
-*class* pathlib.PurePosixPath(*\*pathsegments*)[¶](#pathlib.PurePosixPath "Link to this definition")
+*class*pathlib.PurePosixPath(*\*pathsegments*)
 :   A subclass of [`PurePath`](#pathlib.PurePath "pathlib.PurePath"), this path flavour represents non-Windows
     filesystem paths:
 
@@ -239,7 +188,7 @@ we also call *flavours*:
 
     *pathsegments* is specified similarly to [`PurePath`](#pathlib.PurePath "pathlib.PurePath").
 
-*class* pathlib.PureWindowsPath(*\*pathsegments*)[¶](#pathlib.PureWindowsPath "Link to this definition")
+*class*pathlib.PureWindowsPath(*\*pathsegments*)
 :   A subclass of [`PurePath`](#pathlib.PurePath "pathlib.PurePath"), this path flavour represents Windows
     filesystem paths, including [UNC paths](https://en.wikipedia.org/wiki/Path_(computing)#UNC):
 
@@ -255,7 +204,7 @@ we also call *flavours*:
 Regardless of the system you’re running on, you can instantiate all of
 these classes, since they don’t provide any operation that does system calls.
 
-### General properties[¶](#general-properties "Link to this heading")
+### General properties
 
 Paths are immutable and [hashable](../glossary.html#term-hashable). Paths of a same flavour are comparable
 and orderable. These properties respect the flavour’s case-folding
@@ -283,7 +232,7 @@ Traceback (most recent call last):
 TypeError: '<' not supported between instances of 'PureWindowsPath' and 'PurePosixPath'
 ```
 
-### Operators[¶](#operators "Link to this heading")
+### Operators
 
 The slash operator helps create child paths, like [`os.path.join()`](os.path.html#os.path.join "os.path.join").
 If the argument is an absolute path, the previous path is ignored.
@@ -309,7 +258,7 @@ A path object can be used anywhere an object implementing [`os.PathLike`](os.htm
 is accepted:
 
 ```
->>> import os
+>>> importos
 >>> p = PurePath('/etc')
 >>> os.fspath(p)
 '/etc'
@@ -341,12 +290,12 @@ Note
 Calling [`bytes`](stdtypes.html#bytes "bytes") is only recommended under Unix. Under Windows,
 the unicode form is the canonical representation of filesystem paths.
 
-### Accessing individual parts[¶](#accessing-individual-parts "Link to this heading")
+### Accessing individual parts
 
 To access the individual “parts” (components) of a path, use the following
 property:
 
-PurePath.parts[¶](#pathlib.PurePath.parts "Link to this definition")
+PurePath.parts
 :   A tuple giving access to the path’s various components:
 
     ```
@@ -361,11 +310,17 @@ PurePath.parts[¶](#pathlib.PurePath.parts "Link to this definition")
 
     (note how the drive and local root are regrouped in a single part)
 
-### Methods and properties[¶](#methods-and-properties "Link to this heading")
+### Methods and properties
 
 Pure paths provide the following methods and properties:
 
-PurePath.drive[¶](#pathlib.PurePath.drive "Link to this definition")
+PurePath.parser
+:   The implementation of the [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") module used for low-level path
+    parsing and joining: either `posixpath` or `ntpath`.
+
+    Added in version 3.13.
+
+PurePath.drive
 :   A string representing the drive letter or name, if any:
 
     ```
@@ -384,7 +339,7 @@ PurePath.drive[¶](#pathlib.PurePath.drive "Link to this definition")
     '\\\\host\\share'
     ```
 
-PurePath.root[¶](#pathlib.PurePath.root "Link to this definition")
+PurePath.root
 :   A string representing the (local or global) root, if any:
 
     ```
@@ -424,7 +379,7 @@ PurePath.root[¶](#pathlib.PurePath.root "Link to this definition")
     an implementation-defined manner, although more than two leading slashes
     shall be treated as a single slash.”*
 
-PurePath.anchor[¶](#pathlib.PurePath.anchor "Link to this definition")
+PurePath.anchor
 :   The concatenation of the drive and root:
 
     ```
@@ -438,7 +393,7 @@ PurePath.anchor[¶](#pathlib.PurePath.anchor "Link to this definition")
     '\\\\host\\share\\'
     ```
 
-PurePath.parents[¶](#pathlib.PurePath.parents "Link to this definition")
+PurePath.parents
 :   An immutable sequence providing access to the logical ancestors of
     the path:
 
@@ -454,7 +409,7 @@ PurePath.parents[¶](#pathlib.PurePath.parents "Link to this definition")
 
     Changed in version 3.10: The parents sequence now supports [slices](../glossary.html#term-slice) and negative index values.
 
-PurePath.parent[¶](#pathlib.PurePath.parent "Link to this definition")
+PurePath.parent
 :   The logical parent of the path:
 
     ```
@@ -488,7 +443,7 @@ PurePath.parent[¶](#pathlib.PurePath.parent "Link to this definition")
     recommended to first call [`Path.resolve()`](#pathlib.Path.resolve "pathlib.Path.resolve") so as to resolve
     symlinks and eliminate `".."` components.
 
-PurePath.name[¶](#pathlib.PurePath.name "Link to this definition")
+PurePath.name
 :   A string representing the final path component, excluding the drive and
     root, if any:
 
@@ -506,8 +461,8 @@ PurePath.name[¶](#pathlib.PurePath.name "Link to this definition")
     ''
     ```
 
-PurePath.suffix[¶](#pathlib.PurePath.suffix "Link to this definition")
-:   The file extension of the final component, if any:
+PurePath.suffix
+:   The last dot-separated portion of the final component, if any:
 
     ```
     >>> PurePosixPath('my/library/setup.py').suffix
@@ -518,8 +473,12 @@ PurePath.suffix[¶](#pathlib.PurePath.suffix "Link to this definition")
     ''
     ```
 
-PurePath.suffixes[¶](#pathlib.PurePath.suffixes "Link to this definition")
-:   A list of the path’s file extensions:
+    This is commonly called the file extension.
+
+    Changed in version 3.14: A single dot (”`.`”) is considered a valid suffix.
+
+PurePath.suffixes
+:   A list of the path’s suffixes, often called file extensions:
 
     ```
     >>> PurePosixPath('my/library.tar.gar').suffixes
@@ -530,7 +489,9 @@ PurePath.suffixes[¶](#pathlib.PurePath.suffixes "Link to this definition")
     []
     ```
 
-PurePath.stem[¶](#pathlib.PurePath.stem "Link to this definition")
+    Changed in version 3.14: A single dot (”`.`”) is considered a valid suffix.
+
+PurePath.stem
 :   The final path component, without its suffix:
 
     ```
@@ -542,7 +503,9 @@ PurePath.stem[¶](#pathlib.PurePath.stem "Link to this definition")
     'library'
     ```
 
-PurePath.as\_posix()[¶](#pathlib.PurePath.as_posix "Link to this definition")
+    Changed in version 3.14: A single dot (”`.`”) is considered a valid suffix.
+
+PurePath.as\_posix()
 :   Return a string representation of the path with forward slashes (`/`):
 
     ```
@@ -553,20 +516,7 @@ PurePath.as\_posix()[¶](#pathlib.PurePath.as_posix "Link to this definition")
     'c:/windows'
     ```
 
-PurePath.as\_uri()[¶](#pathlib.PurePath.as_uri "Link to this definition")
-:   Represent the path as a `file` URI. [`ValueError`](exceptions.html#ValueError "ValueError") is raised if
-    the path isn’t absolute.
-
-    ```
-    >>> p = PurePosixPath('/etc/passwd')
-    >>> p.as_uri()
-    'file:///etc/passwd'
-    >>> p = PureWindowsPath('c:/Windows')
-    >>> p.as_uri()
-    'file:///c:/Windows'
-    ```
-
-PurePath.is\_absolute()[¶](#pathlib.PurePath.is_absolute "Link to this definition")
+PurePath.is\_absolute()
 :   Return whether the path is absolute or not. A path is considered absolute
     if it has both a root and (if the flavour allows) a drive:
 
@@ -586,7 +536,7 @@ PurePath.is\_absolute()[¶](#pathlib.PurePath.is_absolute "Link to this definiti
     True
     ```
 
-PurePath.is\_relative\_to(*other*)[¶](#pathlib.PurePath.is_relative_to "Link to this definition")
+PurePath.is\_relative\_to(*other*)
 :   Return whether or not this path is relative to the *other* path.
 
     ```
@@ -608,25 +558,21 @@ PurePath.is\_relative\_to(*other*)[¶](#pathlib.PurePath.is_relative_to "Link to
 
     Added in version 3.9.
 
-    Deprecated since version 3.12, will be removed in version 3.14: Passing additional arguments is deprecated; if supplied, they are joined
+    Deprecated since version 3.12, removed in version 3.14: Passing additional arguments is deprecated; if supplied, they are joined
     with *other*.
 
-PurePath.is\_reserved()[¶](#pathlib.PurePath.is_reserved "Link to this definition")
+PurePath.is\_reserved()
 :   With [`PureWindowsPath`](#pathlib.PureWindowsPath "pathlib.PureWindowsPath"), return `True` if the path is considered
     reserved under Windows, `False` otherwise. With [`PurePosixPath`](#pathlib.PurePosixPath "pathlib.PurePosixPath"),
     `False` is always returned.
 
-    ```
-    >>> PureWindowsPath('nul').is_reserved()
-    True
-    >>> PurePosixPath('nul').is_reserved()
-    False
-    ```
+    Changed in version 3.13: Windows path names that contain a colon, or end with a dot or a space,
+    are considered reserved. UNC paths may be reserved.
 
-    File system calls on reserved paths can fail mysteriously or have
-    unintended effects.
+    Deprecated since version 3.13, will be removed in version 3.15: This method is deprecated; use [`os.path.isreserved()`](os.path.html#os.path.isreserved "os.path.isreserved") to detect
+    reserved paths on Windows.
 
-PurePath.joinpath(*\*pathsegments*)[¶](#pathlib.PurePath.joinpath "Link to this definition")
+PurePath.joinpath(*\*pathsegments*)
 :   Calling this method is equivalent to combining the path with each of
     the given *pathsegments* in turn:
 
@@ -641,12 +587,46 @@ PurePath.joinpath(*\*pathsegments*)[¶](#pathlib.PurePath.joinpath "Link to this
     PureWindowsPath('c:/Program Files')
     ```
 
-PurePath.match(*pattern*, *\**, *case\_sensitive=None*)[¶](#pathlib.PurePath.match "Link to this definition")
+PurePath.full\_match(*pattern*, *\**, *case\_sensitive=None*)
 :   Match this path against the provided glob-style pattern. Return `True`
-    if matching is successful, `False` otherwise.
+    if matching is successful, `False` otherwise. For example:
 
-    If *pattern* is relative, the path can be either relative or absolute,
-    and matching is done from the right:
+    ```
+    >>> PurePath('a/b.py').full_match('a/*.py')
+    True
+    >>> PurePath('a/b.py').full_match('*.py')
+    False
+    >>> PurePath('/a/b/c.py').full_match('/a/**')
+    True
+    >>> PurePath('/a/b/c.py').full_match('**/*.py')
+    True
+    ```
+
+    See also
+
+    [Pattern language](#pathlib-pattern-language) documentation.
+
+    As with other methods, case-sensitivity follows platform defaults:
+
+    ```
+    >>> PurePosixPath('b.py').full_match('*.PY')
+    False
+    >>> PureWindowsPath('b.py').full_match('*.PY')
+    True
+    ```
+
+    Set *case\_sensitive* to `True` or `False` to override this behaviour.
+
+    Added in version 3.13.
+
+PurePath.match(*pattern*, *\**, *case\_sensitive=None*)
+:   Match this path against the provided non-recursive glob-style pattern.
+    Return `True` if matching is successful, `False` otherwise.
+
+    This method is similar to [`full_match()`](#pathlib.PurePath.full_match "pathlib.PurePath.full_match"), but empty patterns
+    aren’t allowed ([`ValueError`](exceptions.html#ValueError "ValueError") is raised), the recursive wildcard
+    “`**`” isn’t supported (it acts like non-recursive “`*`”), and if a
+    relative pattern is provided, then matching is done from the right:
 
     ```
     >>> PurePath('a/b.py').match('*.py')
@@ -657,46 +637,11 @@ PurePath.match(*pattern*, *\**, *case\_sensitive=None*)[¶](#pathlib.PurePath.ma
     False
     ```
 
-    If *pattern* is absolute, the path must be absolute, and the whole path
-    must match:
-
-    ```
-    >>> PurePath('/a.py').match('/*.py')
-    True
-    >>> PurePath('a/b.py').match('/*.py')
-    False
-    ```
-
-    The *pattern* may be another path object; this speeds up matching the same
-    pattern against multiple files:
-
-    ```
-    >>> pattern = PurePath('*.py')
-    >>> PurePath('a/b.py').match(pattern)
-    True
-    ```
-
-    Note
-
-    The recursive wildcard “`**`” isn’t supported by this method (it acts
-    like non-recursive “`*`”.)
-
-    Changed in version 3.12: Accepts an object implementing the [`os.PathLike`](os.html#os.PathLike "os.PathLike") interface.
-
-    As with other methods, case-sensitivity follows platform defaults:
-
-    ```
-    >>> PurePosixPath('b.py').match('*.PY')
-    False
-    >>> PureWindowsPath('b.py').match('*.PY')
-    True
-    ```
-
-    Set *case\_sensitive* to `True` or `False` to override this behaviour.
+    Changed in version 3.12: The *pattern* parameter accepts a [path-like object](../glossary.html#term-path-like-object).
 
     Changed in version 3.12: The *case\_sensitive* parameter was added.
 
-PurePath.relative\_to(*other*, *walk\_up=False*)[¶](#pathlib.PurePath.relative_to "Link to this definition")
+PurePath.relative\_to(*other*, *walk\_up=False*)
 :   Compute a version of this path relative to the path represented by
     *other*. If it’s impossible, [`ValueError`](exceptions.html#ValueError "ValueError") is raised:
 
@@ -710,7 +655,7 @@ PurePath.relative\_to(*other*, *walk\_up=False*)[¶](#pathlib.PurePath.relative_
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
       File "pathlib.py", line 941, in relative_to
-        raise ValueError(error_message.format(str(self), str(formatted)))
+    raise ValueError(error_message.format(str(self), str(formatted)))
     ValueError: '/etc/passwd' is not in the subpath of '/usr' OR one path is relative and the other is absolute.
     ```
 
@@ -726,7 +671,7 @@ PurePath.relative\_to(*other*, *walk\_up=False*)[¶](#pathlib.PurePath.relative_
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
       File "pathlib.py", line 941, in relative_to
-        raise ValueError(error_message.format(str(self), str(formatted)))
+    raise ValueError(error_message.format(str(self), str(formatted)))
     ValueError: '/etc/passwd' is not on the same drive as 'foo' OR one path is relative and the other is absolute.
     ```
 
@@ -740,10 +685,10 @@ PurePath.relative\_to(*other*, *walk\_up=False*)[¶](#pathlib.PurePath.relative_
 
     Changed in version 3.12: The *walk\_up* parameter was added (old behavior is the same as `walk_up=False`).
 
-    Deprecated since version 3.12, will be removed in version 3.14: Passing additional positional arguments is deprecated; if supplied,
+    Deprecated since version 3.12, removed in version 3.14: Passing additional positional arguments is deprecated; if supplied,
     they are joined with *other*.
 
-PurePath.with\_name(*name*)[¶](#pathlib.PurePath.with_name "Link to this definition")
+PurePath.with\_name(*name*)
 :   Return a new path with the [`name`](#pathlib.PurePath.name "pathlib.PurePath.name") changed. If the original path
     doesn’t have a name, ValueError is raised:
 
@@ -756,11 +701,11 @@ PurePath.with\_name(*name*)[¶](#pathlib.PurePath.with_name "Link to this defini
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
       File "/home/antoine/cpython/default/Lib/pathlib.py", line 751, in with_name
-        raise ValueError("%r has an empty name" % (self,))
+    raise ValueError("%r has an empty name" % (self,))
     ValueError: PureWindowsPath('c:/') has an empty name
     ```
 
-PurePath.with\_stem(*stem*)[¶](#pathlib.PurePath.with_stem "Link to this definition")
+PurePath.with\_stem(*stem*)
 :   Return a new path with the [`stem`](#pathlib.PurePath.stem "pathlib.PurePath.stem") changed. If the original path
     doesn’t have a name, ValueError is raised:
 
@@ -776,15 +721,15 @@ PurePath.with\_stem(*stem*)[¶](#pathlib.PurePath.with_stem "Link to this defini
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
       File "/home/antoine/cpython/default/Lib/pathlib.py", line 861, in with_stem
-        return self.with_name(stem + self.suffix)
+    return self.with_name(stem + self.suffix)
       File "/home/antoine/cpython/default/Lib/pathlib.py", line 851, in with_name
-        raise ValueError("%r has an empty name" % (self,))
+    raise ValueError("%r has an empty name" % (self,))
     ValueError: PureWindowsPath('c:/') has an empty name
     ```
 
     Added in version 3.9.
 
-PurePath.with\_suffix(*suffix*)[¶](#pathlib.PurePath.with_suffix "Link to this definition")
+PurePath.with\_suffix(*suffix*)
 :   Return a new path with the [`suffix`](#pathlib.PurePath.suffix "pathlib.PurePath.suffix") changed. If the original path
     doesn’t have a suffix, the new *suffix* is appended instead. If the
     *suffix* is an empty string, the original suffix is removed:
@@ -801,21 +746,24 @@ PurePath.with\_suffix(*suffix*)[¶](#pathlib.PurePath.with_suffix "Link to this 
     PureWindowsPath('README')
     ```
 
-PurePath.with\_segments(*\*pathsegments*)[¶](#pathlib.PurePath.with_segments "Link to this definition")
+    Changed in version 3.14: A single dot (”`.`”) is considered a valid suffix. In previous
+    versions, [`ValueError`](exceptions.html#ValueError "ValueError") is raised if a single dot is supplied.
+
+PurePath.with\_segments(*\*pathsegments*)
 :   Create a new path object of the same type by combining the given
     *pathsegments*. This method is called whenever a derivative path is created,
     such as from [`parent`](#pathlib.PurePath.parent "pathlib.PurePath.parent") and [`relative_to()`](#pathlib.PurePath.relative_to "pathlib.PurePath.relative_to"). Subclasses may
     override this method to pass information to derivative paths, for example:
 
     ```
-    from pathlib import PurePosixPath
+    frompathlibimport PurePosixPath
 
-    class MyPath(PurePosixPath):
-        def __init__(self, *pathsegments, session_id):
+    classMyPath(PurePosixPath):
+        def__init__(self, *pathsegments, session_id):
             super().__init__(*pathsegments)
             self.session_id = session_id
 
-        def with_segments(self, *pathsegments):
+        defwith_segments(self, *pathsegments):
             return type(self)(*pathsegments, session_id=self.session_id)
 
     etc = MyPath('/etc', session_id=42)
@@ -825,13 +773,13 @@ PurePath.with\_segments(*\*pathsegments*)[¶](#pathlib.PurePath.with_segments "L
 
     Added in version 3.12.
 
-## Concrete paths[¶](#concrete-paths "Link to this heading")
+## Concrete paths
 
 Concrete paths are subclasses of the pure path classes. In addition to
 operations provided by the latter, they also provide methods to do system
 calls on path objects. There are three ways to instantiate concrete paths:
 
-*class* pathlib.Path(*\*pathsegments*)[¶](#pathlib.Path "Link to this definition")
+*class*pathlib.Path(*\*pathsegments*)
 :   A subclass of [`PurePath`](#pathlib.PurePath "pathlib.PurePath"), this class represents concrete paths of
     the system’s path flavour (instantiating it creates either a
     [`PosixPath`](#pathlib.PosixPath "pathlib.PosixPath") or a [`WindowsPath`](#pathlib.WindowsPath "pathlib.WindowsPath")):
@@ -843,7 +791,7 @@ calls on path objects. There are three ways to instantiate concrete paths:
 
     *pathsegments* is specified similarly to [`PurePath`](#pathlib.PurePath "pathlib.PurePath").
 
-*class* pathlib.PosixPath(*\*pathsegments*)[¶](#pathlib.PosixPath "Link to this definition")
+*class*pathlib.PosixPath(*\*pathsegments*)
 :   A subclass of [`Path`](#pathlib.Path "pathlib.Path") and [`PurePosixPath`](#pathlib.PurePosixPath "pathlib.PurePosixPath"), this class
     represents concrete non-Windows filesystem paths:
 
@@ -854,7 +802,10 @@ calls on path objects. There are three ways to instantiate concrete paths:
 
     *pathsegments* is specified similarly to [`PurePath`](#pathlib.PurePath "pathlib.PurePath").
 
-*class* pathlib.WindowsPath(*\*pathsegments*)[¶](#pathlib.WindowsPath "Link to this definition")
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") on Windows. In previous versions,
+    [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised instead.
+
+*class*pathlib.WindowsPath(*\*pathsegments*)
 :   A subclass of [`Path`](#pathlib.Path "pathlib.Path") and [`PureWindowsPath`](#pathlib.PureWindowsPath "pathlib.PureWindowsPath"), this class
     represents concrete Windows filesystem paths:
 
@@ -865,12 +816,15 @@ calls on path objects. There are three ways to instantiate concrete paths:
 
     *pathsegments* is specified similarly to [`PurePath`](#pathlib.PurePath "pathlib.PurePath").
 
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") on non-Windows platforms. In previous
+    versions, [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised instead.
+
 You can only instantiate the class flavour that corresponds to your system
 (allowing system calls on non-compatible path flavours could lead to
 bugs or failures in your application):
 
 ```
->>> import os
+>>> importos
 >>> os.name
 'posix'
 >>> Path('setup.py')
@@ -881,16 +835,83 @@ PosixPath('setup.py')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
   File "pathlib.py", line 798, in __new__
-    % (cls.__name__,))
-NotImplementedError: cannot instantiate 'WindowsPath' on your system
+% (cls.__name__,))
+UnsupportedOperation: cannot instantiate 'WindowsPath' on your system
 ```
 
 Some concrete path methods can raise an [`OSError`](exceptions.html#OSError "OSError") if a system call fails
 (for example because the path doesn’t exist).
 
-### Expanding and resolving paths[¶](#expanding-and-resolving-paths "Link to this heading")
+### Parsing and generating URIs
 
-*classmethod* Path.home()[¶](#pathlib.Path.home "Link to this definition")
+Concrete path objects can be created from, and represented as, ‘file’ URIs
+conforming to [**RFC 8089**](https://datatracker.ietf.org/doc/html/rfc8089.html).
+
+Note
+
+File URIs are not portable across machines with different
+[filesystem encodings](os.html#filesystem-encoding).
+
+*classmethod*Path.from\_uri(*uri*)
+:   Return a new path object from parsing a ‘file’ URI. For example:
+
+    ```
+    >>> p = Path.from_uri('file:///etc/hosts')
+    PosixPath('/etc/hosts')
+    ```
+
+    On Windows, DOS device and UNC paths may be parsed from URIs:
+
+    ```
+    >>> p = Path.from_uri('file:///c:/windows')
+    WindowsPath('c:/windows')
+    >>> p = Path.from_uri('file://server/share')
+    WindowsPath('//server/share')
+    ```
+
+    Several variant forms are supported:
+
+    ```
+    >>> p = Path.from_uri('file:////server/share')
+    WindowsPath('//server/share')
+    >>> p = Path.from_uri('file://///server/share')
+    WindowsPath('//server/share')
+    >>> p = Path.from_uri('file:c:/windows')
+    WindowsPath('c:/windows')
+    >>> p = Path.from_uri('file:/c|/windows')
+    WindowsPath('c:/windows')
+    ```
+
+    [`ValueError`](exceptions.html#ValueError "ValueError") is raised if the URI does not start with `file:`, or
+    the parsed path isn’t absolute.
+
+    Added in version 3.13.
+
+    Changed in version 3.14: The URL authority is discarded if it matches the local hostname.
+    Otherwise, if the authority isn’t empty or `localhost`, then on
+    Windows a UNC path is returned (as before), and on other platforms a
+    [`ValueError`](exceptions.html#ValueError "ValueError") is raised.
+
+Path.as\_uri()
+:   Represent the path as a ‘file’ URI. [`ValueError`](exceptions.html#ValueError "ValueError") is raised if
+    the path isn’t absolute.
+
+    ```
+    >>> p = PosixPath('/etc/passwd')
+    >>> p.as_uri()
+    'file:///etc/passwd'
+    >>> p = WindowsPath('c:/Windows')
+    >>> p.as_uri()
+    'file:///c:/Windows'
+    ```
+
+    Deprecated since version 3.14, will be removed in version 3.19: Calling this method from [`PurePath`](#pathlib.PurePath "pathlib.PurePath") rather than [`Path`](#pathlib.Path "pathlib.Path") is
+    possible but deprecated. The method’s use of [`os.fsencode()`](os.html#os.fsencode "os.fsencode") makes
+    it strictly impure.
+
+### Expanding and resolving paths
+
+*classmethod*Path.home()
 :   Return a new path object representing the user’s home directory (as
     returned by [`os.path.expanduser()`](os.path.html#os.path.expanduser "os.path.expanduser") with `~` construct). If the home
     directory can’t be resolved, [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError") is raised.
@@ -902,7 +923,7 @@ Some concrete path methods can raise an [`OSError`](exceptions.html#OSError "OSE
 
     Added in version 3.5.
 
-Path.expanduser()[¶](#pathlib.Path.expanduser "Link to this definition")
+Path.expanduser()
 :   Return a new path with expanded `~` and `~user` constructs,
     as returned by [`os.path.expanduser()`](os.path.html#os.path.expanduser "os.path.expanduser"). If a home directory can’t be
     resolved, [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError") is raised.
@@ -915,7 +936,7 @@ Path.expanduser()[¶](#pathlib.Path.expanduser "Link to this definition")
 
     Added in version 3.5.
 
-*classmethod* Path.cwd()[¶](#pathlib.Path.cwd "Link to this definition")
+*classmethod*Path.cwd()
 :   Return a new path object representing the current directory (as returned
     by [`os.getcwd()`](os.html#os.getcwd "os.getcwd")):
 
@@ -924,7 +945,7 @@ Path.expanduser()[¶](#pathlib.Path.expanduser "Link to this definition")
     PosixPath('/home/antoine/pathlib')
     ```
 
-Path.absolute()[¶](#pathlib.Path.absolute "Link to this definition")
+Path.absolute()
 :   Make the path absolute, without normalization or resolving symlinks.
     Returns a new path object:
 
@@ -936,7 +957,7 @@ Path.absolute()[¶](#pathlib.Path.absolute "Link to this definition")
     PosixPath('/home/antoine/pathlib/tests')
     ```
 
-Path.resolve(*strict=False*)[¶](#pathlib.Path.resolve "Link to this definition")
+Path.resolve(*strict=False*)
 :   Make the path absolute, resolving any symlinks. A new path object is
     returned:
 
@@ -956,15 +977,18 @@ Path.resolve(*strict=False*)[¶](#pathlib.Path.resolve "Link to this definition"
     PosixPath('/home/antoine/pathlib/setup.py')
     ```
 
-    If the path doesn’t exist and *strict* is `True`, [`FileNotFoundError`](exceptions.html#FileNotFoundError "FileNotFoundError")
-    is raised. If *strict* is `False`, the path is resolved as far as possible
-    and any remainder is appended without checking whether it exists. If an
-    infinite loop is encountered along the resolution path, [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError")
-    is raised.
+    If a path doesn’t exist or a symlink loop is encountered, and *strict* is
+    `True`, [`OSError`](exceptions.html#OSError "OSError") is raised. If *strict* is `False`, the path is
+    resolved as far as possible and any remainder is appended without checking
+    whether it exists.
 
     Changed in version 3.6: The *strict* parameter was added (pre-3.6 behavior is strict).
 
-Path.readlink()[¶](#pathlib.Path.readlink "Link to this definition")
+    Changed in version 3.13: Symlink loops are treated like other errors: [`OSError`](exceptions.html#OSError "OSError") is raised in
+    strict mode, and no exception is raised in non-strict mode. In previous
+    versions, [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError") is raised no matter the value of *strict*.
+
+Path.readlink()
 :   Return the path to which the symbolic link points (as returned by
     [`os.readlink()`](os.html#os.readlink "os.readlink")):
 
@@ -977,7 +1001,10 @@ Path.readlink()[¶](#pathlib.Path.readlink "Link to this definition")
 
     Added in version 3.9.
 
-### Querying file type and status[¶](#querying-file-type-and-status "Link to this heading")
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") if [`os.readlink()`](os.html#os.readlink "os.readlink") is not
+    available. In previous versions, [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised.
+
+### Querying file type and status
 
 Changed in version 3.8: [`exists()`](#pathlib.Path.exists "pathlib.Path.exists"), [`is_dir()`](#pathlib.Path.is_dir "pathlib.Path.is_dir"), [`is_file()`](#pathlib.Path.is_file "pathlib.Path.is_file"),
 [`is_mount()`](#pathlib.Path.is_mount "pathlib.Path.is_mount"), [`is_symlink()`](#pathlib.Path.is_symlink "pathlib.Path.is_symlink"),
@@ -986,7 +1013,14 @@ Changed in version 3.8: [`exists()`](#pathlib.Path.exists "pathlib.Path.exists")
 instead of raising an exception for paths that contain characters
 unrepresentable at the OS level.
 
-Path.stat(*\**, *follow\_symlinks=True*)[¶](#pathlib.Path.stat "Link to this definition")
+Changed in version 3.14: The methods given above now return `False` instead of raising any
+[`OSError`](exceptions.html#OSError "OSError") exception from the operating system. In previous versions,
+some kinds of `OSError` exception are raised, and others suppressed.
+The new behaviour is consistent with [`os.path.exists()`](os.path.html#os.path.exists "os.path.exists"),
+[`os.path.isdir()`](os.path.html#os.path.isdir "os.path.isdir"), etc. Use [`stat()`](#pathlib.Path.stat "pathlib.Path.stat") to retrieve the file
+status without suppressing exceptions.
+
+Path.stat(*\**, *follow\_symlinks=True*)
 :   Return an [`os.stat_result`](os.html#os.stat_result "os.stat_result") object containing information about this path, like [`os.stat()`](os.html#os.stat "os.stat").
     The result is looked up at each call to this method.
 
@@ -1003,12 +1037,14 @@ Path.stat(*\**, *follow\_symlinks=True*)[¶](#pathlib.Path.stat "Link to this de
 
     Changed in version 3.10: The *follow\_symlinks* parameter was added.
 
-Path.lstat()[¶](#pathlib.Path.lstat "Link to this definition")
+Path.lstat()
 :   Like [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") but, if the path points to a symbolic link, return
     the symbolic link’s information rather than its target’s.
 
-Path.exists(*\**, *follow\_symlinks=True*)[¶](#pathlib.Path.exists "Link to this definition")
+Path.exists(*\**, *follow\_symlinks=True*)
 :   Return `True` if the path points to an existing file or directory.
+    `False` will be returned if the path is invalid, inaccessible or missing.
+    Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to distinguish between these cases.
 
     This method normally follows symlinks; to check if a symlink exists, add
     the argument `follow_symlinks=False`.
@@ -1026,33 +1062,41 @@ Path.exists(*\**, *follow\_symlinks=True*)[¶](#pathlib.Path.exists "Link to thi
 
     Changed in version 3.12: The *follow\_symlinks* parameter was added.
 
-Path.is\_file()[¶](#pathlib.Path.is_file "Link to this definition")
-:   Return `True` if the path points to a regular file (or a symbolic link
-    pointing to a regular file), `False` if it points to another kind of file.
+Path.is\_file(*\**, *follow\_symlinks=True*)
+:   Return `True` if the path points to a regular file. `False` will be
+    returned if the path is invalid, inaccessible or missing, or if it points
+    to something other than a regular file. Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to
+    distinguish between these cases.
 
-    `False` is also returned if the path doesn’t exist or is a broken symlink;
-    other errors (such as permission errors) are propagated.
+    This method normally follows symlinks; to exclude symlinks, add the
+    argument `follow_symlinks=False`.
 
-Path.is\_dir()[¶](#pathlib.Path.is_dir "Link to this definition")
-:   Return `True` if the path points to a directory (or a symbolic link
-    pointing to a directory), `False` if it points to another kind of file.
+    Changed in version 3.13: The *follow\_symlinks* parameter was added.
 
-    `False` is also returned if the path doesn’t exist or is a broken symlink;
-    other errors (such as permission errors) are propagated.
+Path.is\_dir(*\**, *follow\_symlinks=True*)
+:   Return `True` if the path points to a directory. `False` will be
+    returned if the path is invalid, inaccessible or missing, or if it points
+    to something other than a directory. Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to distinguish
+    between these cases.
 
-Path.is\_symlink()[¶](#pathlib.Path.is_symlink "Link to this definition")
-:   Return `True` if the path points to a symbolic link, `False` otherwise.
+    This method normally follows symlinks; to exclude symlinks to directories,
+    add the argument `follow_symlinks=False`.
 
-    `False` is also returned if the path doesn’t exist; other errors (such
-    as permission errors) are propagated.
+    Changed in version 3.13: The *follow\_symlinks* parameter was added.
 
-Path.is\_junction()[¶](#pathlib.Path.is_junction "Link to this definition")
+Path.is\_symlink()
+:   Return `True` if the path points to a symbolic link, even if that symlink
+    is broken. `False` will be returned if the path is invalid, inaccessible
+    or missing, or if it points to something other than a symbolic link. Use
+    [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to distinguish between these cases.
+
+Path.is\_junction()
 :   Return `True` if the path points to a junction, and `False` for any other
     type of file. Currently only Windows supports junctions.
 
     Added in version 3.12.
 
-Path.is\_mount()[¶](#pathlib.Path.is_mount "Link to this definition")
+Path.is\_mount()
 :   Return `True` if the path is a *mount point*: a point in a
     file system where a different file system has been mounted. On POSIX, the
     function checks whether *path*’s parent, `path/..`, is on a different
@@ -1066,35 +1110,31 @@ Path.is\_mount()[¶](#pathlib.Path.is_mount "Link to this definition")
 
     Changed in version 3.12: Windows support was added.
 
-Path.is\_socket()[¶](#pathlib.Path.is_socket "Link to this definition")
-:   Return `True` if the path points to a Unix socket (or a symbolic link
-    pointing to a Unix socket), `False` if it points to another kind of file.
+Path.is\_socket()
+:   Return `True` if the path points to a Unix socket. `False` will be
+    returned if the path is invalid, inaccessible or missing, or if it points
+    to something other than a Unix socket. Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to
+    distinguish between these cases.
 
-    `False` is also returned if the path doesn’t exist or is a broken symlink;
-    other errors (such as permission errors) are propagated.
+Path.is\_fifo()
+:   Return `True` if the path points to a FIFO. `False` will be returned if
+    the path is invalid, inaccessible or missing, or if it points to something
+    other than a FIFO. Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to distinguish between these
+    cases.
 
-Path.is\_fifo()[¶](#pathlib.Path.is_fifo "Link to this definition")
-:   Return `True` if the path points to a FIFO (or a symbolic link
-    pointing to a FIFO), `False` if it points to another kind of file.
+Path.is\_block\_device()
+:   Return `True` if the path points to a block device. `False` will be
+    returned if the path is invalid, inaccessible or missing, or if it points
+    to something other than a block device. Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to
+    distinguish between these cases.
 
-    `False` is also returned if the path doesn’t exist or is a broken symlink;
-    other errors (such as permission errors) are propagated.
+Path.is\_char\_device()
+:   Return `True` if the path points to a character device. `False` will be
+    returned if the path is invalid, inaccessible or missing, or if it points
+    to something other than a character device. Use [`Path.stat()`](#pathlib.Path.stat "pathlib.Path.stat") to
+    distinguish between these cases.
 
-Path.is\_block\_device()[¶](#pathlib.Path.is_block_device "Link to this definition")
-:   Return `True` if the path points to a block device (or a symbolic link
-    pointing to a block device), `False` if it points to another kind of file.
-
-    `False` is also returned if the path doesn’t exist or is a broken symlink;
-    other errors (such as permission errors) are propagated.
-
-Path.is\_char\_device()[¶](#pathlib.Path.is_char_device "Link to this definition")
-:   Return `True` if the path points to a character device (or a symbolic link
-    pointing to a character device), `False` if it points to another kind of file.
-
-    `False` is also returned if the path doesn’t exist or is a broken symlink;
-    other errors (such as permission errors) are propagated.
-
-Path.samefile(*other\_path*)[¶](#pathlib.Path.samefile "Link to this definition")
+Path.samefile(*other\_path*)
 :   Return whether this path points to the same file as *other\_path*, which
     can be either a Path object, or a string. The semantics are similar
     to [`os.path.samefile()`](os.path.html#os.path.samefile "os.path.samefile") and [`os.path.samestat()`](os.path.html#os.path.samestat "os.path.samestat").
@@ -1113,9 +1153,41 @@ Path.samefile(*other\_path*)[¶](#pathlib.Path.samefile "Link to this definition
 
     Added in version 3.5.
 
-### Reading and writing files[¶](#reading-and-writing-files "Link to this heading")
+Path.info
+:   A [`PathInfo`](#pathlib.types.PathInfo "pathlib.types.PathInfo") object that supports querying file type
+    information. The object exposes methods that cache their results, which can
+    help reduce the number of system calls needed when switching on file type.
+    For example:
 
-Path.open(*mode='r'*, *buffering=-1*, *encoding=None*, *errors=None*, *newline=None*)[¶](#pathlib.Path.open "Link to this definition")
+    ```
+    >>> p = Path('src')
+    >>> if p.info.is_symlink():
+    ...     print('symlink')
+    ... elif p.info.is_dir():
+    ...     print('directory')
+    ... elif p.info.exists():
+    ...     print('something else')
+    ... else:
+    ...     print('not found')
+    ...
+    directory
+    ```
+
+    If the path was generated from [`Path.iterdir()`](#pathlib.Path.iterdir "pathlib.Path.iterdir") then this attribute is
+    initialized with some information about the file type gleaned from scanning
+    the parent directory. Merely accessing `Path.info` does not perform
+    any filesystem queries.
+
+    To fetch up-to-date information, it’s best to call [`Path.is_dir()`](#pathlib.Path.is_dir "pathlib.Path.is_dir"),
+    [`is_file()`](#pathlib.Path.is_file "pathlib.Path.is_file") and [`is_symlink()`](#pathlib.Path.is_symlink "pathlib.Path.is_symlink") rather than methods of
+    this attribute. There is no way to reset the cache; instead you can create
+    a new path object with an empty info cache via `p = Path(p)`.
+
+    Added in version 3.14.
+
+### Reading and writing files
+
+Path.open(*mode='r'*, *buffering=-1*, *encoding=None*, *errors=None*, *newline=None*)
 :   Open the file pointed to by the path, like the built-in [`open()`](functions.html#open "open")
     function does:
 
@@ -1127,7 +1199,7 @@ Path.open(*mode='r'*, *buffering=-1*, *encoding=None*, *errors=None*, *newline=N
     '#!/usr/bin/env python3\n'
     ```
 
-Path.read\_text(*encoding=None*, *errors=None*)[¶](#pathlib.Path.read_text "Link to this definition")
+Path.read\_text(*encoding=None*, *errors=None*, *newline=None*)
 :   Return the decoded contents of the pointed-to file as a string:
 
     ```
@@ -1143,7 +1215,9 @@ Path.read\_text(*encoding=None*, *errors=None*)[¶](#pathlib.Path.read_text "Lin
 
     Added in version 3.5.
 
-Path.read\_bytes()[¶](#pathlib.Path.read_bytes "Link to this definition")
+    Changed in version 3.13: The *newline* parameter was added.
+
+Path.read\_bytes()
 :   Return the binary contents of the pointed-to file as a bytes object:
 
     ```
@@ -1156,7 +1230,7 @@ Path.read\_bytes()[¶](#pathlib.Path.read_bytes "Link to this definition")
 
     Added in version 3.5.
 
-Path.write\_text(*data*, *encoding=None*, *errors=None*, *newline=None*)[¶](#pathlib.Path.write_text "Link to this definition")
+Path.write\_text(*data*, *encoding=None*, *errors=None*, *newline=None*)
 :   Open the file pointed to in text mode, write *data* to it, and close the
     file:
 
@@ -1175,7 +1249,7 @@ Path.write\_text(*data*, *encoding=None*, *errors=None*, *newline=None*)[¶](#pa
 
     Changed in version 3.10: The *newline* parameter was added.
 
-Path.write\_bytes(*data*)[¶](#pathlib.Path.write_bytes "Link to this definition")
+Path.write\_bytes(*data*)
 :   Open the file pointed to in bytes mode, write *data* to it, and close the
     file:
 
@@ -1191,9 +1265,9 @@ Path.write\_bytes(*data*)[¶](#pathlib.Path.write_bytes "Link to this definition
 
     Added in version 3.5.
 
-### Reading directories[¶](#reading-directories "Link to this heading")
+### Reading directories
 
-Path.iterdir()[¶](#pathlib.Path.iterdir "Link to this definition")
+Path.iterdir()
 :   When the path points to a directory, yield path objects of the directory
     contents:
 
@@ -1218,7 +1292,7 @@ Path.iterdir()[¶](#pathlib.Path.iterdir "Link to this definition")
     If the path is not a directory or otherwise inaccessible, [`OSError`](exceptions.html#OSError "OSError") is
     raised.
 
-Path.glob(*pattern*, *\**, *case\_sensitive=None*)[¶](#pathlib.Path.glob "Link to this definition")
+Path.glob(*pattern*, *\**, *case\_sensitive=None*, *recurse\_symlinks=False*)
 :   Glob the given relative *pattern* in the directory represented by this path,
     yielding all matching files (of any kind):
 
@@ -1227,13 +1301,6 @@ Path.glob(*pattern*, *\**, *case\_sensitive=None*)[¶](#pathlib.Path.glob "Link 
     [PosixPath('pathlib.py'), PosixPath('setup.py'), PosixPath('test_pathlib.py')]
     >>> sorted(Path('.').glob('*/*.py'))
     [PosixPath('docs/conf.py')]
-    ```
-
-    Patterns are the same as for [`fnmatch`](fnmatch.html#module-fnmatch "fnmatch: Unix shell style filename pattern matching."), with the addition of “`**`”
-    which means “this directory and all subdirectories, recursively”. In other
-    words, it enables recursive globbing:
-
-    ```
     >>> sorted(Path('.').glob('**/*.py'))
     [PosixPath('build/lib/pathlib.py'),
      PosixPath('docs/conf.py'),
@@ -1242,54 +1309,70 @@ Path.glob(*pattern*, *\**, *case\_sensitive=None*)[¶](#pathlib.Path.glob "Link 
      PosixPath('test_pathlib.py')]
     ```
 
-    This method calls [`Path.is_dir()`](#pathlib.Path.is_dir "pathlib.Path.is_dir") on the top-level directory and
-    propagates any [`OSError`](exceptions.html#OSError "OSError") exception that is raised. Subsequent
-    [`OSError`](exceptions.html#OSError "OSError") exceptions from scanning directories are suppressed.
+    Note
+
+    The paths are returned in no particular order.
+    If you need a specific order, sort the results.
+
+    See also
+
+    [Pattern language](#pathlib-pattern-language) documentation.
 
     By default, or when the *case\_sensitive* keyword-only argument is set to
     `None`, this method matches paths using platform-specific casing rules:
     typically, case-sensitive on POSIX, and case-insensitive on Windows.
     Set *case\_sensitive* to `True` or `False` to override this behaviour.
+
+    By default, or when the *recurse\_symlinks* keyword-only argument is set to
+    `False`, this method follows symlinks except when expanding “`**`”
+    wildcards. Set *recurse\_symlinks* to `True` to always follow symlinks.
 
     Note
 
-    Using the “`**`” pattern in large directory trees may consume
-    an inordinate amount of time.
+    Any [`OSError`](exceptions.html#OSError "OSError") exceptions raised from scanning the filesystem are
+    suppressed. This includes [`PermissionError`](exceptions.html#PermissionError "PermissionError") when accessing
+    directories without read permission.
 
     Raises an [auditing event](sys.html#auditing) `pathlib.Path.glob` with arguments `self`, `pattern`.
 
-    Changed in version 3.11: Return only directories if *pattern* ends with a pathname components
-    separator ([`sep`](os.html#os.sep "os.sep") or [`altsep`](os.html#os.altsep "os.altsep")).
-
     Changed in version 3.12: The *case\_sensitive* parameter was added.
 
-Path.rglob(*pattern*, *\**, *case\_sensitive=None*)[¶](#pathlib.Path.rglob "Link to this definition")
+    Changed in version 3.13: The *recurse\_symlinks* parameter was added.
+
+    Changed in version 3.13: The *pattern* parameter accepts a [path-like object](../glossary.html#term-path-like-object).
+
+    Changed in version 3.13: Any [`OSError`](exceptions.html#OSError "OSError") exceptions raised from scanning the filesystem are
+    suppressed. In previous versions, such exceptions are suppressed in many
+    cases, but not all.
+
+Path.rglob(*pattern*, *\**, *case\_sensitive=None*, *recurse\_symlinks=False*)
 :   Glob the given relative *pattern* recursively. This is like calling
-    [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") with “`**/`” added in front of the *pattern*, where
-    *patterns* are the same as for [`fnmatch`](fnmatch.html#module-fnmatch "fnmatch: Unix shell style filename pattern matching."):
+    [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") with “`**/`” added in front of the *pattern*.
 
-    ```
-    >>> sorted(Path().rglob("*.py"))
-    [PosixPath('build/lib/pathlib.py'),
-     PosixPath('docs/conf.py'),
-     PosixPath('pathlib.py'),
-     PosixPath('setup.py'),
-     PosixPath('test_pathlib.py')]
-    ```
+    Note
 
-    By default, or when the *case\_sensitive* keyword-only argument is set to
-    `None`, this method matches paths using platform-specific casing rules:
-    typically, case-sensitive on POSIX, and case-insensitive on Windows.
-    Set *case\_sensitive* to `True` or `False` to override this behaviour.
+    The paths are returned in no particular order.
+    If you need a specific order, sort the results.
+
+    Note
+
+    Any [`OSError`](exceptions.html#OSError "OSError") exceptions raised from scanning the filesystem are
+    suppressed. This includes [`PermissionError`](exceptions.html#PermissionError "PermissionError") when accessing
+    directories without read permission.
+
+    See also
+
+    [Pattern language](#pathlib-pattern-language) and [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") documentation.
 
     Raises an [auditing event](sys.html#auditing) `pathlib.Path.rglob` with arguments `self`, `pattern`.
 
-    Changed in version 3.11: Return only directories if *pattern* ends with a pathname components
-    separator ([`sep`](os.html#os.sep "os.sep") or [`altsep`](os.html#os.altsep "os.altsep")).
-
     Changed in version 3.12: The *case\_sensitive* parameter was added.
 
-Path.walk(*top\_down=True*, *on\_error=None*, *follow\_symlinks=False*)[¶](#pathlib.Path.walk "Link to this definition")
+    Changed in version 3.13: The *recurse\_symlinks* parameter was added.
+
+    Changed in version 3.13: The *pattern* parameter accepts a [path-like object](../glossary.html#term-path-like-object).
+
+Path.walk(*top\_down=True*, *on\_error=None*, *follow\_symlinks=False*)
 :   Generate the file names in a directory tree by walking the tree
     either top-down or bottom-up.
 
@@ -1314,12 +1397,12 @@ Path.walk(*top\_down=True*, *on\_error=None*, *follow\_symlinks=False*)[¶](#pat
     its subdirectories are walked.
 
     When *top\_down* is true, the caller can modify the *dirnames* list in-place
-    (for example, using [`del`](../reference/simple_stmts.html#del) or slice assignment), and [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk")
+    (for example, using [`del`](../reference/simple_stmts.html#del) or slice assignment), and `Path.walk()`
     will only recurse into the subdirectories whose names remain in *dirnames*.
     This can be used to prune the search, or to impose a specific order of visiting,
-    or even to inform [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") about directories the caller creates or
-    renames before it resumes [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") again. Modifying *dirnames* when
-    *top\_down* is false has no effect on the behavior of [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") since the
+    or even to inform `Path.walk()` about directories the caller creates or
+    renames before it resumes `Path.walk()` again. Modifying *dirnames* when
+    *top\_down* is false has no effect on the behavior of `Path.walk()` since the
     directories in *dirnames* have already been generated by the time *dirnames*
     is yielded to the caller.
 
@@ -1329,7 +1412,7 @@ Path.walk(*top\_down=True*, *on\_error=None*, *follow\_symlinks=False*)[¶](#pat
     error to continue the walk or re-raise it to stop the walk. Note that the
     filename is available as the `filename` attribute of the exception object.
 
-    By default, [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") does not follow symbolic links, and instead adds them
+    By default, `Path.walk()` does not follow symbolic links, and instead adds them
     to the *filenames* list. Set *follow\_symlinks* to true to resolve symlinks
     and place them in *dirnames* and *filenames* as appropriate for their targets, and
     consequently visit directories pointed to by symlinks (where supported).
@@ -1337,27 +1420,27 @@ Path.walk(*top\_down=True*, *on\_error=None*, *follow\_symlinks=False*)[¶](#pat
     Note
 
     Be aware that setting *follow\_symlinks* to true can lead to infinite
-    recursion if a link points to a parent directory of itself. [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk")
+    recursion if a link points to a parent directory of itself. `Path.walk()`
     does not keep track of the directories it has already visited.
 
     Note
 
-    [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") assumes the directories it walks are not modified during
+    `Path.walk()` assumes the directories it walks are not modified during
     execution. For example, if a directory from *dirnames* has been replaced
-    with a symlink and *follow\_symlinks* is false, [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") will
+    with a symlink and *follow\_symlinks* is false, `Path.walk()` will
     still try to descend into it. To prevent such behavior, remove directories
     from *dirnames* as appropriate.
 
     Note
 
-    Unlike [`os.walk()`](os.html#os.walk "os.walk"), [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") lists symlinks to directories in
+    Unlike [`os.walk()`](os.html#os.walk "os.walk"), `Path.walk()` lists symlinks to directories in
     *filenames* if *follow\_symlinks* is false.
 
     This example displays the number of bytes used by all files in each directory,
     while ignoring `__pycache__` directories:
 
     ```
-    from pathlib import Path
+    frompathlibimport Path
     for root, dirs, files in Path("cpython/Lib/concurrent").walk(on_error=print):
       print(
           root,
@@ -1388,9 +1471,9 @@ Path.walk(*top\_down=True*, *on\_error=None*, *follow\_symlinks=False*)[¶](#pat
 
     Added in version 3.12.
 
-### Creating files and directories[¶](#creating-files-and-directories "Link to this heading")
+### Creating files and directories
 
-Path.touch(*mode=0o666*, *exist\_ok=True*)[¶](#pathlib.Path.touch "Link to this definition")
+Path.touch(*mode=0o666*, *exist\_ok=True*)
 :   Create a file at this given path. If *mode* is given, it is combined
     with the process’s `umask` value to determine the file mode and access
     flags. If the file already exists, the function succeeds when *exist\_ok*
@@ -1402,7 +1485,7 @@ Path.touch(*mode=0o666*, *exist\_ok=True*)[¶](#pathlib.Path.touch "Link to this
     The [`open()`](#pathlib.Path.open "pathlib.Path.open"), [`write_text()`](#pathlib.Path.write_text "pathlib.Path.write_text") and
     [`write_bytes()`](#pathlib.Path.write_bytes "pathlib.Path.write_bytes") methods are often used to create files.
 
-Path.mkdir(*mode=0o777*, *parents=False*, *exist\_ok=False*)[¶](#pathlib.Path.mkdir "Link to this definition")
+Path.mkdir(*mode=0o777*, *parents=False*, *exist\_ok=False*)
 :   Create a new directory at this given path. If *mode* is given, it is
     combined with the process’s `umask` value to determine the file mode
     and access flags. If the path already exists, [`FileExistsError`](exceptions.html#FileExistsError "FileExistsError")
@@ -1424,7 +1507,7 @@ Path.mkdir(*mode=0o777*, *parents=False*, *exist\_ok=False*)[¶](#pathlib.Path.m
 
     Changed in version 3.5: The *exist\_ok* parameter was added.
 
-Path.symlink\_to(*target*, *target\_is\_directory=False*)[¶](#pathlib.Path.symlink_to "Link to this definition")
+Path.symlink\_to(*target*, *target\_is\_directory=False*)
 :   Make this path a symbolic link pointing to *target*.
 
     On Windows, a symlink represents either a file or a directory, and does not
@@ -1449,7 +1532,10 @@ Path.symlink\_to(*target*, *target\_is\_directory=False*)[¶](#pathlib.Path.syml
     The order of arguments (link, target) is the reverse
     of [`os.symlink()`](os.html#os.symlink "os.symlink")’s.
 
-Path.hardlink\_to(*target*)[¶](#pathlib.Path.hardlink_to "Link to this definition")
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") if [`os.symlink()`](os.html#os.symlink "os.symlink") is not
+    available. In previous versions, [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised.
+
+Path.hardlink\_to(*target*)
 :   Make this path a hard link to the same file as *target*.
 
     Note
@@ -1459,9 +1545,44 @@ Path.hardlink\_to(*target*)[¶](#pathlib.Path.hardlink_to "Link to this definiti
 
     Added in version 3.10.
 
-### Renaming and deleting[¶](#renaming-and-deleting "Link to this heading")
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") if [`os.link()`](os.html#os.link "os.link") is not
+    available. In previous versions, [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised.
 
-Path.rename(*target*)[¶](#pathlib.Path.rename "Link to this definition")
+### Copying, moving and deleting
+
+Path.copy(*target*, *\**, *follow\_symlinks=True*, *preserve\_metadata=False*)
+:   Copy this file or directory tree to the given *target*, and return a new
+    `Path` instance pointing to *target*.
+
+    If the source is a file, the target will be replaced if it is an existing
+    file. If the source is a symlink and *follow\_symlinks* is true (the
+    default), the symlink’s target is copied. Otherwise, the symlink is
+    recreated at the destination.
+
+    If *preserve\_metadata* is false (the default), only directory structures
+    and file data are guaranteed to be copied. Set *preserve\_metadata* to true
+    to ensure that file and directory permissions, flags, last access and
+    modification times, and extended attributes are copied where supported.
+    This argument has no effect when copying files on Windows (where
+    metadata is always preserved).
+
+    Note
+
+    Where supported by the operating system and file system, this method
+    performs a lightweight copy, where data blocks are only copied when
+    modified. This is known as copy-on-write.
+
+    Added in version 3.14.
+
+Path.copy\_into(*target\_dir*, *\**, *follow\_symlinks=True*, *preserve\_metadata=False*)
+:   Copy this file or directory tree into the given *target\_dir*, which should
+    be an existing directory. Other arguments are handled identically to
+    [`Path.copy()`](#pathlib.Path.copy "pathlib.Path.copy"). Returns a new `Path` instance pointing to the
+    copy.
+
+    Added in version 3.14.
+
+Path.rename(*target*)
 :   Rename this file or directory to the given *target*, and return a new
     `Path` instance pointing to *target*. On Unix, if *target* exists
     and is a file, it will be replaced silently if the user has permission.
@@ -1487,7 +1608,7 @@ Path.rename(*target*)[¶](#pathlib.Path.rename "Link to this definition")
 
     Changed in version 3.8: Added return value, return the new `Path` instance.
 
-Path.replace(*target*)[¶](#pathlib.Path.replace "Link to this definition")
+Path.replace(*target*)
 :   Rename this file or directory to the given *target*, and return a new
     `Path` instance pointing to *target*. If *target* points to an
     existing file or empty directory, it will be unconditionally replaced.
@@ -1498,7 +1619,29 @@ Path.replace(*target*)[¶](#pathlib.Path.replace "Link to this definition")
 
     Changed in version 3.8: Added return value, return the new `Path` instance.
 
-Path.unlink(*missing\_ok=False*)[¶](#pathlib.Path.unlink "Link to this definition")
+Path.move(*target*)
+:   Move this file or directory tree to the given *target*, and return a new
+    `Path` instance pointing to *target*.
+
+    If the *target* doesn’t exist it will be created. If both this path and the
+    *target* are existing files, then the target is overwritten. If both paths
+    point to the same file or directory, or the *target* is a non-empty
+    directory, then [`OSError`](exceptions.html#OSError "OSError") is raised.
+
+    If both paths are on the same filesystem, the move is performed with
+    [`os.replace()`](os.html#os.replace "os.replace"). Otherwise, this path is copied (preserving metadata and
+    symlinks) and then deleted.
+
+    Added in version 3.14.
+
+Path.move\_into(*target\_dir*)
+:   Move this file or directory tree into the given *target\_dir*, which should
+    be an existing directory. Returns a new `Path` instance pointing to
+    the moved path.
+
+    Added in version 3.14.
+
+Path.unlink(*missing\_ok=False*)
 :   Remove this file or symbolic link. If the path points to a directory,
     use [`Path.rmdir()`](#pathlib.Path.rmdir "pathlib.Path.rmdir") instead.
 
@@ -1510,20 +1653,36 @@ Path.unlink(*missing\_ok=False*)[¶](#pathlib.Path.unlink "Link to this definiti
 
     Changed in version 3.8: The *missing\_ok* parameter was added.
 
-Path.rmdir()[¶](#pathlib.Path.rmdir "Link to this definition")
+Path.rmdir()
 :   Remove this directory. The directory must be empty.
 
-### Permissions and ownership[¶](#permissions-and-ownership "Link to this heading")
+### Permissions and ownership
 
-Path.owner()[¶](#pathlib.Path.owner "Link to this definition")
+Path.owner(*\**, *follow\_symlinks=True*)
 :   Return the name of the user owning the file. [`KeyError`](exceptions.html#KeyError "KeyError") is raised
     if the file’s user identifier (UID) isn’t found in the system database.
 
-Path.group()[¶](#pathlib.Path.group "Link to this definition")
+    This method normally follows symlinks; to get the owner of the symlink, add
+    the argument `follow_symlinks=False`.
+
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") if the [`pwd`](pwd.html#module-pwd "pwd: The password database (getpwnam() and friends).") module is not
+    available. In earlier versions, [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised.
+
+    Changed in version 3.13: The *follow\_symlinks* parameter was added.
+
+Path.group(*\**, *follow\_symlinks=True*)
 :   Return the name of the group owning the file. [`KeyError`](exceptions.html#KeyError "KeyError") is raised
     if the file’s group identifier (GID) isn’t found in the system database.
 
-Path.chmod(*mode*, *\**, *follow\_symlinks=True*)[¶](#pathlib.Path.chmod "Link to this definition")
+    This method normally follows symlinks; to get the group of the symlink, add
+    the argument `follow_symlinks=False`.
+
+    Changed in version 3.13: Raises [`UnsupportedOperation`](#pathlib.UnsupportedOperation "pathlib.UnsupportedOperation") if the [`grp`](grp.html#module-grp "grp: The group database (getgrnam() and friends).") module is not
+    available. In earlier versions, [`NotImplementedError`](exceptions.html#NotImplementedError "NotImplementedError") was raised.
+
+    Changed in version 3.13: The *follow\_symlinks* parameter was added.
+
+Path.chmod(*mode*, *\**, *follow\_symlinks=True*)
 :   Change the file mode and permissions, like [`os.chmod()`](os.html#os.chmod "os.chmod").
 
     This method normally follows symlinks. Some Unix flavours support changing
@@ -1541,16 +1700,127 @@ Path.chmod(*mode*, *\**, *follow\_symlinks=True*)[¶](#pathlib.Path.chmod "Link 
 
     Changed in version 3.10: The *follow\_symlinks* parameter was added.
 
-Path.lchmod(*mode*)[¶](#pathlib.Path.lchmod "Link to this definition")
+Path.lchmod(*mode*)
 :   Like [`Path.chmod()`](#pathlib.Path.chmod "pathlib.Path.chmod") but, if the path points to a symbolic link, the
     symbolic link’s mode is changed rather than its target’s.
 
-## Correspondence to tools in the [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") module[¶](#correspondence-to-tools-in-the-os-module "Link to this heading")
+## Pattern language
+
+The following wildcards are supported in patterns for
+[`full_match()`](#pathlib.PurePath.full_match "pathlib.PurePath.full_match"), [`glob()`](#pathlib.Path.glob "pathlib.Path.glob") and [`rglob()`](#pathlib.Path.rglob "pathlib.Path.rglob"):
+
+`**` (entire segment)
+:   Matches any number of file or directory segments, including zero.
+
+`*` (entire segment)
+:   Matches one file or directory segment.
+
+`*` (part of a segment)
+:   Matches any number of non-separator characters, including zero.
+
+`?`
+:   Matches one non-separator character.
+
+`[seq]`
+:   Matches one character in *seq*, where *seq* is a sequence of characters.
+    Range expressions are supported; for example, `[a-z]` matches any lowercase ASCII letter.
+    Multiple ranges can be combined: `[a-zA-Z0-9_]` matches any ASCII letter, digit, or underscore.
+
+`[!seq]`
+:   Matches one character not in *seq*, where *seq* follows the same rules as above.
+
+For a literal match, wrap the meta-characters in brackets.
+For example, `"[?]"` matches the character `"?"`.
+
+The “`**`” wildcard enables recursive globbing. A few examples:
+
+| Pattern | Meaning |
+| --- | --- |
+| “`**/*`” | Any path with at least one segment. |
+| “`**/*.py`” | Any path with a final segment ending “`.py`”. |
+| “`assets/**`” | Any path starting with “`assets/`”. |
+| “`assets/**/*`” | Any path starting with “`assets/`”, excluding “`assets/`” itself. |
+
+Note
+
+Globbing with the “`**`” wildcard visits every directory in the tree.
+Large directory trees may take a long time to search.
+
+Changed in version 3.13: Globbing with a pattern that ends with “`**`” returns both files and
+directories. In previous versions, only directories were returned.
+
+In [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") and [`rglob()`](#pathlib.Path.rglob "pathlib.Path.rglob"), a trailing slash may be added to
+the pattern to match only directories.
+
+Changed in version 3.11: Globbing with a pattern that ends with a pathname components separator
+([`sep`](os.html#os.sep "os.sep") or [`altsep`](os.html#os.altsep "os.altsep")) returns only directories.
+
+## Comparison to the [`glob`](glob.html#module-glob "glob: Unix shell style pathname pattern expansion.") module
+
+The patterns accepted and results generated by [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") and
+[`Path.rglob()`](#pathlib.Path.rglob "pathlib.Path.rglob") differ slightly from those by the [`glob`](glob.html#module-glob "glob: Unix shell style pathname pattern expansion.") module:
+
+1. Files beginning with a dot are not special in pathlib. This is
+   like passing `include_hidden=True` to [`glob.glob()`](glob.html#glob.glob "glob.glob").
+2. “`**`” pattern components are always recursive in pathlib. This is like
+   passing `recursive=True` to [`glob.glob()`](glob.html#glob.glob "glob.glob").
+3. “`**`” pattern components do not follow symlinks by default in pathlib.
+   This behaviour has no equivalent in [`glob.glob()`](glob.html#glob.glob "glob.glob"), but you can pass
+   `recurse_symlinks=True` to [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") for compatible behaviour.
+4. Like all [`PurePath`](#pathlib.PurePath "pathlib.PurePath") and [`Path`](#pathlib.Path "pathlib.Path") objects, the values returned
+   from [`Path.glob()`](#pathlib.Path.glob "pathlib.Path.glob") and [`Path.rglob()`](#pathlib.Path.rglob "pathlib.Path.rglob") don’t include trailing
+   slashes.
+5. The values returned from pathlib’s `path.glob()` and `path.rglob()`
+   include the *path* as a prefix, unlike the results of
+   `glob.glob(root_dir=path)`.
+6. The values returned from pathlib’s `path.glob()` and `path.rglob()`
+   may include *path* itself, for example when globbing “`**`”, whereas the
+   results of `glob.glob(root_dir=path)` never include an empty string that
+   would correspond to *path*.
+
+## Comparison to the [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") and [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") modules
+
+pathlib implements path operations using [`PurePath`](#pathlib.PurePath "pathlib.PurePath") and [`Path`](#pathlib.Path "pathlib.Path")
+objects, and so it’s said to be *object-oriented*. On the other hand, the
+[`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") and [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") modules supply functions that work with low-level
+`str` and `bytes` objects, which is a more *procedural* approach. Some
+users consider the object-oriented style to be more readable.
+
+Many functions in [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") and [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") support `bytes` paths and
+[paths relative to directory descriptors](os.html#dir-fd). These features aren’t
+available in pathlib.
+
+Python’s `str` and `bytes` types, and portions of the [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") and
+[`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") modules, are written in C and are very speedy. pathlib is
+written in pure Python and is often slower, but rarely slow enough to matter.
+
+pathlib’s path normalization is slightly more opinionated and consistent than
+[`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames."). For example, whereas [`os.path.abspath()`](os.path.html#os.path.abspath "os.path.abspath") eliminates
+“`..`” segments from a path, which may change its meaning if symlinks are
+involved, [`Path.absolute()`](#pathlib.Path.absolute "pathlib.Path.absolute") preserves these segments for greater safety.
+
+pathlib’s path normalization may render it unsuitable for some applications:
+
+1. pathlib normalizes `Path("my_folder/")` to `Path("my_folder")`, which
+   changes a path’s meaning when supplied to various operating system APIs and
+   command-line utilities. Specifically, the absence of a trailing separator
+   may allow the path to be resolved as either a file or directory, rather
+   than a directory only.
+2. pathlib normalizes `Path("./my_program")` to `Path("my_program")`,
+   which changes a path’s meaning when used as an executable search path, such
+   as in a shell or when spawning a child process. Specifically, the absence
+   of a separator in the path may force it to be looked up in `PATH`
+   rather than the current directory.
+
+As a consequence of these differences, pathlib is not a drop-in replacement
+for [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.").
+
+### Corresponding tools
 
 Below is a table mapping various [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") functions to their corresponding
 [`PurePath`](#pathlib.PurePath "pathlib.PurePath")/[`Path`](#pathlib.Path "pathlib.Path") equivalent.
 
-| [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") and [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") | [`pathlib`](#module-pathlib "pathlib: Object-oriented filesystem paths") |
+| [`os`](os.html#module-os "os: Miscellaneous operating system interfaces.") and [`os.path`](os.path.html#module-os.path "os.path: Operations on pathnames.") | `pathlib` |
 | --- | --- |
 | [`os.path.dirname()`](os.path.html#os.path.dirname "os.path.dirname") | [`PurePath.parent`](#pathlib.PurePath.parent "pathlib.PurePath.parent") |
 | [`os.path.basename()`](os.path.html#os.path.basename "os.path.basename") | [`PurePath.name`](#pathlib.PurePath.name "pathlib.PurePath.name") |
@@ -1586,97 +1856,49 @@ Below is a table mapping various [`os`](os.html#module-os "os: Miscellaneous ope
 
 Footnotes
 
-[[1](#id3)]
+## Protocols
 
-[`os.path.relpath()`](os.path.html#os.path.relpath "os.path.relpath") calls [`abspath()`](os.path.html#os.path.abspath "os.path.abspath") to make paths
-absolute and remove “`..`” parts, whereas [`PurePath.relative_to()`](#pathlib.PurePath.relative_to "pathlib.PurePath.relative_to")
-is a lexical operation that raises [`ValueError`](exceptions.html#ValueError "ValueError") when its inputs’
-anchors differ (e.g. if one path is absolute and the other relative.)
+The `pathlib.types` module provides types for static type checking.
 
-[[2](#id4)]
+Added in version 3.14.
 
-[`os.path.expanduser()`](os.path.html#os.path.expanduser "os.path.expanduser") returns the path unchanged if the home
-directory can’t be resolved, whereas [`Path.expanduser()`](#pathlib.Path.expanduser "pathlib.Path.expanduser") raises
-[`RuntimeError`](exceptions.html#RuntimeError "RuntimeError").
+*class*pathlib.types.PathInfo
+:   A [`typing.Protocol`](typing.html#typing.Protocol "typing.Protocol") describing the
+    [`Path.info`](#pathlib.Path.info "pathlib.Path.info") attribute. Implementations may
+    return cached results from their methods.
 
-[[3](#id5)]
+    exists(*\**, *follow\_symlinks=True*)
+    :   Return `True` if the path is an existing file or directory, or any
+        other kind of file; return `False` if the path doesn’t exist.
 
-[`os.path.abspath()`](os.path.html#os.path.abspath "os.path.abspath") removes “`..`” components without resolving
-symlinks, which may change the meaning of the path, whereas
-[`Path.absolute()`](#pathlib.Path.absolute "pathlib.Path.absolute") leaves any “`..`” components in the path.
+        If *follow\_symlinks* is `False`, return `True` for symlinks without
+        checking if their targets exist.
 
-[[4](#id6)]
+    is\_dir(*\**, *follow\_symlinks=True*)
+    :   Return `True` if the path is a directory, or a symbolic link pointing
+        to a directory; return `False` if the path is (or points to) any other
+        kind of file, or if it doesn’t exist.
 
-[`os.walk()`](os.html#os.walk "os.walk") always follows symlinks when categorizing paths into
-*dirnames* and *filenames*, whereas [`Path.walk()`](#pathlib.Path.walk "pathlib.Path.walk") categorizes all
-symlinks into *filenames* when *follow\_symlinks* is false (the default.)
+        If *follow\_symlinks* is `False`, return `True` only if the path
+        is a directory (without following symlinks); return `False` if the
+        path is any other kind of file, or if it doesn’t exist.
 
-### [Table of Contents](../contents.html)
+    is\_file(*\**, *follow\_symlinks=True*)
+    :   Return `True` if the path is a file, or a symbolic link pointing to
+        a file; return `False` if the path is (or points to) a directory or
+        other non-file, or if it doesn’t exist.
 
-* [`pathlib` — Object-oriented filesystem paths](#)
-  + [Basic use](#basic-use)
-  + [Pure paths](#pure-paths)
-    - [General properties](#general-properties)
-    - [Operators](#operators)
-    - [Accessing individual parts](#accessing-individual-parts)
-    - [Methods and properties](#methods-and-properties)
-  + [Concrete paths](#concrete-paths)
-    - [Expanding and resolving paths](#expanding-and-resolving-paths)
-    - [Querying file type and status](#querying-file-type-and-status)
-    - [Reading and writing files](#reading-and-writing-files)
-    - [Reading directories](#reading-directories)
-    - [Creating files and directories](#creating-files-and-directories)
-    - [Renaming and deleting](#renaming-and-deleting)
-    - [Permissions and ownership](#permissions-and-ownership)
-  + [Correspondence to tools in the `os` module](#correspondence-to-tools-in-the-os-module)
+        If *follow\_symlinks* is `False`, return `True` only if the path
+        is a file (without following symlinks); return `False` if the path
+        is a directory or other non-file, or if it doesn’t exist.
 
-#### Previous topic
+    is\_symlink()
+    :   Return `True` if the path is a symbolic link (even if broken); return
+        `False` if the path is a directory or any kind of file, or if it
+        doesn’t exist.
 
-[File and Directory Access](filesys.html "previous chapter")
+---
 
-#### Next topic
+## Bibliography
 
-[`os.path` — Common pathname manipulations](os.path.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/pathlib.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](os.path.html "os.path — Common pathname manipulations") |
-* [previous](filesys.html "File and Directory Access") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [File and Directory Access](filesys.html) »
-* `pathlib` — Object-oriented filesystem paths
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`pathlib` — Object-oriented filesystem paths](https://docs.python.org/3/library/pathlib.html)

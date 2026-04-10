@@ -1,51 +1,11 @@
-abc — Abstract Base Classes — Python 3.12.13 documentation
+# Python abc
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-#### Previous topic
+## 1. `abc` — Abstract Base Classes
 
-[`contextlib` — Utilities for `with`-statement contexts](contextlib.html "previous chapter")
-
-#### Next topic
-
-[`atexit` — Exit handlers](atexit.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/abc.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](atexit.html "atexit — Exit handlers") |
-* [previous](contextlib.html "contextlib — Utilities for with-statement contexts") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Python Runtime Services](python.html) »
-* `abc` — Abstract Base Classes
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `abc` — Abstract Base Classes[¶](#module-abc "Link to this heading")
-
-**Source code:** [Lib/abc.py](https://github.com/python/cpython/tree/3.12/Lib/abc.py)
+**Source code:** [Lib/abc.py](https://github.com/python/cpython/tree/3.14/Lib/abc.py)
 
 ---
 
@@ -63,15 +23,15 @@ a class or instance provides a particular interface, for example, if it is
 This module provides the metaclass [`ABCMeta`](#abc.ABCMeta "abc.ABCMeta") for defining ABCs and
 a helper class [`ABC`](#abc.ABC "abc.ABC") to alternatively define ABCs through inheritance:
 
-*class* abc.ABC[¶](#abc.ABC "Link to this definition")
+*class*abc.ABC
 :   A helper class that has [`ABCMeta`](#abc.ABCMeta "abc.ABCMeta") as its metaclass. With this class,
     an abstract base class can be created by simply deriving from `ABC`
     avoiding sometimes confusing metaclass usage, for example:
 
     ```
-    from abc import ABC
+    fromabcimport ABC
 
-    class MyABC(ABC):
+    classMyABC(ABC):
         pass
     ```
 
@@ -82,15 +42,15 @@ a helper class [`ABC`](#abc.ABC "abc.ABC") to alternatively define ABCs through 
     keyword and using `ABCMeta` directly, for example:
 
     ```
-    from abc import ABCMeta
+    fromabcimport ABCMeta
 
-    class MyABC(metaclass=ABCMeta):
+    classMyABC(metaclass=ABCMeta):
         pass
     ```
 
     Added in version 3.4.
 
-*class* abc.ABCMeta[¶](#abc.ABCMeta "Link to this definition")
+*class*abc.ABCMeta
 :   Metaclass for defining Abstract Base Classes (ABCs).
 
     Use this metaclass to create an ABC. An ABC can be subclassed directly, and
@@ -104,14 +64,14 @@ a helper class [`ABC`](#abc.ABC "abc.ABC") to alternatively define ABCs through 
 
     Classes created with a metaclass of `ABCMeta` have the following method:
 
-    register(*subclass*)[¶](#abc.ABCMeta.register "Link to this definition")
+    register(*subclass*)
     :   Register *subclass* as a “virtual subclass” of this ABC. For
         example:
 
         ```
-        from abc import ABC
+        fromabcimport ABC
 
-        class MyABC(ABC):
+        classMyABC(ABC):
             pass
 
         MyABC.register(tuple)
@@ -127,7 +87,7 @@ a helper class [`ABC`](#abc.ABC "abc.ABC") to alternatively define ABCs through 
 
     You can also override this method in an abstract base class:
 
-    \_\_subclasshook\_\_(*subclass*)[¶](#abc.ABCMeta.__subclasshook__ "Link to this definition")
+    \_\_subclasshook\_\_(*subclass*)
     :   (Must be defined as a class method.)
 
         Check whether *subclass* is considered a subclass of this ABC. This means
@@ -146,26 +106,26 @@ a helper class [`ABC`](#abc.ABC "abc.ABC") to alternatively define ABCs through 
     For a demonstration of these concepts, look at this example ABC definition:
 
     ```
-    class Foo:
-        def __getitem__(self, index):
+    classFoo:
+        def__getitem__(self, index):
             ...
-        def __len__(self):
+        def__len__(self):
             ...
-        def get_iterator(self):
+        defget_iterator(self):
             return iter(self)
 
-    class MyIterable(ABC):
+    classMyIterable(ABC):
 
         @abstractmethod
-        def __iter__(self):
+        def__iter__(self):
             while False:
                 yield None
 
-        def get_iterator(self):
+        defget_iterator(self):
             return self.__iter__()
 
         @classmethod
-        def __subclasshook__(cls, C):
+        def__subclasshook__(cls, C):
             if cls is MyIterable:
                 if any("__iter__" in B.__dict__ for B in C.__mro__):
                     return True
@@ -193,7 +153,7 @@ a helper class [`ABC`](#abc.ABC "abc.ABC") to alternatively define ABCs through 
 
 The `abc` module also provides the following decorator:
 
-@abc.abstractmethod[¶](#abc.abstractmethod "Link to this definition")
+@abc.abstractmethod
 :   A decorator indicating abstract methods.
 
     Using this decorator requires that the class’s metaclass is [`ABCMeta`](#abc.ABCMeta "abc.ABCMeta")
@@ -215,33 +175,33 @@ The `abc` module also provides the following decorator:
     the following usage examples:
 
     ```
-    class C(ABC):
+    classC(ABC):
         @abstractmethod
-        def my_abstract_method(self, arg1):
+        defmy_abstract_method(self, arg1):
             ...
         @classmethod
         @abstractmethod
-        def my_abstract_classmethod(cls, arg2):
+        defmy_abstract_classmethod(cls, arg2):
             ...
         @staticmethod
         @abstractmethod
-        def my_abstract_staticmethod(arg3):
+        defmy_abstract_staticmethod(arg3):
             ...
 
         @property
         @abstractmethod
-        def my_abstract_property(self):
+        defmy_abstract_property(self):
             ...
         @my_abstract_property.setter
         @abstractmethod
-        def my_abstract_property(self, val):
+        defmy_abstract_property(self, val):
             ...
 
         @abstractmethod
-        def _get_x(self):
+        def_get_x(self):
             ...
         @abstractmethod
-        def _set_x(self, val):
+        def_set_x(self, val):
             ...
         x = property(_get_x, _set_x)
     ```
@@ -253,10 +213,10 @@ The `abc` module also provides the following decorator:
     example, Python’s built-in [`property`](functions.html#property "property") does the equivalent of:
 
     ```
-    class Descriptor:
+    classDescriptor:
         ...
         @property
-        def __isabstractmethod__(self):
+        def__isabstractmethod__(self):
             return any(getattr(f, '__isabstractmethod__', False) for
                        f in (self._fget, self._fset, self._fdel))
     ```
@@ -272,7 +232,7 @@ The `abc` module also provides the following decorator:
 
 The `abc` module also supports the following legacy decorators:
 
-@abc.abstractclassmethod[¶](#abc.abstractclassmethod "Link to this definition")
+@abc.abstractclassmethod
 :   Added in version 3.2.
 
     Deprecated since version 3.3: It is now possible to use [`classmethod`](functions.html#classmethod "classmethod") with
@@ -286,14 +246,14 @@ The `abc` module also supports the following legacy decorators:
     method:
 
     ```
-    class C(ABC):
+    classC(ABC):
         @classmethod
         @abstractmethod
-        def my_abstract_classmethod(cls, arg):
+        defmy_abstract_classmethod(cls, arg):
             ...
     ```
 
-@abc.abstractstaticmethod[¶](#abc.abstractstaticmethod "Link to this definition")
+@abc.abstractstaticmethod
 :   Added in version 3.2.
 
     Deprecated since version 3.3: It is now possible to use [`staticmethod`](functions.html#staticmethod "staticmethod") with
@@ -307,14 +267,14 @@ The `abc` module also supports the following legacy decorators:
     method:
 
     ```
-    class C(ABC):
+    classC(ABC):
         @staticmethod
         @abstractmethod
-        def my_abstract_staticmethod(arg):
+        defmy_abstract_staticmethod(arg):
             ...
     ```
 
-@abc.abstractproperty[¶](#abc.abstractproperty "Link to this definition")
+@abc.abstractproperty
 :   Deprecated since version 3.3: It is now possible to use [`property`](functions.html#property "property"), [`property.getter()`](functions.html#property.getter "property.getter"),
     [`property.setter()`](functions.html#property.setter "property.setter") and [`property.deleter()`](functions.html#property.deleter "property.deleter") with
     [`abstractmethod()`](#abc.abstractmethod "abc.abstractmethod"), making this decorator redundant.
@@ -327,10 +287,10 @@ The `abc` module also supports the following legacy decorators:
     method:
 
     ```
-    class C(ABC):
+    classC(ABC):
         @property
         @abstractmethod
-        def my_abstract_property(self):
+        defmy_abstract_property(self):
             ...
     ```
 
@@ -339,14 +299,14 @@ The `abc` module also supports the following legacy decorators:
     underlying methods as abstract:
 
     ```
-    class C(ABC):
+    classC(ABC):
         @property
-        def x(self):
+        defx(self):
             ...
 
         @x.setter
         @abstractmethod
-        def x(self, val):
+        defx(self, val):
             ...
     ```
 
@@ -354,15 +314,15 @@ The `abc` module also supports the following legacy decorators:
     updated to create a concrete property in a subclass:
 
     ```
-    class D(C):
+    classD(C):
         @C.x.setter
-        def x(self, val):
+        defx(self, val):
             ...
     ```
 
 The `abc` module also provides the following functions:
 
-abc.get\_cache\_token()[¶](#abc.get_cache_token "Link to this definition")
+abc.get\_cache\_token()
 :   Returns the current abstract base class cache token.
 
     The token is an opaque object (that supports equality testing) identifying
@@ -371,7 +331,7 @@ abc.get\_cache\_token()[¶](#abc.get_cache_token "Link to this definition")
 
     Added in version 3.4.
 
-abc.update\_abstractmethods(*cls*)[¶](#abc.update_abstractmethods "Link to this definition")
+abc.update\_abstractmethods(*cls*)
 :   A function to recalculate an abstract class’s abstraction status. This
     function should be called if a class’s abstract methods have been
     implemented or changed after it was created. Usually, this function should
@@ -390,58 +350,8 @@ abc.update\_abstractmethods(*cls*)[¶](#abc.update_abstractmethods "Link to this
 
 Footnotes
 
-[[1](#id1)]
+---
 
-C++ programmers should note that Python’s virtual base class
-concept is not the same as C++’s.
+## Bibliography
 
-#### Previous topic
-
-[`contextlib` — Utilities for `with`-statement contexts](contextlib.html "previous chapter")
-
-#### Next topic
-
-[`atexit` — Exit handlers](atexit.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/abc.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](atexit.html "atexit — Exit handlers") |
-* [previous](contextlib.html "contextlib — Utilities for with-statement contexts") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Python Runtime Services](python.html) »
-* `abc` — Abstract Base Classes
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`abc` — Abstract Base Classes](https://docs.python.org/3/library/abc.html)

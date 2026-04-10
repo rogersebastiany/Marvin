@@ -1,60 +1,11 @@
-urllib.parse — Parse URLs into components — Python 3.12.13 documentation
+# Python urllib-parse
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
 
-Theme
-Auto
-Light
-Dark
+---
 
-### [Table of Contents](../contents.html)
+## 1. `urllib.parse` — Parse URLs into components
 
-* [`urllib.parse` — Parse URLs into components](#)
-  + [URL Parsing](#url-parsing)
-  + [URL parsing security](#url-parsing-security)
-  + [Parsing ASCII Encoded Bytes](#parsing-ascii-encoded-bytes)
-  + [Structured Parse Results](#structured-parse-results)
-  + [URL Quoting](#url-quoting)
-
-#### Previous topic
-
-[`urllib.request` — Extensible library for opening URLs](urllib.request.html "previous chapter")
-
-#### Next topic
-
-[`urllib.error` — Exception classes raised by urllib.request](urllib.error.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/urllib.parse.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](urllib.error.html "urllib.error — Exception classes raised by urllib.request") |
-* [previous](urllib.request.html "urllib.request — Extensible library for opening URLs") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Internet Protocols and Support](internet.html) »
-* `urllib.parse` — Parse URLs into components
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `urllib.parse` — Parse URLs into components[¶](#module-urllib.parse "Link to this heading")
-
-**Source code:** [Lib/urllib/parse.py](https://github.com/python/cpython/tree/3.12/Lib/urllib/parse.py)
+**Source code:** [Lib/urllib/parse.py](https://github.com/python/cpython/tree/3.14/Lib/urllib/parse.py)
 
 ---
 
@@ -65,12 +16,18 @@ to an absolute URL given a “base URL.”
 
 The module has been designed to match the internet RFC on Relative Uniform
 Resource Locators. It supports the following URL schemes: `file`, `ftp`,
-`gopher`, `hdl`, `http`, `https`, `imap`, `mailto`, `mms`,
+`gopher`, `hdl`, `http`, `https`, `imap`, `itms-services`, `mailto`, `mms`,
 `news`, `nntp`, `prospero`, `rsync`, `rtsp`, `rtsps`, `rtspu`,
 `sftp`, `shttp`, `sip`, `sips`, `snews`, `svn`, `svn+ssh`,
 `telnet`, `wais`, `ws`, `wss`.
 
-The [`urllib.parse`](#module-urllib.parse "urllib.parse: Parse URLs into or assemble them from components.") module defines functions that fall into two broad
+**CPython implementation detail:** The inclusion of the `itms-services` URL scheme can prevent an app from
+passing Apple’s App Store review process for the macOS and iOS App Stores.
+Handling for the `itms-services` scheme is always removed on iOS; on
+macOS, it *may* be removed if CPython has been built with the
+[`--with-app-store-compliance`](../using/configure.html#cmdoption-with-app-store-compliance) option.
+
+The `urllib.parse` module defines functions that fall into two broad
 categories: URL parsing and URL quoting. These are covered in detail in
 the following sections.
 
@@ -79,15 +36,16 @@ which was introduced in [**RFC 1808**](https://datatracker.ietf.org/doc/html/rfc
 [**RFC 3986**](https://datatracker.ietf.org/doc/html/rfc3986.html), which introduced the term `authority` as its replacement.
 The use of `netloc` is continued for backward compatibility.
 
-## URL Parsing[¶](#url-parsing "Link to this heading")
+## URL Parsing
 
 The URL parsing functions focus on splitting a URL string into its components,
 or on combining URL components into a URL string.
 
-urllib.parse.urlparse(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#urllib.parse.urlparse "Link to this definition")
-:   Parse a URL into six components, returning a 6-item [named tuple](../glossary.html#term-named-tuple). This
-    corresponds to the general structure of a URL:
-    `scheme://netloc/path;parameters?query#fragment`.
+urllib.parse.urlsplit(*urlstring*, *scheme=None*, *allow\_fragments=True*)
+:   Parse a URL into five components, returning a 5-item [named tuple](../glossary.html#term-named-tuple)
+    [`SplitResult`](#urllib.parse.SplitResult "urllib.parse.SplitResult") or [`SplitResultBytes`](#urllib.parse.SplitResultBytes "urllib.parse.SplitResultBytes").
+    This corresponds to the general structure of a URL:
+    `scheme://netloc/path?query#fragment`.
     Each tuple item is a string, possibly empty. The components are not broken up
     into smaller parts (for example, the network location is a single string), and %
     escapes are not expanded. The delimiters as shown above are not part of the
@@ -95,15 +53,15 @@ urllib.parse.urlparse(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#ur
     present. For example:
 
     ```
-    >>> from urllib.parse import urlparse
-    >>> urlparse("scheme://netloc/path;parameters?query#fragment")
-    ParseResult(scheme='scheme', netloc='netloc', path='/path;parameters', params='',
+    >>> fromurllib.parseimport urlsplit
+    >>> urlsplit("scheme://netloc/path?query#fragment")
+    SplitResult(scheme='scheme', netloc='netloc', path='/path',
                 query='query', fragment='fragment')
-    >>> o = urlparse("http://docs.python.org:80/3/library/urllib.parse.html?"
+    >>> o = urlsplit("http://docs.python.org:80/3/library/urllib.parse.html?"
     ...              "highlight=params#url-parsing")
     >>> o
-    ParseResult(scheme='http', netloc='docs.python.org:80',
-                path='/3/library/urllib.parse.html', params='',
+    SplitResult(scheme='http', netloc='docs.python.org:80',
+                path='/3/library/urllib.parse.html',
                 query='highlight=params', fragment='url-parsing')
     >>> o.scheme
     'http'
@@ -117,21 +75,21 @@ urllib.parse.urlparse(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#ur
     'http://docs.python.org:80/3/library/urllib.parse.html?highlight=params'
     ```
 
-    Following the syntax specifications in [**RFC 1808**](https://datatracker.ietf.org/doc/html/rfc1808.html), urlparse recognizes
+    Following the syntax specifications in [**RFC 1808**](https://datatracker.ietf.org/doc/html/rfc1808.html), `urlsplit()` recognizes
     a netloc only if it is properly introduced by ‘//’. Otherwise the
     input is presumed to be a relative URL and thus to start with
     a path component.
 
     ```
-    >>> from urllib.parse import urlparse
-    >>> urlparse('//www.cwi.nl:80/%7Eguido/Python.html')
-    ParseResult(scheme='', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
-                params='', query='', fragment='')
-    >>> urlparse('www.cwi.nl/%7Eguido/Python.html')
-    ParseResult(scheme='', netloc='', path='www.cwi.nl/%7Eguido/Python.html',
-                params='', query='', fragment='')
-    >>> urlparse('help/Python.html')
-    ParseResult(scheme='', netloc='', path='help/Python.html', params='',
+    >>> fromurllib.parseimport urlsplit
+    >>> urlsplit('//www.cwi.nl:80/%7Eguido/Python.html')
+    SplitResult(scheme='', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
+                query='', fragment='')
+    >>> urlsplit('www.cwi.nl/%7Eguido/Python.html')
+    SplitResult(scheme='', netloc='', path='www.cwi.nl/%7Eguido/Python.html',
+                query='', fragment='')
+    >>> urlsplit('help/Python.html')
+    SplitResult(scheme='', netloc='', path='help/Python.html',
                 query='', fragment='')
     ```
 
@@ -153,9 +111,8 @@ urllib.parse.urlparse(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#ur
     | `scheme` | 0 | URL scheme specifier | *scheme* parameter |
     | `netloc` | 1 | Network location part | empty string |
     | `path` | 2 | Hierarchical path | empty string |
-    | `params` | 3 | Parameters for last path element | empty string |
-    | `query` | 4 | Query component | empty string |
-    | `fragment` | 5 | Fragment identifier | empty string |
+    | `query` | 3 | Query component | empty string |
+    | `fragment` | 4 | Fragment identifier | empty string |
     | `username` |  | User name | [`None`](constants.html#None "None") |
     | `password` |  | Password | [`None`](constants.html#None "None") |
     | `hostname` |  | Host name (lower case) | [`None`](constants.html#None "None") |
@@ -173,25 +130,29 @@ urllib.parse.urlparse(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#ur
     `#`, `@`, or `:` will raise a [`ValueError`](exceptions.html#ValueError "ValueError"). If the URL is
     decomposed before parsing, no error will be raised.
 
+    Following some of the [WHATWG spec](https://url.spec.whatwg.org/#concept-basic-url-parser) that updates [**RFC 3986**](https://datatracker.ietf.org/doc/html/rfc3986.html), leading C0
+    control and space characters are stripped from the URL. `\n`,
+    `\r` and tab `\t` characters are removed from the URL at any position.
+
     As is the case with all named tuples, the subclass has a few additional methods
     and attributes that are particularly useful. One such method is `_replace()`.
-    The `_replace()` method will return a new ParseResult object replacing specified
-    fields with new values.
+    The `_replace()` method will return a new [`SplitResult`](#urllib.parse.SplitResult "urllib.parse.SplitResult") object
+    replacing specified fields with new values.
 
     ```
-    >>> from urllib.parse import urlparse
-    >>> u = urlparse('//www.cwi.nl:80/%7Eguido/Python.html')
+    >>> fromurllib.parseimport urlsplit
+    >>> u = urlsplit('//www.cwi.nl:80/%7Eguido/Python.html')
     >>> u
-    ParseResult(scheme='', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
-                params='', query='', fragment='')
+    SplitResult(scheme='', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
+                query='', fragment='')
     >>> u._replace(scheme='http')
-    ParseResult(scheme='http', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
-                params='', query='', fragment='')
+    SplitResult(scheme='http', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
+                query='', fragment='')
     ```
 
     Warning
 
-    [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") does not perform validation. See [URL parsing
+    `urlsplit()` does not perform validation. See [URL parsing
     security](#url-parsing-security) for details.
 
     Changed in version 3.2: Added IPv6 URL parsing capabilities.
@@ -206,7 +167,11 @@ urllib.parse.urlparse(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#ur
     Changed in version 3.8: Characters that affect netloc parsing under NFKC normalization will
     now raise [`ValueError`](exceptions.html#ValueError "ValueError").
 
-urllib.parse.parse\_qs(*qs*, *keep\_blank\_values=False*, *strict\_parsing=False*, *encoding='utf-8'*, *errors='replace'*, *max\_num\_fields=None*, *separator='&'*)[¶](#urllib.parse.parse_qs "Link to this definition")
+    Changed in version 3.10: ASCII newline and tab characters are stripped from the URL.
+
+    Changed in version 3.12: Leading WHATWG C0 control and space characters are stripped from the URL.
+
+urllib.parse.parse\_qs(*qs*, *keep\_blank\_values=False*, *strict\_parsing=False*, *encoding='utf-8'*, *errors='replace'*, *max\_num\_fields=None*, *separator='&'*)
 :   Parse a query string given as a string argument (data of type
     *application/x-www-form-urlencoded*). Data are returned as a
     dictionary. The dictionary keys are the unique query variable names and the
@@ -246,7 +211,10 @@ urllib.parse.parse\_qs(*qs*, *keep\_blank\_values=False*, *strict\_parsing=False
     query parameter separator. This has been changed to allow only a single
     separator key, with `&` as the default separator.
 
-urllib.parse.parse\_qsl(*qs*, *keep\_blank\_values=False*, *strict\_parsing=False*, *encoding='utf-8'*, *errors='replace'*, *max\_num\_fields=None*, *separator='&'*)[¶](#urllib.parse.parse_qsl "Link to this definition")
+    Deprecated since version 3.14: Accepting objects with false values (like `0` and `[]`) except empty
+    strings and byte-like objects and `None` is now deprecated.
+
+urllib.parse.parse\_qsl(*qs*, *keep\_blank\_values=False*, *strict\_parsing=False*, *encoding='utf-8'*, *errors='replace'*, *max\_num\_fields=None*, *separator='&'*)
 :   Parse a query string given as a string argument (data of type
     *application/x-www-form-urlencoded*). Data are returned as a list of
     name, value pairs.
@@ -284,92 +252,49 @@ urllib.parse.parse\_qsl(*qs*, *keep\_blank\_values=False*, *strict\_parsing=Fals
     query parameter separator. This has been changed to allow only a single
     separator key, with `&` as the default separator.
 
-urllib.parse.urlunparse(*parts*)[¶](#urllib.parse.urlunparse "Link to this definition")
-:   Construct a URL from a tuple as returned by `urlparse()`. The *parts*
-    argument can be any six-item iterable. This may result in a slightly
+urllib.parse.urlunsplit(*parts*)
+:   Construct a URL from a tuple as returned by `urlsplit()`. The *parts*
+    argument can be any five-item iterable. This may result in a slightly
     different, but equivalent URL, if the URL that was parsed originally had
     unnecessary delimiters (for example, a `?` with an empty query; the RFC
     states that these are equivalent).
 
-urllib.parse.urlsplit(*urlstring*, *scheme=''*, *allow\_fragments=True*)[¶](#urllib.parse.urlsplit "Link to this definition")
-:   This is similar to [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse"), but does not split the params from the URL.
-    This should generally be used instead of [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") if the more recent URL
-    syntax allowing parameters to be applied to each segment of the *path* portion
-    of the URL (see [**RFC 2396**](https://datatracker.ietf.org/doc/html/rfc2396.html)) is wanted. A separate function is needed to
-    separate the path segments and parameters. This function returns a 5-item
-    [named tuple](../glossary.html#term-named-tuple):
+urllib.parse.urlparse(*urlstring*, *scheme=None*, *allow\_fragments=True*)
+:   This is similar to [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit"), but additionally splits the *path*
+    component on *path* and *params*.
+    This function returns a 6-item [named tuple](../glossary.html#term-named-tuple) [`ParseResult`](#urllib.parse.ParseResult "urllib.parse.ParseResult")
+    or [`ParseResultBytes`](#urllib.parse.ParseResultBytes "urllib.parse.ParseResultBytes").
+    Its items are the same as for the `urlsplit()` result, except that
+    *params* is inserted at index 3, between *path* and *query*.
 
-    ```
-    (addressing scheme, network location, path, query, fragment identifier).
-    ```
+    This function is based on obsoleted [**RFC 1738**](https://datatracker.ietf.org/doc/html/rfc1738.html) and [**RFC 1808**](https://datatracker.ietf.org/doc/html/rfc1808.html), which
+    listed *params* as the main URL component.
+    The more recent URL syntax allows parameters to be applied to each segment
+    of the *path* portion of the URL (see [**RFC 3986**](https://datatracker.ietf.org/doc/html/rfc3986.html)).
+    [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") should generally be used instead of `urlparse()`.
+    A separate function is needed to separate the path segments and parameters.
 
-    The return value is a [named tuple](../glossary.html#term-named-tuple), its items can be accessed by index
-    or as named attributes:
-
-    | Attribute | Index | Value | Value if not present |
-    | --- | --- | --- | --- |
-    | `scheme` | 0 | URL scheme specifier | *scheme* parameter |
-    | `netloc` | 1 | Network location part | empty string |
-    | `path` | 2 | Hierarchical path | empty string |
-    | `query` | 3 | Query component | empty string |
-    | `fragment` | 4 | Fragment identifier | empty string |
-    | `username` |  | User name | [`None`](constants.html#None "None") |
-    | `password` |  | Password | [`None`](constants.html#None "None") |
-    | `hostname` |  | Host name (lower case) | [`None`](constants.html#None "None") |
-    | `port` |  | Port number as integer, if present | [`None`](constants.html#None "None") |
-
-    Reading the `port` attribute will raise a [`ValueError`](exceptions.html#ValueError "ValueError") if
-    an invalid port is specified in the URL. See section
-    [Structured Parse Results](#urlparse-result-object) for more information on the result object.
-
-    Unmatched square brackets in the `netloc` attribute will raise a
-    [`ValueError`](exceptions.html#ValueError "ValueError").
-
-    Characters in the `netloc` attribute that decompose under NFKC
-    normalization (as used by the IDNA encoding) into any of `/`, `?`,
-    `#`, `@`, or `:` will raise a [`ValueError`](exceptions.html#ValueError "ValueError"). If the URL is
-    decomposed before parsing, no error will be raised.
-
-    Following some of the [WHATWG spec](https://url.spec.whatwg.org/#concept-basic-url-parser) that updates RFC 3986, leading C0
-    control and space characters are stripped from the URL. `\n`,
-    `\r` and tab `\t` characters are removed from the URL at any position.
-
-    Warning
-
-    [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") does not perform validation. See [URL parsing
-    security](#url-parsing-security) for details.
-
-    Changed in version 3.6: Out-of-range port numbers now raise [`ValueError`](exceptions.html#ValueError "ValueError"), instead of
-    returning [`None`](constants.html#None "None").
-
-    Changed in version 3.8: Characters that affect netloc parsing under NFKC normalization will
-    now raise [`ValueError`](exceptions.html#ValueError "ValueError").
-
-    Changed in version 3.10: ASCII newline and tab characters are stripped from the URL.
-
-    Changed in version 3.12: Leading WHATWG C0 control and space characters are stripped from the URL.
-
-urllib.parse.urlunsplit(*parts*)[¶](#urllib.parse.urlunsplit "Link to this definition")
-:   Combine the elements of a tuple as returned by [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") into a
-    complete URL as a string. The *parts* argument can be any five-item
+urllib.parse.urlunparse(*parts*)
+:   Combine the elements of a tuple as returned by [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") into a
+    complete URL as a string. The *parts* argument can be any six-item
     iterable. This may result in a slightly different, but equivalent URL, if the
     URL that was parsed originally had unnecessary delimiters (for example, a ?
     with an empty query; the RFC states that these are equivalent).
 
-urllib.parse.urljoin(*base*, *url*, *allow\_fragments=True*)[¶](#urllib.parse.urljoin "Link to this definition")
+urllib.parse.urljoin(*base*, *url*, *allow\_fragments=True*)
 :   Construct a full (“absolute”) URL by combining a “base URL” (*base*) with
     another URL (*url*). Informally, this uses components of the base URL, in
     particular the addressing scheme, the network location and (part of) the
     path, to provide missing components in the relative URL. For example:
 
     ```
-    >>> from urllib.parse import urljoin
+    >>> fromurllib.parseimport urljoin
     >>> urljoin('http://www.cwi.nl/%7Eguido/Python.html', 'FAQ.html')
     'http://www.cwi.nl/%7Eguido/FAQ.html'
     ```
 
     The *allow\_fragments* argument has the same meaning and default as for
-    [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse").
+    [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit").
 
     Note
 
@@ -396,7 +321,7 @@ urllib.parse.urljoin(*base*, *url*, *allow\_fragments=True*)[¶](#urllib.parse.u
 
     Changed in version 3.5: Behavior updated to match the semantics defined in [**RFC 3986**](https://datatracker.ietf.org/doc/html/rfc3986.html).
 
-urllib.parse.urldefrag(*url*)[¶](#urllib.parse.urldefrag "Link to this definition")
+urllib.parse.urldefrag(*url*)
 :   If *url* contains a fragment identifier, return a modified version of *url*
     with no fragment identifier, and the fragment identifier as a separate
     string. If there is no fragment identifier in *url*, return *url* unmodified
@@ -415,13 +340,13 @@ urllib.parse.urldefrag(*url*)[¶](#urllib.parse.urldefrag "Link to this definiti
 
     Changed in version 3.2: Result is a structured object rather than a simple 2-tuple.
 
-urllib.parse.unwrap(*url*)[¶](#urllib.parse.unwrap "Link to this definition")
+urllib.parse.unwrap(*url*)
 :   Extract the url from a wrapped URL (that is, a string formatted as
     `<URL:scheme://host/path>`, `<scheme://host/path>`, `URL:scheme://host/path`
     or `scheme://host/path`). If *url* is not a wrapped URL, it is returned
     without changes.
 
-## URL parsing security[¶](#url-parsing-security "Link to this heading")
+## URL parsing security
 
 The [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") and [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") APIs do not perform **validation** of
 inputs. They may not raise errors on inputs that other applications consider
@@ -447,7 +372,7 @@ both, but cannot be claimed compliant with either. The APIs and existing user
 code with expectations on specific behaviors predate both standards leading us
 to be very cautious about making API behavior changes.
 
-## Parsing ASCII Encoded Bytes[¶](#parsing-ascii-encoded-bytes "Link to this heading")
+## Parsing ASCII Encoded Bytes
 
 The URL parsing functions were originally designed to operate on character
 strings only. In practice, it is useful to be able to manipulate properly
@@ -456,8 +381,8 @@ URL parsing functions in this module all operate on [`bytes`](stdtypes.html#byte
 [`bytearray`](stdtypes.html#bytearray "bytearray") objects in addition to [`str`](stdtypes.html#str "str") objects.
 
 If [`str`](stdtypes.html#str "str") data is passed in, the result will also contain only
-[`str`](stdtypes.html#str "str") data. If [`bytes`](stdtypes.html#bytes "bytes") or [`bytearray`](stdtypes.html#bytearray "bytearray") data is
-passed in, the result will contain only [`bytes`](stdtypes.html#bytes "bytes") data.
+`str` data. If [`bytes`](stdtypes.html#bytes "bytes") or [`bytearray`](stdtypes.html#bytearray "bytearray") data is
+passed in, the result will contain only `bytes` data.
 
 Attempting to mix [`str`](stdtypes.html#str "str") data with [`bytes`](stdtypes.html#bytes "bytes") or
 [`bytearray`](stdtypes.html#bytearray "bytearray") in a single function call will result in a
@@ -466,13 +391,13 @@ byte values will trigger [`UnicodeDecodeError`](exceptions.html#UnicodeDecodeErr
 
 To support easier conversion of result objects between [`str`](stdtypes.html#str "str") and
 [`bytes`](stdtypes.html#bytes "bytes"), all return values from URL parsing functions provide
-either an `encode()` method (when the result contains [`str`](stdtypes.html#str "str")
-data) or a `decode()` method (when the result contains [`bytes`](stdtypes.html#bytes "bytes")
+either an `encode()` method (when the result contains `str`
+data) or a `decode()` method (when the result contains `bytes`
 data). The signatures of these methods match those of the corresponding
-[`str`](stdtypes.html#str "str") and [`bytes`](stdtypes.html#bytes "bytes") methods (except that the default encoding
+`str` and `bytes` methods (except that the default encoding
 is `'ascii'` rather than `'utf-8'`). Each produces a value of a
-corresponding type that contains either [`bytes`](stdtypes.html#bytes "bytes") data (for
-`encode()` methods) or [`str`](stdtypes.html#str "str") data (for
+corresponding type that contains either `bytes` data (for
+`encode()` methods) or `str` data (for
 `decode()` methods).
 
 Applications that need to operate on potentially improperly quoted URLs
@@ -486,15 +411,15 @@ individual URL quoting functions.
 
 Changed in version 3.2: URL parsing functions now accept ASCII encoded byte sequences
 
-## Structured Parse Results[¶](#structured-parse-results "Link to this heading")
+## Structured Parse Results
 
-The result objects from the [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse"), [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") and
+The result objects from the [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit"), [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") and
 [`urldefrag()`](#urllib.parse.urldefrag "urllib.parse.urldefrag") functions are subclasses of the [`tuple`](stdtypes.html#tuple "tuple") type.
 These subclasses add the attributes listed in the documentation for
 those functions, the encoding and decoding support described in the
 previous section, as well as an additional method:
 
-urllib.parse.SplitResult.geturl()[¶](#urllib.parse.urllib.parse.SplitResult.geturl "Link to this definition")
+urllib.parse.SplitResult.geturl()
 :   Return the re-combined version of the original URL as a string. This may
     differ from the original URL in that the scheme may be normalized to lower
     case and empty components may be dropped. Specifically, empty parameters,
@@ -508,7 +433,7 @@ urllib.parse.SplitResult.geturl()[¶](#urllib.parse.urllib.parse.SplitResult.get
     parsing function:
 
     ```
-    >>> from urllib.parse import urlsplit
+    >>> fromurllib.parseimport urlsplit
     >>> url = 'HTTP://www.Python.org/doc/#'
     >>> r1 = urlsplit(url)
     >>> r1.geturl()
@@ -521,19 +446,19 @@ urllib.parse.SplitResult.geturl()[¶](#urllib.parse.urllib.parse.SplitResult.get
 The following classes provide the implementations of the structured parse
 results when operating on [`str`](stdtypes.html#str "str") objects:
 
-*class* urllib.parse.DefragResult(*url*, *fragment*)[¶](#urllib.parse.DefragResult "Link to this definition")
+*class*urllib.parse.DefragResult(*url*, *fragment*)
 :   Concrete class for [`urldefrag()`](#urllib.parse.urldefrag "urllib.parse.urldefrag") results containing [`str`](stdtypes.html#str "str")
     data. The `encode()` method returns a [`DefragResultBytes`](#urllib.parse.DefragResultBytes "urllib.parse.DefragResultBytes")
     instance.
 
     Added in version 3.2.
 
-*class* urllib.parse.ParseResult(*scheme*, *netloc*, *path*, *params*, *query*, *fragment*)[¶](#urllib.parse.ParseResult "Link to this definition")
+*class*urllib.parse.ParseResult(*scheme*, *netloc*, *path*, *params*, *query*, *fragment*)
 :   Concrete class for [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") results containing [`str`](stdtypes.html#str "str")
     data. The `encode()` method returns a [`ParseResultBytes`](#urllib.parse.ParseResultBytes "urllib.parse.ParseResultBytes")
     instance.
 
-*class* urllib.parse.SplitResult(*scheme*, *netloc*, *path*, *query*, *fragment*)[¶](#urllib.parse.SplitResult "Link to this definition")
+*class*urllib.parse.SplitResult(*scheme*, *netloc*, *path*, *query*, *fragment*)
 :   Concrete class for [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") results containing [`str`](stdtypes.html#str "str")
     data. The `encode()` method returns a [`SplitResultBytes`](#urllib.parse.SplitResultBytes "urllib.parse.SplitResultBytes")
     instance.
@@ -541,28 +466,28 @@ results when operating on [`str`](stdtypes.html#str "str") objects:
 The following classes provide the implementations of the parse results when
 operating on [`bytes`](stdtypes.html#bytes "bytes") or [`bytearray`](stdtypes.html#bytearray "bytearray") objects:
 
-*class* urllib.parse.DefragResultBytes(*url*, *fragment*)[¶](#urllib.parse.DefragResultBytes "Link to this definition")
+*class*urllib.parse.DefragResultBytes(*url*, *fragment*)
 :   Concrete class for [`urldefrag()`](#urllib.parse.urldefrag "urllib.parse.urldefrag") results containing [`bytes`](stdtypes.html#bytes "bytes")
     data. The `decode()` method returns a [`DefragResult`](#urllib.parse.DefragResult "urllib.parse.DefragResult")
     instance.
 
     Added in version 3.2.
 
-*class* urllib.parse.ParseResultBytes(*scheme*, *netloc*, *path*, *params*, *query*, *fragment*)[¶](#urllib.parse.ParseResultBytes "Link to this definition")
+*class*urllib.parse.ParseResultBytes(*scheme*, *netloc*, *path*, *params*, *query*, *fragment*)
 :   Concrete class for [`urlparse()`](#urllib.parse.urlparse "urllib.parse.urlparse") results containing [`bytes`](stdtypes.html#bytes "bytes")
     data. The `decode()` method returns a [`ParseResult`](#urllib.parse.ParseResult "urllib.parse.ParseResult")
     instance.
 
     Added in version 3.2.
 
-*class* urllib.parse.SplitResultBytes(*scheme*, *netloc*, *path*, *query*, *fragment*)[¶](#urllib.parse.SplitResultBytes "Link to this definition")
+*class*urllib.parse.SplitResultBytes(*scheme*, *netloc*, *path*, *query*, *fragment*)
 :   Concrete class for [`urlsplit()`](#urllib.parse.urlsplit "urllib.parse.urlsplit") results containing [`bytes`](stdtypes.html#bytes "bytes")
     data. The `decode()` method returns a [`SplitResult`](#urllib.parse.SplitResult "urllib.parse.SplitResult")
     instance.
 
     Added in version 3.2.
 
-## URL Quoting[¶](#url-quoting "Link to this heading")
+## URL Quoting
 
 The URL quoting functions focus on taking program data and making it safe
 for use as URL components by quoting special characters and appropriately
@@ -570,7 +495,7 @@ encoding non-ASCII text. They also support reversing these operations to
 recreate the original data from the contents of a URL component if that
 task isn’t already covered by the URL parsing functions above.
 
-urllib.parse.quote(*string*, *safe='/'*, *encoding=None*, *errors=None*)[¶](#urllib.parse.quote "Link to this definition")
+urllib.parse.quote(*string*, *safe='/'*, *encoding=None*, *errors=None*)
 :   Replace special characters in *string* using the `%xx` escape. Letters,
     digits, and the characters `'_.-~'` are never quoted. By default, this
     function is intended for quoting the path section of a URL. The optional
@@ -595,7 +520,7 @@ urllib.parse.quote(*string*, *safe='/'*, *encoding=None*, *errors=None*)[¶](#ur
 
     Example: `quote('/El Niño/')` yields `'/El%20Ni%C3%B1o/'`.
 
-urllib.parse.quote\_plus(*string*, *safe=''*, *encoding=None*, *errors=None*)[¶](#urllib.parse.quote_plus "Link to this definition")
+urllib.parse.quote\_plus(*string*, *safe=''*, *encoding=None*, *errors=None*)
 :   Like [`quote()`](#urllib.parse.quote "urllib.parse.quote"), but also replace spaces with plus signs, as required for
     quoting HTML form values when building up a query string to go into a URL.
     Plus signs in the original string are escaped unless they are included in
@@ -603,14 +528,14 @@ urllib.parse.quote\_plus(*string*, *safe=''*, *encoding=None*, *errors=None*)[¶
 
     Example: `quote_plus('/El Niño/')` yields `'%2FEl+Ni%C3%B1o%2F'`.
 
-urllib.parse.quote\_from\_bytes(*bytes*, *safe='/'*)[¶](#urllib.parse.quote_from_bytes "Link to this definition")
+urllib.parse.quote\_from\_bytes(*bytes*, *safe='/'*)
 :   Like [`quote()`](#urllib.parse.quote "urllib.parse.quote"), but accepts a [`bytes`](stdtypes.html#bytes "bytes") object rather than a
     [`str`](stdtypes.html#str "str"), and does not perform string-to-bytes encoding.
 
     Example: `quote_from_bytes(b'a&\xef')` yields
     `'a%26%EF'`.
 
-urllib.parse.unquote(*string*, *encoding='utf-8'*, *errors='replace'*)[¶](#urllib.parse.unquote "Link to this definition")
+urllib.parse.unquote(*string*, *encoding='utf-8'*, *errors='replace'*)
 :   Replace `%xx` escapes with their single-character equivalent.
     The optional *encoding* and *errors* parameters specify how to decode
     percent-encoded sequences into Unicode characters, as accepted by the
@@ -626,7 +551,7 @@ urllib.parse.unquote(*string*, *encoding='utf-8'*, *errors='replace'*)[¶](#urll
 
     Changed in version 3.9: *string* parameter supports bytes and str objects (previously only str).
 
-urllib.parse.unquote\_plus(*string*, *encoding='utf-8'*, *errors='replace'*)[¶](#urllib.parse.unquote_plus "Link to this definition")
+urllib.parse.unquote\_plus(*string*, *encoding='utf-8'*, *errors='replace'*)
 :   Like [`unquote()`](#urllib.parse.unquote "urllib.parse.unquote"), but also replace plus signs with spaces, as required
     for unquoting HTML form values.
 
@@ -634,7 +559,7 @@ urllib.parse.unquote\_plus(*string*, *encoding='utf-8'*, *errors='replace'*)[¶]
 
     Example: `unquote_plus('/El+Ni%C3%B1o/')` yields `'/El Niño/'`.
 
-urllib.parse.unquote\_to\_bytes(*string*)[¶](#urllib.parse.unquote_to_bytes "Link to this definition")
+urllib.parse.unquote\_to\_bytes(*string*)
 :   Replace `%xx` escapes with their single-octet equivalent, and return a
     [`bytes`](stdtypes.html#bytes "bytes") object.
 
@@ -645,7 +570,7 @@ urllib.parse.unquote\_to\_bytes(*string*)[¶](#urllib.parse.unquote_to_bytes "Li
 
     Example: `unquote_to_bytes('a%26%EF')` yields `b'a&\xef'`.
 
-urllib.parse.urlencode(*query*, *doseq=False*, *safe=''*, *encoding=None*, *errors=None*, *quote\_via=quote\_plus*)[¶](#urllib.parse.urlencode "Link to this definition")
+urllib.parse.urlencode(*query*, *doseq=False*, *safe=''*, *encoding=None*, *errors=None*, *quote\_via=quote\_plus*)
 :   Convert a mapping object or a sequence of two-element tuples, which may
     contain [`str`](stdtypes.html#str "str") or [`bytes`](stdtypes.html#bytes "bytes") objects, to a percent-encoded ASCII
     text string. If the resultant string is to be used as a *data* for POST
@@ -686,6 +611,9 @@ urllib.parse.urlencode(*query*, *doseq=False*, *safe=''*, *encoding=None*, *erro
 
     Changed in version 3.5: Added the *quote\_via* parameter.
 
+    Deprecated since version 3.14: Accepting objects with false values (like `0` and `[]`) except empty
+    strings and byte-like objects and `None` is now deprecated.
+
 See also
 
 [WHATWG](https://url.spec.whatwg.org/) - URL Living standard
@@ -716,62 +644,8 @@ See also
 [**RFC 1738**](https://datatracker.ietf.org/doc/html/rfc1738.html) - Uniform Resource Locators (URL)
 :   This specifies the formal syntax and semantics of absolute URLs.
 
-### [Table of Contents](../contents.html)
+---
 
-* [`urllib.parse` — Parse URLs into components](#)
-  + [URL Parsing](#url-parsing)
-  + [URL parsing security](#url-parsing-security)
-  + [Parsing ASCII Encoded Bytes](#parsing-ascii-encoded-bytes)
-  + [Structured Parse Results](#structured-parse-results)
-  + [URL Quoting](#url-quoting)
+## Bibliography
 
-#### Previous topic
-
-[`urllib.request` — Extensible library for opening URLs](urllib.request.html "previous chapter")
-
-#### Next topic
-
-[`urllib.error` — Exception classes raised by urllib.request](urllib.error.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/urllib.parse.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](urllib.error.html "urllib.error — Exception classes raised by urllib.request") |
-* [previous](urllib.request.html "urllib.request — Extensible library for opening URLs") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Internet Protocols and Support](internet.html) »
-* `urllib.parse` — Parse URLs into components
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`urllib.parse` — Parse URLs into components](https://docs.python.org/3/library/urllib.parse.html)

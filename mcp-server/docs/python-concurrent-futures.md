@@ -1,90 +1,44 @@
-concurrent.futures — Launching parallel tasks — Python 3.12.13 documentation
+# Python concurrent.futures
 
-@media only screen {
-table.full-width-table {
-width: 100%;
-}
-}
-
-Theme
-Auto
-Light
-Dark
-
-### [Table of Contents](../contents.html)
-
-* [`concurrent.futures` — Launching parallel tasks](#)
-  + [Executor Objects](#executor-objects)
-  + [ThreadPoolExecutor](#threadpoolexecutor)
-    - [ThreadPoolExecutor Example](#threadpoolexecutor-example)
-  + [ProcessPoolExecutor](#processpoolexecutor)
-    - [ProcessPoolExecutor Example](#processpoolexecutor-example)
-  + [Future Objects](#future-objects)
-  + [Module Functions](#module-functions)
-  + [Exception classes](#exception-classes)
-
-#### Previous topic
-
-[The `concurrent` package](concurrent.html "previous chapter")
-
-#### Next topic
-
-[`subprocess` — Subprocess management](subprocess.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/concurrent.futures.rst)
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](subprocess.html "subprocess — Subprocess management") |
-* [previous](concurrent.html "The concurrent package") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Concurrent Execution](concurrency.html) »
-* `concurrent.futures` — Launching parallel tasks
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-# `concurrent.futures` — Launching parallel tasks[¶](#module-concurrent.futures "Link to this heading")
-
-Added in version 3.2.
-
-**Source code:** [Lib/concurrent/futures/thread.py](https://github.com/python/cpython/tree/3.12/Lib/concurrent/futures/thread.py)
-and [Lib/concurrent/futures/process.py](https://github.com/python/cpython/tree/3.12/Lib/concurrent/futures/process.py)
 
 ---
 
-The [`concurrent.futures`](#module-concurrent.futures "concurrent.futures: Execute computations concurrently using threads or processes.") module provides a high-level interface for
+## 1. `concurrent.futures` — Launching parallel tasks
+
+Added in version 3.2.
+
+**Source code:** [Lib/concurrent/futures/thread.py](https://github.com/python/cpython/tree/3.14/Lib/concurrent/futures/thread.py),
+[Lib/concurrent/futures/process.py](https://github.com/python/cpython/tree/3.14/Lib/concurrent/futures/process.py),
+and [Lib/concurrent/futures/interpreter.py](https://github.com/python/cpython/tree/3.14/Lib/concurrent/futures/interpreter.py)
+
+---
+
+The `concurrent.futures` module provides a high-level interface for
 asynchronously executing callables.
 
 The asynchronous execution can be performed with threads, using
-[`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor"), or separate processes, using
-[`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor"). Both implement the same interface, which is
-defined by the abstract [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") class.
+[`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor") or [`InterpreterPoolExecutor`](#concurrent.futures.InterpreterPoolExecutor "concurrent.futures.InterpreterPoolExecutor"),
+or separate processes, using [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor").
+Each implements the same interface, which is defined
+by the abstract [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") class.
 
-[Availability](intro.html#availability): not Emscripten, not WASI.
+[`concurrent.futures.Future`](#concurrent.futures.Future "concurrent.futures.Future") must not be confused with
+[`asyncio.Future`](asyncio-future.html#asyncio.Future "asyncio.Future"), which is designed for use with [`asyncio`](asyncio.html#module-asyncio "asyncio: Asynchronous I/O.")
+tasks and coroutines. See the [asyncio’s Future](asyncio-future.html)
+documentation for a detailed comparison of the two.
 
-This module does not work or is not available on WebAssembly platforms
-`wasm32-emscripten` and `wasm32-wasi`. See
+[Availability](intro.html#availability): not WASI.
+
+This module does not work or is not available on WebAssembly. See
 [WebAssembly platforms](intro.html#wasm-availability) for more information.
 
-## Executor Objects[¶](#executor-objects "Link to this heading")
+## Executor Objects
 
-*class* concurrent.futures.Executor[¶](#concurrent.futures.Executor "Link to this definition")
+*class*concurrent.futures.Executor
 :   An abstract class that provides methods to execute calls asynchronously. It
     should not be used directly, but through its concrete subclasses.
 
-    submit(*fn*, */*, *\*args*, *\*\*kwargs*)[¶](#concurrent.futures.Executor.submit "Link to this definition")
+    submit(*fn*, */*, *\*args*, *\*\*kwargs*)
     :   Schedules the callable, *fn*, to be executed as `fn(*args, **kwargs)`
         and returns a [`Future`](#concurrent.futures.Future "concurrent.futures.Future") object representing the execution of the
         callable.
@@ -95,16 +49,19 @@ This module does not work or is not available on WebAssembly platforms
             print(future.result())
         ```
 
-    map(*fn*, *\*iterables*, *timeout=None*, *chunksize=1*)[¶](#concurrent.futures.Executor.map "Link to this definition")
+    map(*fn*, *\*iterables*, *timeout=None*, *chunksize=1*, *buffersize=None*)
     :   Similar to [`map(fn, *iterables)`](functions.html#map "map") except:
 
-        * the *iterables* are collected immediately rather than lazily;
+        * The *iterables* are collected immediately rather than lazily, unless a
+          *buffersize* is specified to limit the number of submitted tasks whose
+          results have not yet been yielded. If the buffer is full, iteration over
+          the *iterables* pauses until a result is yielded from the buffer.
         * *fn* is executed asynchronously and several calls to
           *fn* may be made concurrently.
 
         The returned iterator raises a [`TimeoutError`](exceptions.html#TimeoutError "TimeoutError")
         if [`__next__()`](stdtypes.html#iterator.__next__ "iterator.__next__") is called and the result isn’t available
-        after *timeout* seconds from the original call to [`Executor.map()`](#concurrent.futures.Executor.map "concurrent.futures.Executor.map").
+        after *timeout* seconds from the original call to `Executor.map()`.
         *timeout* can be an int or a float. If *timeout* is not specified or
         `None`, there is no limit to the wait time.
 
@@ -117,11 +74,14 @@ This module does not work or is not available on WebAssembly platforms
         setting *chunksize* to a positive integer. For very long iterables,
         using a large value for *chunksize* can significantly improve
         performance compared to the default size of 1. With
-        [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor"), *chunksize* has no effect.
+        [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor") and [`InterpreterPoolExecutor`](#concurrent.futures.InterpreterPoolExecutor "concurrent.futures.InterpreterPoolExecutor"),
+        *chunksize* has no effect.
 
-        Changed in version 3.5: Added the *chunksize* argument.
+        Changed in version 3.5: Added the *chunksize* parameter.
 
-    shutdown(*wait=True*, *\**, *cancel\_futures=False*)[¶](#concurrent.futures.Executor.shutdown "Link to this definition")
+        Changed in version 3.14: Added the *buffersize* parameter.
+
+    shutdown(*wait=True*, *\**, *cancel\_futures=False*)
     :   Signal the executor that it should free any resources that it is using
         when the currently pending futures are done executing. Calls to
         [`Executor.submit()`](#concurrent.futures.Executor.submit "concurrent.futures.Executor.submit") and [`Executor.map()`](#concurrent.futures.Executor.map "concurrent.futures.Executor.map") made after shutdown will
@@ -144,13 +104,13 @@ This module does not work or is not available on WebAssembly platforms
         executor has started running will be completed prior to this method
         returning. The remaining futures are cancelled.
 
-        You can avoid having to call this method explicitly if you use the
-        [`with`](../reference/compound_stmts.html#with) statement, which will shutdown the [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor")
-        (waiting as if [`Executor.shutdown()`](#concurrent.futures.Executor.shutdown "concurrent.futures.Executor.shutdown") were called with *wait* set to
-        `True`):
+        You can avoid having to call this method explicitly if you use the executor
+        as a [context manager](../glossary.html#term-context-manager) via the [`with`](../reference/compound_stmts.html#with) statement, which
+        will shutdown the `Executor` (waiting as if `Executor.shutdown()`
+        were called with *wait* set to `True`):
 
         ```
-        import shutil
+        importshutil
         with ThreadPoolExecutor(max_workers=4) as e:
             e.submit(shutil.copy, 'src1.txt', 'dest1.txt')
             e.submit(shutil.copy, 'src2.txt', 'dest2.txt')
@@ -160,22 +120,22 @@ This module does not work or is not available on WebAssembly platforms
 
         Changed in version 3.9: Added *cancel\_futures*.
 
-## ThreadPoolExecutor[¶](#threadpoolexecutor "Link to this heading")
+## ThreadPoolExecutor
 
 [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor") is an [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") subclass that uses a pool of
 threads to execute calls asynchronously.
 
 Deadlocks can occur when the callable associated with a [`Future`](#concurrent.futures.Future "concurrent.futures.Future") waits on
-the results of another [`Future`](#concurrent.futures.Future "concurrent.futures.Future"). For example:
+the results of another `Future`. For example:
 
 ```
-import time
-def wait_on_b():
+importtime
+defwait_on_b():
     time.sleep(5)
     print(b.result())  # b will never complete because it is waiting on a.
     return 5
 
-def wait_on_a():
+defwait_on_a():
     time.sleep(5)
     print(a.result())  # a will never complete because it is waiting on b.
     return 6
@@ -188,17 +148,19 @@ b = executor.submit(wait_on_a)
 And:
 
 ```
-def wait_on_future():
+defwait_on_future():
     f = executor.submit(pow, 5, 2)
     # This will never complete because there is only one worker thread and
     # it is executing this function.
     print(f.result())
 
 executor = ThreadPoolExecutor(max_workers=1)
-executor.submit(wait_on_future)
+future = executor.submit(wait_on_future)
+# Note: calling future.result() would also cause a deadlock because
+# the single worker thread is already waiting for wait_on_future().
 ```
 
-*class* concurrent.futures.ThreadPoolExecutor(*max\_workers=None*, *thread\_name\_prefix=''*, *initializer=None*, *initargs=()*)[¶](#concurrent.futures.ThreadPoolExecutor "Link to this definition")
+*class*concurrent.futures.ThreadPoolExecutor(*max\_workers=None*, *thread\_name\_prefix=''*, *initializer=None*, *initargs=()*)
 :   An [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") subclass that uses a pool of at most *max\_workers*
     threads to execute calls asynchronously.
 
@@ -217,7 +179,7 @@ executor.submit(wait_on_future)
 
     Changed in version 3.5: If *max\_workers* is `None` or
     not given, it will default to the number of processors on the machine,
-    multiplied by `5`, assuming that [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor") is often
+    multiplied by `5`, assuming that `ThreadPoolExecutor` is often
     used to overlap I/O instead of CPU work and the number of workers
     should be higher than the number of workers
     for [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor").
@@ -236,20 +198,23 @@ executor.submit(wait_on_future)
     ThreadPoolExecutor now reuses idle worker threads before starting
     *max\_workers* worker threads too.
 
-### ThreadPoolExecutor Example[¶](#threadpoolexecutor-example "Link to this heading")
+    Changed in version 3.13: Default value of *max\_workers* is changed to
+    `min(32, (os.process_cpu_count() or 1) + 4)`.
+
+### ThreadPoolExecutor Example
 
 ```
-import concurrent.futures
-import urllib.request
+importconcurrent.futures
+importurllib.request
 
 URLS = ['http://www.foxnews.com/',
         'http://www.cnn.com/',
         'http://europe.wsj.com/',
         'http://www.bbc.co.uk/',
-        'http://nonexistant-subdomain.python.org/']
+        'http://nonexistent-subdomain.python.org/']
 
 # Retrieve a single page and report the URL and contents
-def load_url(url, timeout):
+defload_url(url, timeout):
     with urllib.request.urlopen(url, timeout=timeout) as conn:
         return conn.read()
 
@@ -267,11 +232,101 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             print('%r page is %d bytes' % (url, len(data)))
 ```
 
-## ProcessPoolExecutor[¶](#processpoolexecutor "Link to this heading")
+## InterpreterPoolExecutor
+
+Added in version 3.14.
+
+The [`InterpreterPoolExecutor`](#concurrent.futures.InterpreterPoolExecutor "concurrent.futures.InterpreterPoolExecutor") class uses a pool of interpreters
+to execute calls asynchronously. It is a [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor")
+subclass, which means each worker is running in its own thread.
+The difference here is that each worker has its own interpreter,
+and runs each task using that interpreter.
+
+The biggest benefit to using interpreters instead of only threads
+is true multi-core parallelism. Each interpreter has its own
+[Global Interpreter Lock](../glossary.html#term-global-interpreter-lock), so code
+running in one interpreter can run on one CPU core, while code in
+another interpreter runs unblocked on a different core.
+
+The tradeoff is that writing concurrent code for use with multiple
+interpreters can take extra effort. However, this is because it
+forces you to be deliberate about how and when interpreters interact,
+and to be explicit about what data is shared between interpreters.
+This results in several benefits that help balance the extra effort,
+including true multi-core parallelism, For example, code written
+this way can make it easier to reason about concurrency. Another
+major benefit is that you don’t have to deal with several of the
+big pain points of using threads, like race conditions.
+
+Each worker’s interpreter is isolated from all the other interpreters.
+“Isolated” means each interpreter has its own runtime state and
+operates completely independently. For example, if you redirect
+[`sys.stdout`](sys.html#sys.stdout "sys.stdout") in one interpreter, it will not be automatically
+redirected to any other interpreter. If you import a module in one
+interpreter, it is not automatically imported in any other. You
+would need to import the module separately in interpreter where
+you need it. In fact, each module imported in an interpreter is
+a completely separate object from the same module in a different
+interpreter, including [`sys`](sys.html#module-sys "sys: Access system-specific parameters and functions."), [`builtins`](builtins.html#module-builtins "builtins: The module that provides the built-in namespace."),
+and even `__main__`.
+
+Isolation means a mutable object, or other data, cannot be used
+by more than one interpreter at the same time. That effectively means
+interpreters cannot actually share such objects or data. Instead,
+each interpreter must have its own copy, and you will have to
+synchronize any changes between the copies manually. Immutable
+objects and data, like the builtin singletons, strings, and tuples
+of immutable objects, don’t have these limitations.
+
+Communicating and synchronizing between interpreters is most effectively
+done using dedicated tools, like those proposed in [**PEP 734**](https://peps.python.org/pep-0734/). One less
+efficient alternative is to serialize with [`pickle`](pickle.html#module-pickle "pickle: Convert Python objects to streams of bytes and back.") and then send
+the bytes over a shared [`socket`](socket.html#module-socket "socket: Low-level networking interface.") or
+[`pipe`](os.html#os.pipe "os.pipe").
+
+*class*concurrent.futures.InterpreterPoolExecutor(*max\_workers=None*, *thread\_name\_prefix=''*, *initializer=None*, *initargs=()*)
+:   A [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor") subclass that executes calls asynchronously
+    using a pool of at most *max\_workers* threads. Each thread runs
+    tasks in its own interpreter. The worker interpreters are isolated
+    from each other, which means each has its own runtime state and that
+    they can’t share any mutable objects or other data. Each interpreter
+    has its own [Global Interpreter Lock](../glossary.html#term-global-interpreter-lock),
+    which means code run with this executor has true multi-core parallelism.
+
+    The optional *initializer* and *initargs* arguments have the same
+    meaning as for `ThreadPoolExecutor`: the initializer is run
+    when each worker is created, though in this case it is run in
+    the worker’s interpreter. The executor serializes the *initializer*
+    and *initargs* using [`pickle`](pickle.html#module-pickle "pickle: Convert Python objects to streams of bytes and back.") when sending them to the worker’s
+    interpreter.
+
+    Note
+
+    The executor may replace uncaught exceptions from *initializer*
+    with [`ExecutionFailed`](concurrent.interpreters.html#concurrent.interpreters.ExecutionFailed "concurrent.interpreters.ExecutionFailed").
+
+    Other caveats from parent [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor") apply here.
+
+[`submit()`](#concurrent.futures.Executor.submit "concurrent.futures.Executor.submit") and [`map()`](#concurrent.futures.Executor.map "concurrent.futures.Executor.map") work like normal,
+except the worker serializes the callable and arguments using
+[`pickle`](pickle.html#module-pickle "pickle: Convert Python objects to streams of bytes and back.") when sending them to its interpreter. The worker
+likewise serializes the return value when sending it back.
+
+When a worker’s current task raises an uncaught exception, the worker
+always tries to preserve the exception as-is. If that is successful
+then it also sets the `__cause__` to a corresponding
+[`ExecutionFailed`](concurrent.interpreters.html#concurrent.interpreters.ExecutionFailed "concurrent.interpreters.ExecutionFailed")
+instance, which contains a summary of the original exception.
+In the uncommon case that the worker is not able to preserve the
+original as-is then it directly preserves the corresponding
+`ExecutionFailed`
+instance instead.
+
+## ProcessPoolExecutor
 
 The [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor") class is an [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") subclass that
 uses a pool of processes to execute calls asynchronously.
-[`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor") uses the [`multiprocessing`](multiprocessing.html#module-multiprocessing "multiprocessing: Process-based parallelism.") module, which
+`ProcessPoolExecutor` uses the [`multiprocessing`](multiprocessing.html#module-multiprocessing "multiprocessing: Process-based parallelism.") module, which
 allows it to side-step the [Global Interpreter Lock](../glossary.html#term-global-interpreter-lock) but also means that
 only picklable objects can be executed and returned.
 
@@ -281,19 +336,24 @@ that [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent
 Calling [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") or [`Future`](#concurrent.futures.Future "concurrent.futures.Future") methods from a callable submitted
 to a [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor") will result in deadlock.
 
-*class* concurrent.futures.ProcessPoolExecutor(*max\_workers=None*, *mp\_context=None*, *initializer=None*, *initargs=()*, *max\_tasks\_per\_child=None*)[¶](#concurrent.futures.ProcessPoolExecutor "Link to this definition")
+Note that the restrictions on functions and arguments needing to picklable as
+per [`multiprocessing.Process`](multiprocessing.html#multiprocessing.Process "multiprocessing.Process") apply when using [`submit()`](#concurrent.futures.Executor.submit "concurrent.futures.Executor.submit")
+and [`map()`](#concurrent.futures.Executor.map "concurrent.futures.Executor.map") on a [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor"). A function defined
+in a REPL or a lambda should not be expected to work.
+
+*class*concurrent.futures.ProcessPoolExecutor(*max\_workers=None*, *mp\_context=None*, *initializer=None*, *initargs=()*, *max\_tasks\_per\_child=None*)
 :   An [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") subclass that executes calls asynchronously using a pool
     of at most *max\_workers* processes. If *max\_workers* is `None` or not
-    given, it will default to the number of processors on the machine.
+    given, it will default to [`os.process_cpu_count()`](os.html#os.process_cpu_count "os.process_cpu_count").
     If *max\_workers* is less than or equal to `0`, then a [`ValueError`](exceptions.html#ValueError "ValueError")
     will be raised.
     On Windows, *max\_workers* must be less than or equal to `61`. If it is not
-    then [`ValueError`](exceptions.html#ValueError "ValueError") will be raised. If *max\_workers* is `None`, then
+    then `ValueError` will be raised. If *max\_workers* is `None`, then
     the default chosen will be at most `61`, even if more processors are
     available.
     *mp\_context* can be a [`multiprocessing`](multiprocessing.html#module-multiprocessing "multiprocessing: Process-based parallelism.") context or `None`. It will be
     used to launch the workers. If *mp\_context* is `None` or not given, the
-    default [`multiprocessing`](multiprocessing.html#module-multiprocessing "multiprocessing: Process-based parallelism.") context is used.
+    default `multiprocessing` context is used.
     See [Contexts and start methods](multiprocessing.html#multiprocessing-start-methods).
 
     *initializer* is an optional callable that is called at the start of
@@ -310,6 +370,12 @@ to a [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent
     default in absence of a *mp\_context* parameter. This feature is incompatible
     with the “fork” start method.
 
+    Note
+
+    Bugs have been reported when using the *max\_tasks\_per\_child* feature that
+    can result in the `ProcessPoolExecutor` hanging in some
+    circumstances. Follow its eventual resolution in [gh-115634](https://github.com/python/cpython/issues/115634).
+
     Changed in version 3.3: When one of the worker processes terminates abruptly, a
     [`BrokenProcessPool`](#concurrent.futures.process.BrokenProcessPool "concurrent.futures.process.BrokenProcessPool") error is now raised.
     Previously, behaviour
@@ -321,15 +387,6 @@ to a [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent
 
     Added the *initializer* and *initargs* arguments.
 
-    Note
-
-    The default [`multiprocessing`](multiprocessing.html#module-multiprocessing "multiprocessing: Process-based parallelism.") start method
-    (see [Contexts and start methods](multiprocessing.html#multiprocessing-start-methods)) will change away from
-    *fork* in Python 3.14. Code that requires *fork* be used for their
-    [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor") should explicitly specify that by
-    passing a `mp_context=multiprocessing.get_context("fork")`
-    parameter.
-
     Changed in version 3.11: The *max\_tasks\_per\_child* argument was added to allow users to
     control the lifetime of workers in the pool.
 
@@ -337,14 +394,44 @@ to a [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent
     [`multiprocessing`](multiprocessing.html#module-multiprocessing "multiprocessing: Process-based parallelism.") context uses the `"fork"` start method:
     The [`os.fork()`](os.html#os.fork "os.fork") function called internally to spawn workers may raise a
     [`DeprecationWarning`](exceptions.html#DeprecationWarning "DeprecationWarning"). Pass a *mp\_context* configured to use a
-    different start method. See the [`os.fork()`](os.html#os.fork "os.fork") documentation for
+    different start method. See the `os.fork()` documentation for
     further explanation.
 
-### ProcessPoolExecutor Example[¶](#processpoolexecutor-example "Link to this heading")
+    Changed in version 3.13: *max\_workers* uses [`os.process_cpu_count()`](os.html#os.process_cpu_count "os.process_cpu_count") by default, instead of
+    [`os.cpu_count()`](os.html#os.cpu_count "os.cpu_count").
+
+    Changed in version 3.14: The default process start method (see
+    [Contexts and start methods](multiprocessing.html#multiprocessing-start-methods)) changed away from *fork*. If you
+    require the *fork* start method for `ProcessPoolExecutor` you must
+    explicitly pass `mp_context=multiprocessing.get_context("fork")`.
+
+    terminate\_workers()
+    :   Attempt to terminate all living worker processes immediately by calling
+        [`Process.terminate`](multiprocessing.html#multiprocessing.Process.terminate "multiprocessing.Process.terminate") on each of them.
+        Internally, it will also call [`Executor.shutdown()`](#concurrent.futures.Executor.shutdown "concurrent.futures.Executor.shutdown") to ensure that all
+        other resources associated with the executor are freed.
+
+        After calling this method the caller should no longer submit tasks to the
+        executor.
+
+        Added in version 3.14.
+
+    kill\_workers()
+    :   Attempt to kill all living worker processes immediately by calling
+        [`Process.kill`](multiprocessing.html#multiprocessing.Process.kill "multiprocessing.Process.kill") on each of them.
+        Internally, it will also call [`Executor.shutdown()`](#concurrent.futures.Executor.shutdown "concurrent.futures.Executor.shutdown") to ensure that all
+        other resources associated with the executor are freed.
+
+        After calling this method the caller should no longer submit tasks to the
+        executor.
+
+        Added in version 3.14.
+
+### ProcessPoolExecutor Example
 
 ```
-import concurrent.futures
-import math
+importconcurrent.futures
+importmath
 
 PRIMES = [
     112272535095293,
@@ -354,7 +441,7 @@ PRIMES = [
     115797848077099,
     1099726899285419]
 
-def is_prime(n):
+defis_prime(n):
     if n < 2:
         return False
     if n == 2:
@@ -368,43 +455,42 @@ def is_prime(n):
             return False
     return True
 
-def main():
+defmain():
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for number, prime in zip(PRIMES, executor.map(is_prime, PRIMES)):
             print('%d is prime: %s' % (number, prime))
 
-if __name__ == '__main__':
-    main()
+if     main()
 ```
 
-## Future Objects[¶](#future-objects "Link to this heading")
+## Future Objects
 
 The [`Future`](#concurrent.futures.Future "concurrent.futures.Future") class encapsulates the asynchronous execution of a callable.
-[`Future`](#concurrent.futures.Future "concurrent.futures.Future") instances are created by [`Executor.submit()`](#concurrent.futures.Executor.submit "concurrent.futures.Executor.submit").
+`Future` instances are created by [`Executor.submit()`](#concurrent.futures.Executor.submit "concurrent.futures.Executor.submit").
 
-*class* concurrent.futures.Future[¶](#concurrent.futures.Future "Link to this definition")
-:   Encapsulates the asynchronous execution of a callable. [`Future`](#concurrent.futures.Future "concurrent.futures.Future")
+*class*concurrent.futures.Future
+:   Encapsulates the asynchronous execution of a callable. `Future`
     instances are created by [`Executor.submit()`](#concurrent.futures.Executor.submit "concurrent.futures.Executor.submit") and should not be created
     directly except for testing.
 
-    cancel()[¶](#concurrent.futures.Future.cancel "Link to this definition")
+    cancel()
     :   Attempt to cancel the call. If the call is currently being executed or
         finished running and cannot be cancelled then the method will return
         `False`, otherwise the call will be cancelled and the method will
         return `True`.
 
-    cancelled()[¶](#concurrent.futures.Future.cancelled "Link to this definition")
+    cancelled()
     :   Return `True` if the call was successfully cancelled.
 
-    running()[¶](#concurrent.futures.Future.running "Link to this definition")
+    running()
     :   Return `True` if the call is currently being executed and cannot be
         cancelled.
 
-    done()[¶](#concurrent.futures.Future.done "Link to this definition")
+    done()
     :   Return `True` if the call was successfully cancelled or finished
         running.
 
-    result(*timeout=None*)[¶](#concurrent.futures.Future.result "Link to this definition")
+    result(*timeout=None*)
     :   Return the value returned by the call. If the call hasn’t yet completed
         then this method will wait up to *timeout* seconds. If the call hasn’t
         completed in *timeout* seconds, then a
@@ -417,7 +503,7 @@ The [`Future`](#concurrent.futures.Future "concurrent.futures.Future") class enc
 
         If the call raised an exception, this method will raise the same exception.
 
-    exception(*timeout=None*)[¶](#concurrent.futures.Future.exception "Link to this definition")
+    exception(*timeout=None*)
     :   Return the exception raised by the call. If the call hasn’t yet
         completed then this method will wait up to *timeout* seconds. If the
         call hasn’t completed in *timeout* seconds, then a
@@ -430,7 +516,7 @@ The [`Future`](#concurrent.futures.Future "concurrent.futures.Future") class enc
 
         If the call completed without raising, `None` is returned.
 
-    add\_done\_callback(*fn*)[¶](#concurrent.futures.Future.add_done_callback "Link to this definition")
+    add\_done\_callback(*fn*)
     :   Attaches the callable *fn* to the future. *fn* will be called, with the
         future as its only argument, when the future is cancelled or finishes
         running.
@@ -444,20 +530,20 @@ The [`Future`](#concurrent.futures.Future "concurrent.futures.Future") class enc
         If the future has already completed or been cancelled, *fn* will be
         called immediately.
 
-    The following [`Future`](#concurrent.futures.Future "concurrent.futures.Future") methods are meant for use in unit tests and
+    The following `Future` methods are meant for use in unit tests and
     [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") implementations.
 
-    set\_running\_or\_notify\_cancel()[¶](#concurrent.futures.Future.set_running_or_notify_cancel "Link to this definition")
+    set\_running\_or\_notify\_cancel()
     :   This method should only be called by [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") implementations
-        before executing the work associated with the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") and by unit
+        before executing the work associated with the `Future` and by unit
         tests.
 
-        If the method returns `False` then the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") was cancelled,
+        If the method returns `False` then the `Future` was cancelled,
         i.e. [`Future.cancel()`](#concurrent.futures.Future.cancel "concurrent.futures.Future.cancel") was called and returned `True`. Any threads
-        waiting on the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") completing (i.e. through
+        waiting on the `Future` completing (i.e. through
         [`as_completed()`](#concurrent.futures.as_completed "concurrent.futures.as_completed") or [`wait()`](#concurrent.futures.wait "concurrent.futures.wait")) will be woken up.
 
-        If the method returns `True` then the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") was not cancelled
+        If the method returns `True` then the `Future` was not cancelled
         and has been put in the running state, i.e. calls to
         [`Future.running()`](#concurrent.futures.Future.running "concurrent.futures.Future.running") will return `True`.
 
@@ -465,31 +551,31 @@ The [`Future`](#concurrent.futures.Future "concurrent.futures.Future") class enc
         [`Future.set_result()`](#concurrent.futures.Future.set_result "concurrent.futures.Future.set_result") or [`Future.set_exception()`](#concurrent.futures.Future.set_exception "concurrent.futures.Future.set_exception") have been
         called.
 
-    set\_result(*result*)[¶](#concurrent.futures.Future.set_result "Link to this definition")
-    :   Sets the result of the work associated with the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") to
+    set\_result(*result*)
+    :   Sets the result of the work associated with the `Future` to
         *result*.
 
         This method should only be used by [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") implementations and
         unit tests.
 
         Changed in version 3.8: This method raises
-        [`concurrent.futures.InvalidStateError`](#concurrent.futures.InvalidStateError "concurrent.futures.InvalidStateError") if the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") is
+        [`concurrent.futures.InvalidStateError`](#concurrent.futures.InvalidStateError "concurrent.futures.InvalidStateError") if the `Future` is
         already done.
 
-    set\_exception(*exception*)[¶](#concurrent.futures.Future.set_exception "Link to this definition")
-    :   Sets the result of the work associated with the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") to the
+    set\_exception(*exception*)
+    :   Sets the result of the work associated with the `Future` to the
         [`Exception`](exceptions.html#Exception "Exception") *exception*.
 
         This method should only be used by [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") implementations and
         unit tests.
 
         Changed in version 3.8: This method raises
-        [`concurrent.futures.InvalidStateError`](#concurrent.futures.InvalidStateError "concurrent.futures.InvalidStateError") if the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") is
+        [`concurrent.futures.InvalidStateError`](#concurrent.futures.InvalidStateError "concurrent.futures.InvalidStateError") if the `Future` is
         already done.
 
-## Module Functions[¶](#module-functions "Link to this heading")
+## Module Functions
 
-concurrent.futures.wait(*fs*, *timeout=None*, *return\_when=ALL\_COMPLETED*)[¶](#concurrent.futures.wait "Link to this definition")
+concurrent.futures.wait(*fs*, *timeout=None*, *return\_when=ALL\_COMPLETED*)
 :   Wait for the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") instances (possibly created by different
     [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") instances) given by *fs* to complete. Duplicate futures
     given to *fs* are removed and will be returned only once. Returns a named
@@ -507,19 +593,19 @@ concurrent.futures.wait(*fs*, *timeout=None*, *return\_when=ALL\_COMPLETED*)[¶]
 
     | Constant | Description |
     | --- | --- |
-    | concurrent.futures.FIRST\_COMPLETED[¶](#concurrent.futures.FIRST_COMPLETED "Link to this definition") | The function will return when any future finishes or is cancelled. |
-    | concurrent.futures.FIRST\_EXCEPTION[¶](#concurrent.futures.FIRST_EXCEPTION "Link to this definition") | The function will return when any future finishes by raising an exception. If no future raises an exception then it is equivalent to [`ALL_COMPLETED`](#concurrent.futures.ALL_COMPLETED "concurrent.futures.ALL_COMPLETED"). |
-    | concurrent.futures.ALL\_COMPLETED[¶](#concurrent.futures.ALL_COMPLETED "Link to this definition") | The function will return when all futures finish or are cancelled. |
+    | concurrent.futures.FIRST\_COMPLETED | The function will return when any future finishes or is cancelled. |
+    | concurrent.futures.FIRST\_EXCEPTION | The function will return when any future finishes by raising an exception. If no future raises an exception then it is equivalent to [`ALL_COMPLETED`](#concurrent.futures.ALL_COMPLETED "concurrent.futures.ALL_COMPLETED"). |
+    | concurrent.futures.ALL\_COMPLETED | The function will return when all futures finish or are cancelled. |
 
-concurrent.futures.as\_completed(*fs*, *timeout=None*)[¶](#concurrent.futures.as_completed "Link to this definition")
+concurrent.futures.as\_completed(*fs*, *timeout=None*)
 :   Returns an iterator over the [`Future`](#concurrent.futures.Future "concurrent.futures.Future") instances (possibly created by
     different [`Executor`](#concurrent.futures.Executor "concurrent.futures.Executor") instances) given by *fs* that yields futures as
     they complete (finished or cancelled futures). Any futures given by *fs* that
     are duplicated will be returned once. Any futures that completed before
-    [`as_completed()`](#concurrent.futures.as_completed "concurrent.futures.as_completed") is called will be yielded first. The returned iterator
+    `as_completed()` is called will be yielded first. The returned iterator
     raises a [`TimeoutError`](exceptions.html#TimeoutError "TimeoutError") if [`__next__()`](stdtypes.html#iterator.__next__ "iterator.__next__")
     is called and the result isn’t available after *timeout* seconds from the
-    original call to [`as_completed()`](#concurrent.futures.as_completed "concurrent.futures.as_completed"). *timeout* can be an int or float. If
+    original call to `as_completed()`. *timeout* can be an int or float. If
     *timeout* is not specified or `None`, there is no limit to the wait time.
 
 See also
@@ -528,31 +614,31 @@ See also
 :   The proposal which described this feature for inclusion in the Python
     standard library.
 
-## Exception classes[¶](#exception-classes "Link to this heading")
+## Exception classes
 
-*exception* concurrent.futures.CancelledError[¶](#concurrent.futures.CancelledError "Link to this definition")
+*exception*concurrent.futures.CancelledError
 :   Raised when a future is cancelled.
 
-*exception* concurrent.futures.TimeoutError[¶](#concurrent.futures.TimeoutError "Link to this definition")
-:   A deprecated alias of [`TimeoutError`](exceptions.html#TimeoutError "TimeoutError"),
+*exception*concurrent.futures.TimeoutError
+:   A deprecated alias of `TimeoutError`,
     raised when a future operation exceeds the given timeout.
 
-    Changed in version 3.11: This class was made an alias of [`TimeoutError`](exceptions.html#TimeoutError "TimeoutError").
+    Changed in version 3.11: This class was made an alias of `TimeoutError`.
 
-*exception* concurrent.futures.BrokenExecutor[¶](#concurrent.futures.BrokenExecutor "Link to this definition")
+*exception*concurrent.futures.BrokenExecutor
 :   Derived from [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError"), this exception class is raised
     when an executor is broken for some reason, and cannot be used
     to submit or execute new tasks.
 
     Added in version 3.7.
 
-*exception* concurrent.futures.InvalidStateError[¶](#concurrent.futures.InvalidStateError "Link to this definition")
+*exception*concurrent.futures.InvalidStateError
 :   Raised when an operation is performed on a future that is not allowed
     in the current state.
 
     Added in version 3.8.
 
-*exception* concurrent.futures.thread.BrokenThreadPool[¶](#concurrent.futures.thread.BrokenThreadPool "Link to this definition")
+*exception*concurrent.futures.thread.BrokenThreadPool
 :   Derived from [`BrokenExecutor`](#concurrent.futures.BrokenExecutor "concurrent.futures.BrokenExecutor"), this exception
     class is raised when one of the workers
     of a [`ThreadPoolExecutor`](#concurrent.futures.ThreadPoolExecutor "concurrent.futures.ThreadPoolExecutor")
@@ -560,7 +646,15 @@ See also
 
     Added in version 3.7.
 
-*exception* concurrent.futures.process.BrokenProcessPool[¶](#concurrent.futures.process.BrokenProcessPool "Link to this definition")
+*exception*concurrent.futures.interpreter.BrokenInterpreterPool
+:   Derived from [`BrokenThreadPool`](#concurrent.futures.thread.BrokenThreadPool "concurrent.futures.thread.BrokenThreadPool"),
+    this exception class is raised when one of the workers
+    of a [`InterpreterPoolExecutor`](#concurrent.futures.InterpreterPoolExecutor "concurrent.futures.InterpreterPoolExecutor")
+    has failed initializing.
+
+    Added in version 3.14.
+
+*exception*concurrent.futures.process.BrokenProcessPool
 :   Derived from [`BrokenExecutor`](#concurrent.futures.BrokenExecutor "concurrent.futures.BrokenExecutor") (formerly
     [`RuntimeError`](exceptions.html#RuntimeError "RuntimeError")), this exception class is raised when one of the
     workers of a [`ProcessPoolExecutor`](#concurrent.futures.ProcessPoolExecutor "concurrent.futures.ProcessPoolExecutor")
@@ -569,65 +663,8 @@ See also
 
     Added in version 3.3.
 
-### [Table of Contents](../contents.html)
+---
 
-* [`concurrent.futures` — Launching parallel tasks](#)
-  + [Executor Objects](#executor-objects)
-  + [ThreadPoolExecutor](#threadpoolexecutor)
-    - [ThreadPoolExecutor Example](#threadpoolexecutor-example)
-  + [ProcessPoolExecutor](#processpoolexecutor)
-    - [ProcessPoolExecutor Example](#processpoolexecutor-example)
-  + [Future Objects](#future-objects)
-  + [Module Functions](#module-functions)
-  + [Exception classes](#exception-classes)
+## Bibliography
 
-#### Previous topic
-
-[The `concurrent` package](concurrent.html "previous chapter")
-
-#### Next topic
-
-[`subprocess` — Subprocess management](subprocess.html "next chapter")
-
-### This Page
-
-* [Report a Bug](../bugs.html)
-* [Show Source](https://github.com/python/cpython/blob/main/Doc/library/concurrent.futures.rst)
-
-«
-
-### Navigation
-
-* [index](../genindex.html "General Index")
-* [modules](../py-modindex.html "Python Module Index") |
-* [next](subprocess.html "subprocess — Subprocess management") |
-* [previous](concurrent.html "The concurrent package") |
-* [Python](https://www.python.org/) »
-
-* [3.12.13 Documentation](../index.html) »
-* [The Python Standard Library](index.html) »
-* [Concurrent Execution](concurrency.html) »
-* `concurrent.futures` — Launching parallel tasks
-* |
-* Theme
-  Auto
-  Light
-  Dark
-   |
-
-© [Copyright](../copyright.html) 2001-2026, Python Software Foundation.
-  
-This page is licensed under the Python Software Foundation License Version 2.
-  
-Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License.
-  
-See [History and License](/license.html) for more information.  
-  
-The Python Software Foundation is a non-profit corporation.
-[Please donate.](https://www.python.org/psf/donations/)
-  
-  
-Last updated on Mar 07, 2026 (17:44 UTC).
-[Found a bug](/bugs.html)?
-  
-Created using [Sphinx](https://www.sphinx-doc.org/) 8.2.3.
+1. [`concurrent.futures` — Launching parallel tasks](https://docs.python.org/3/library/concurrent.futures.html)

@@ -1,6 +1,9 @@
-Beautiful Soup Documentation — Beautiful Soup 4.14.3 documentation
+# BeautifulSoup4
 
-# Beautiful Soup Documentation[¶](#beautiful-soup-documentation "Link to this heading")
+
+---
+
+## 1. Beautiful Soup Documentation
 
 [Beautiful Soup](http://www.crummy.com/software/BeautifulSoup/) is a
 Python library for pulling data out of HTML and XML files. It works
@@ -32,7 +35,7 @@ Beautiful Soup users:
 * [Este documento también está disponible en una traducción al español.](https://www.crummy.com/software/BeautifulSoup/bs4/doc.es/)
 * [Эта документация доступна на русском языке.](https://www.crummy.com/software/BeautifulSoup/bs4/doc.ru/)
 
-## Getting help[¶](#getting-help "Link to this heading")
+## Getting help
 
 If you have questions about Beautiful Soup, or run into problems,
 [send mail to the discussion group](https://groups.google.com/forum/?fromgroups#!forum/beautifulsoup). If
@@ -43,7 +46,7 @@ that document.
 When reporting an error in this documentation, please mention which
 translation you're reading.
 
-### API documentation[¶](#api-documentation "Link to this heading")
+### API documentation
 
 This document is written like an instruction manual, but you can also read
 [traditional API documentation](api/modules.html)
@@ -51,7 +54,7 @@ generated from the Beautiful Soup source code. If you want details
 about Beautiful Soup's internals, or a feature not covered in this
 document, try the API documentation.
 
-# Quick Start[¶](#quick-start "Link to this heading")
+# Quick Start
 
 Here's an HTML document I'll be using as an example throughout this
 document. It's part of a story from *Alice in Wonderland*:
@@ -176,7 +179,7 @@ print(soup.get_text())
 
 Does this look like what you need? If so, read on.
 
-# Installing Beautiful Soup[¶](#installing-beautiful-soup "Link to this heading")
+# Installing Beautiful Soup
 
 If you're using a recent version of Debian or Ubuntu Linux, you can
 install Beautiful Soup with the system package manager:
@@ -212,7 +215,7 @@ and use Beautiful Soup without installing it at all.
 I use Python 3.10 to develop Beautiful Soup, but it should work with
 other recent versions.
 
-## Installing a parser[¶](#installing-a-parser "Link to this heading")
+## Installing a parser
 
 Beautiful Soup supports the HTML parser included in Python's standard
 library, but it also supports a number of third-party Python parsers.
@@ -249,7 +252,7 @@ Note that if a document is invalid, different parsers will generate
 different Beautiful Soup trees for it. See [Differences
 between parsers](#differences-between-parsers) for details.
 
-# Making the soup[¶](#making-the-soup "Link to this heading")
+# Making the soup
 
 To parse a document, pass it into the `BeautifulSoup`
 constructor. You can pass in a string or an open filehandle:
@@ -275,7 +278,7 @@ Beautiful Soup then parses the document using the best available
 parser. It will use an HTML parser unless you specifically tell it to
 use an XML parser. (See [Parsing XML](#id15).)
 
-# Kinds of objects[¶](#kinds-of-objects "Link to this heading")
+# Kinds of objects
 
 Beautiful Soup transforms a complex HTML document into a complex tree
 of Python objects. But you'll only ever have to deal with about four
@@ -283,7 +286,7 @@ of Python objects. But you'll only ever have to deal with about four
 and [`Comment`](#Comment "Comment"). These objects represent the HTML *elements*
 that comprise the page.
 
-*class* Tag[¶](#Tag "Link to this definition")
+*class*Tag
 :   A [`Tag`](#Tag "Tag") object corresponds to an XML or HTML tag in the original document.
 
     ```
@@ -297,7 +300,7 @@ that comprise the page.
     in [Navigating the tree](#navigating-the-tree) and [Searching the tree](#searching-the-tree). For now, the most
     important methods of a tag are for accessing its name and attributes.
 
-    name[¶](#Tag.name "Link to this definition")
+    name
     :   Every tag has a name:
 
         ```
@@ -314,7 +317,7 @@ that comprise the page.
         # <blockquote class="boldest">Extremely bold</blockquote>
         ```
 
-    attrs[¶](#Tag.attrs "Link to this definition")
+    attrs
     :   An HTML or XML tag may have any number of attributes. The tag `<b
         id="boldest">` has an attribute "id" whose value is
         "boldest". You can access a tag's attributes by treating the tag like
@@ -355,7 +358,7 @@ that comprise the page.
         # None
         ```
 
-        ## Multi-valued attributes[¶](#multi-valued-attributes "Link to this heading")
+        ## Multi-valued attributes
 
         HTML 4 defines a few attributes that can have multiple values. HTML 5
         removes a couple of them, but defines a few more. The most common
@@ -441,7 +444,7 @@ that comprise the page.
         builder_registry.lookup('html').DEFAULT_CDATA_LIST_ATTRIBUTES
         ```
 
-*class* NavigableString[¶](#NavigableString "Link to this definition")
+*class*NavigableString
 
 ---
 
@@ -523,14 +526,14 @@ soup.name
 # '[document]'
 ```
 
-## Special strings[¶](#special-strings "Link to this heading")
+## Special strings
 
 [`Tag`](#Tag "Tag"), [`NavigableString`](#NavigableString "NavigableString"), and
 `BeautifulSoup` cover almost everything you'll see in an
 HTML or XML file, but there are a few leftover bits. The main one
 you'll probably encounter is the [`Comment`](#Comment "Comment").
 
-*class* Comment[¶](#Comment "Link to this definition")
+*class*Comment
 
 ```
 markup = "<b><!--Hey, buddy. Want to buy a used parser?--></b>"
@@ -557,7 +560,7 @@ print(soup.b.prettify())
 # </b>
 ```
 
-### For HTML documents[¶](#for-html-documents "Link to this heading")
+### For HTML documents
 
 Beautiful Soup defines a few [`NavigableString`](#NavigableString "NavigableString") subclasses to
 contain strings found inside specific HTML tags. This makes it easier
@@ -566,25 +569,25 @@ probably represent programming directives found within the
 page. *(These classes are new in Beautiful Soup 4.9.0, and the
 html5lib parser doesn't use them.)*
 
-*class* Stylesheet[¶](#Stylesheet "Link to this definition")
+*class*Stylesheet
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass that represents embedded CSS
 stylesheets; that is, any strings found inside a `<style>` tag
 during document parsing.
 
-*class* Script[¶](#Script "Link to this definition")
+*class*Script
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass that represents embedded
 Javascript; that is, any strings found inside a `<script>` tag
 during document parsing.
 
-*class* Template[¶](#Template "Link to this definition")
+*class*Template
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass that represents embedded HTML
 templates; that is, any strings found inside a `<template>` tag during
 document parsing.
 
-### For XML documents[¶](#for-xml-documents "Link to this heading")
+### For XML documents
 
 Beautiful Soup defines some [`NavigableString`](#NavigableString "NavigableString") classes for
 holding special types of strings that can be found in XML
@@ -592,1521 +595,33 @@ documents. Like [`Comment`](#Comment "Comment"), these classes are subclasses of
 [`NavigableString`](#NavigableString "NavigableString") that add something extra to the string on
 output.
 
-*class* Declaration[¶](#Declaration "Link to this definition")
+*class*Declaration
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass representing the [declaration](https://www.w3.org/TR/REC-xml/#sec-prolog-dtd) at the beginning of
 an XML document.
 
-*class* Doctype[¶](#Doctype "Link to this definition")
+*class*Doctype
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass representing the [document type
 declaration](https://www.w3.org/TR/REC-xml/#dt-doctype) which may
 be found near the beginning of an XML document.
 
-*class* CData[¶](#CData "Link to this definition")
+*class*CData
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass that represents a [CData section](https://www.w3.org/TR/REC-xml/#sec-cdata-sect).
 
-*class* ProcessingInstruction[¶](#ProcessingInstruction "Link to this definition")
+*class*ProcessingInstruction
 
 A [`NavigableString`](#NavigableString "NavigableString") subclass that represents the contents
 of an [XML processing instruction](https://www.w3.org/TR/REC-xml/#sec-pi).
 
-# Navigating the tree[¶](#navigating-the-tree "Link to this heading")
-
-Here's the "Three sisters" HTML document again:
-
-```
-html_doc = """
-<html><head><title>The Dormouse's story</title></head>
-<body>
-<p class="title"><b>The Dormouse's story</b></p>
-
-<p class="story">Once upon a time there were three little sisters; and their names were
-<a href="http://example.com/elsie" class="sister" id="link1">Elsie</a>,
-<a href="http://example.com/lacie" class="sister" id="link2">Lacie</a> and
-<a href="http://example.com/tillie" class="sister" id="link3">Tillie</a>;
-and they lived at the bottom of a well.</p>
-
-<p class="story">...</p>
-"""
-
-from bs4 import BeautifulSoup
-soup = BeautifulSoup(html_doc, 'html.parser')
-```
-
-I'll use this as an example to show you how to move from one part of
-a document to another.
-
-## Going down[¶](#going-down "Link to this heading")
-
-Tags may contain strings and more tags. These elements are the tag's
-*children*. Beautiful Soup provides a lot of different attributes for
-navigating and iterating over a tag's children.
-
-Note that Beautiful Soup strings don't support any of these
-attributes, because a string can't have children.
-
-### Navigating using tag names[¶](#navigating-using-tag-names "Link to this heading")
-
-The simplest way to navigate the parse tree is to find a tag by name. To
-do this, you can use the `find()` method:
-
-```
-soup.find("head")
-# <head><title>The Dormouse's story</title></head>
-```
-
-For convenience, just saying the name of the tag you want is equivalent
-to `find()` (if no built-in attribute has that name). If you want the
-<head> tag, just say `soup.head`:
-
-```
-soup.head
-# <head><title>The Dormouse's story</title></head>
-
-soup.title
-# <title>The Dormouse's story</title>
-```
-
-You can use this trick again and again to zoom in on a certain part
-of the parse tree. This code gets the first <b> tag beneath the <body> tag:
-
-```
-soup.body.b
-# <b>The Dormouse's story</b>
-```
-
-`find()` (and its convenience equivalent) gives you only the *first* tag
-by that name:
-
-```
-soup.a
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-```
-
-If you need to get *all* the <a> tags, you can use `find_all()`:
-
-```
-soup.find_all('a')
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-For more complicated tasks, such as pattern-matching and filtering, you can
-use the methods described in [Searching the tree](#searching-the-tree).
-
-### `.contents` and `.children`[¶](#contents-and-children "Link to this heading")
-
-A tag's children are available in a list called `.contents`:
-
-```
-head_tag = soup.head
-head_tag
-# <head><title>The Dormouse's story</title></head>
-
-head_tag.contents
-# [<title>The Dormouse's story</title>]
-
-title_tag = head_tag.contents[0]
-title_tag
-# <title>The Dormouse's story</title>
-title_tag.contents
-# ['The Dormouse's story']
-```
-
-The `BeautifulSoup` object itself has children. In this case, the
-<html> tag is the child of the `BeautifulSoup` object.:
-
-```
-len(soup.contents)
-# 1
-soup.contents[0].name
-# 'html'
-```
-
-A string does not have `.contents`, because it can't contain
-anything:
-
-```
-text = title_tag.contents[0]
-text.contents
-# AttributeError: 'NavigableString' object has no attribute 'contents'
-```
-
-Instead of getting them as a list, you can iterate over a tag's
-children using the `.children` generator:
-
-```
-for child in title_tag.children:
-    print(child)
-# The Dormouse's story
-```
-
-If you want to modify a tag's children, use the methods described in
-[Modifying the tree](#modifying-the-tree). Don't modify the the `.contents` list
-directly: that can lead to problems that are subtle and difficult to
-spot.
-
-### `.descendants`[¶](#descendants "Link to this heading")
-
-The `.contents` and `.children` attributes consider only a tag's
-*direct* children. For instance, the <head> tag has a single direct
-child—the <title> tag:
-
-```
-head_tag.contents
-# [<title>The Dormouse's story</title>]
-```
-
-But the <title> tag itself has a child: the string "The Dormouse's
-story". There's a sense in which that string is also a child of the
-<head> tag. The `.descendants` attribute lets you iterate over *all*
-of a tag's children, recursively: its direct children, the children of
-its direct children, and so on:
-
-```
-for child in head_tag.descendants:
-    print(child)
-# <title>The Dormouse's story</title>
-# The Dormouse's story
-```
-
-The <head> tag has only one child, but it has two descendants: the
-<title> tag and the <title> tag's child. The `BeautifulSoup` object
-only has one direct child (the <html> tag), but it has a whole lot of
-descendants:
-
-```
-len(list(soup.children))
-# 1
-len(list(soup.descendants))
-# 26
-```
-
-### `.string`[¶](#string "Link to this heading")
-
-If a tag has only one child, and that child is a [`NavigableString`](#NavigableString "NavigableString"),
-the child is made available as `.string`:
-
-```
-title_tag.string
-# 'The Dormouse's story'
-```
-
-If a tag's only child is another tag, and *that* tag has a
-`.string`, then the parent tag is considered to have the same
-`.string` as its child:
-
-```
-head_tag.contents
-# [<title>The Dormouse's story</title>]
-
-head_tag.string
-# 'The Dormouse's story'
-```
-
-If a tag contains more than one thing, then it's not clear what
-`.string` should refer to, so `.string` is defined to be
-`None`:
-
-```
-print(soup.html.string)
-# None
-```
-
-### `.strings` and `stripped_strings`[¶](#strings-and-stripped-strings "Link to this heading")
-
-If there's more than one thing inside a tag, you can still look at
-just the strings. Use the `.strings` generator to see all descendant
-strings:
-
-```
-for string in soup.strings:
-    print(repr(string))
-    '\n'
-# "The Dormouse's story"
-# '\n'
-# '\n'
-# "The Dormouse's story"
-# '\n'
-# 'Once upon a time there were three little sisters; and their names were\n'
-# 'Elsie'
-# ',\n'
-# 'Lacie'
-# ' and\n'
-# 'Tillie'
-# ';\nand they lived at the bottom of a well.'
-# '\n'
-# '...'
-# '\n'
-```
-
-Newlines and spaces that separate tags are also strings. You can remove extra
-whitespace by using the `.stripped_strings` generator instead:
-
-```
-for string in soup.stripped_strings:
-    print(repr(string))
-# "The Dormouse's story"
-# "The Dormouse's story"
-# 'Once upon a time there were three little sisters; and their names were'
-# 'Elsie'
-# ','
-# 'Lacie'
-# 'and'
-# 'Tillie'
-# ';\n and they lived at the bottom of a well.'
-# '...'
-```
-
-Here, strings consisting entirely of whitespace are ignored, and
-whitespace at the beginning and end of strings is removed.
-
-## Going up[¶](#going-up "Link to this heading")
-
-Continuing the "family tree" analogy, every tag and every string has a
-*parent*: the tag that contains it.
-
-### `.parent`[¶](#parent "Link to this heading")
-
-You can access an element's parent with the `.parent` attribute. In
-the example "three sisters" document, the <head> tag is the parent
-of the <title> tag:
-
-```
-title_tag = soup.title
-title_tag
-# <title>The Dormouse's story</title>
-title_tag.parent
-# <head><title>The Dormouse's story</title></head>
-```
-
-The title string itself has a parent: the <title> tag that contains
-it:
-
-```
-title_tag.string.parent
-# <title>The Dormouse's story</title>
-```
-
-The parent of a top-level tag like <html> is the `BeautifulSoup` object
-itself:
-
-```
-html_tag = soup.html
-type(html_tag.parent)
-# <class 'bs4.BeautifulSoup'>
-```
-
-And the `.parent` of a `BeautifulSoup` object is defined as None:
-
-```
-print(soup.parent)
-# None
-```
-
-### `.parents`[¶](#parents "Link to this heading")
-
-You can iterate over all of an element's parents with
-`.parents`. This example uses `.parents` to travel from an <a> tag
-buried deep within the document, to the very top of the document:
-
-```
-link = soup.a
-link
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-for parent in link.parents:
-    print(parent.name)
-# p
-# body
-# html
-# [document]
-```
-
-### `.self_and_parents`[¶](#self-and-parents "Link to this heading")
-
-The `.self_and_parents` generator is a variant of `.parents` which
-gives you the entire ancestry of an element, including the element
-itself:
-
-```
-for tag in link.self_and_parents:
-    print(tag.name)
-# link
-# p
-# body
-# html
-# [document]
-```
-
-## Going sideways[¶](#going-sideways "Link to this heading")
-
-Consider a simple document like this:
-
-```
-sibling_soup = BeautifulSoup("<a><b>text1</b><c>text2</c></a>", 'html.parser')
-print(sibling_soup.prettify())
-#   <a>
-#    <b>
-#     text1
-#    </b>
-#    <c>
-#     text2
-#    </c>
-#   </a>
-```
-
-The <b> tag and the <c> tag are at the same level: they're both direct
-children of the same tag. We call them *siblings*. When a document is
-pretty-printed, siblings show up at the same indentation level. You
-can also use this relationship in the code you write.
-
-### `.next_sibling` and `.previous_sibling`[¶](#next-sibling-and-previous-sibling "Link to this heading")
-
-You can use `.next_sibling` and `.previous_sibling` to navigate
-between page elements that are on the same level of the parse tree:
-
-```
-sibling_soup.b.next_sibling
-# <c>text2</c>
-
-sibling_soup.c.previous_sibling
-# <b>text1</b>
-```
-
-The <b> tag has a `.next_sibling`, but no `.previous_sibling`,
-because there's nothing before the <b> tag *on the same level of the
-tree*. For the same reason, the <c> tag has a `.previous_sibling`
-but no `.next_sibling`:
-
-```
-print(sibling_soup.b.previous_sibling)
-# None
-print(sibling_soup.c.next_sibling)
-# None
-```
-
-The strings "text1" and "text2" are *not* siblings, because they don't
-have the same parent:
-
-```
-sibling_soup.b.string
-# 'text1'
-
-print(sibling_soup.b.string.next_sibling)
-# None
-```
-
-In real documents, the `.next_sibling` or `.previous_sibling` of a
-tag will usually be a string containing whitespace. Going back to the
-"three sisters" document:
-
-```
-# <a href="http://example.com/elsie" class="sister" id="link1">Elsie</a>,
-# <a href="http://example.com/lacie" class="sister" id="link2">Lacie</a> and
-# <a href="http://example.com/tillie" class="sister" id="link3">Tillie</a>;
-```
-
-You might think that the `.next_sibling` of the first <a> tag would
-be the second <a> tag. But actually, it's a string: the comma and
-newline that separate the first <a> tag from the second:
-
-```
-link = soup.a
-link
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-
-link.next_sibling
-# ',\n '
-```
-
-The second <a> tag is then the `.next_sibling` of the comma string:
-
-```
-link.next_sibling.next_sibling
-# <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>
-```
-
-### `.next_siblings` and `.previous_siblings`[¶](#next-siblings-and-previous-siblings "Link to this heading")
-
-You can iterate over a tag's siblings with `.next_siblings` or
-`.previous_siblings`:
-
-```
-for sibling in soup.a.next_siblings:
-    print(repr(sibling))
-# ',\n'
-# <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>
-# ' and\n'
-# <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>
-# '; and they lived at the bottom of a well.'
-
-for sibling in soup.find(id="link3").previous_siblings:
-    print(repr(sibling))
-# ' and\n'
-# <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>
-# ',\n'
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-# 'Once upon a time there were three little sisters; and their names were\n'
-```
-
-(If the argument syntax to find tags by their attribute value is unfamiliar,
-don't worry; this is covered later in [The keyword arguments](#kwargs).)
-
-## Going back and forth[¶](#going-back-and-forth "Link to this heading")
-
-Take a look at the beginning of the "three sisters" document:
-
-```
-# <html><head><title>The Dormouse's story</title></head>
-# <p class="title"><b>The Dormouse's story</b></p>
-```
-
-An HTML parser takes this string of characters and turns it into a
-series of events: "open an <html> tag", "open a <head> tag", "open a
-<title> tag", "add a string", "close the <title> tag", "open a <p>
-tag", and so on. The order in which the opening tags and strings are
-encountered is called *document order*. Beautiful Soup offers tools for
-searching a document's elements in document order.
-
-### `.next_element` and `.previous_element`[¶](#next-element-and-previous-element "Link to this heading")
-
-The `.next_element` attribute of a string or tag points to whatever
-was parsed immediately after the opening of the current tag or after
-the current string. It might be the same as `.next_sibling`, but it's
-usually drastically different.
-
-Here's the final <a> tag in the "three sisters" document. Its
-`.next_sibling` is a string: the conclusion of the sentence that was
-interrupted by the start of the <a> tag:
-
-```
-last_a_tag = soup.find("a", id="link3")
-last_a_tag
-# <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>
-
-last_a_tag.next_sibling
-# ';\nand they lived at the bottom of a well.'
-```
-
-But the `.next_element` of that <a> tag, the thing that was parsed
-immediately after the <a> tag, is *not* the rest of that sentence:
-it's the string "Tillie" inside it:
-
-```
-last_a_tag.next_element
-# 'Tillie'
-```
-
-That's because in the original markup, the word "Tillie" appeared
-before that semicolon. The parser encountered an <a> tag, then the
-word "Tillie", then the closing </a> tag, then the semicolon and rest of
-the sentence. The semicolon is on the same level as the <a> tag, but the
-word "Tillie" was encountered first.
-
-The `.previous_element` attribute is the exact opposite of
-`.next_element`. It points to the opening tag or string that was
-parsed immediately before this one:
-
-```
-last_a_tag.previous_element
-# ' and\n'
-last_a_tag.previous_element.next_element
-# <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>
-```
-
-### `.next_elements` and `.previous_elements`[¶](#next-elements-and-previous-elements "Link to this heading")
-
-You should get the idea by now. You can use these iterators to move
-forward or backward in the document as it was parsed:
-
-```
-for element in last_a_tag.next_elements:
-    print(repr(element))
-# 'Tillie'
-# ';\nand they lived at the bottom of a well.'
-# '\n'
-# <p class="story">...</p>
-# '...'
-# '\n'
-```
-
-# Searching the tree[¶](#searching-the-tree "Link to this heading")
-
-Beautiful Soup defines a lot of methods for searching the parse tree,
-but they're all very similar. I'm going to spend a lot of time explaining
-the two most popular methods: `find()` and `find_all()`. The other
-methods take almost exactly the same arguments, so I'll just cover
-them briefly.
-
-Once again, I'll be using the "three sisters" document as an example:
-
-```
-html_doc = """
-<html><head><title>The Dormouse's story</title></head>
-<body>
-<p class="title"><b>The Dormouse's story</b></p>
-
-<p class="story">Once upon a time there were three little sisters; and their names were
-<a href="http://example.com/elsie" class="sister" id="link1">Elsie</a>,
-<a href="http://example.com/lacie" class="sister" id="link2">Lacie</a> and
-<a href="http://example.com/tillie" class="sister" id="link3">Tillie</a>;
-and they lived at the bottom of a well.</p>
-
-<p class="story">...</p>
-"""
-
-from bs4 import BeautifulSoup
-soup = BeautifulSoup(html_doc, 'html.parser')
-```
-
-By passing in a filter to a method like `find_all()`, you can
-zoom in on the parts of the document you're interested in.
-
-## Kinds of filters[¶](#kinds-of-filters "Link to this heading")
-
-Before talking in detail about `find_all()` and similar methods, I
-want to show examples of different filters you can pass into these
-methods. These filters show up again and again, throughout the
-search API. You can use them to filter based on a tag's name,
-on its attributes, on the text of a string, or on some combination of
-these.
-
-### A string[¶](#a-string "Link to this heading")
-
-The simplest filter is a string. Pass a string to a search method and
-Beautiful Soup will perform a tag-name match against that exact string.
-This code finds all the <b> tags in the document:
-
-```
-soup.find_all('b')
-# [<b>The Dormouse's story</b>]
-```
-
-If you pass in a byte string, Beautiful Soup will assume the string is
-encoded as UTF-8. You can avoid this by passing in a Unicode string instead.
-
-### A regular expression[¶](#a-regular-expression "Link to this heading")
-
-If you pass in a regular expression object, Beautiful Soup will filter
-against that regular expression using its `search()` method. This code
-finds all the tags whose names start with the letter "b"; in this
-case, the <body> tag and the <b> tag:
-
-```
-import re
-for tag in soup.find_all(re.compile("^b")):
-    print(tag.name)
-# body
-# b
-```
-
-This code finds all the tags whose names contain the letter 't':
-
-```
-for tag in soup.find_all(re.compile("t")):
-    print(tag.name)
-# html
-# title
-```
-
-### `True`[¶](#true "Link to this heading")
-
-The value `True` matches every tag it can. This code finds *all*
-the tags in the document, but none of the text strings:
-
-```
-for tag in soup.find_all(True):
-    print(tag.name)
-# html
-# head
-# title
-# body
-# p
-# b
-# p
-# a
-# a
-# a
-# p
-```
-
-### A function[¶](#a-function "Link to this heading")
-
-If none of the other matches work for you, define a function that
-takes an element as its only argument. The function should return
-`True` if the argument matches, and `False` otherwise.
-
-Here's a function that returns `True` if a tag defines the "class"
-attribute but doesn't define the "id" attribute:
-
-```
-def has_class_but_no_id(tag):
-    return tag.has_attr('class') and not tag.has_attr('id')
-```
-
-Pass this function into `find_all()` and you'll pick up all the <p>
-tags:
-
-```
-soup.find_all(has_class_but_no_id)
-# [<p class="title"><b>The Dormouse's story</b></p>,
-#  <p class="story">Once upon a time there were…bottom of a well.</p>,
-#  <p class="story">...</p>]
-```
-
-This function picks up only the <p> tags. It doesn't pick up the <a>
-tags, because those tags define both "class" and "id". It doesn't pick
-up tags like <html> and <title>, because those tags don't define
-"class".
-
-The function can be as complicated as you need it to be. Here's a
-function that returns `True` if a tag is surrounded by string
-objects:
-
-```
-from bs4 import NavigableString
-def surrounded_by_strings(tag):
-    return (isinstance(tag.next_element, NavigableString)
-            and isinstance(tag.previous_element, NavigableString))
-
-for tag in soup.find_all(surrounded_by_strings):
-    print(tag.name)
-# body
-# p
-# a
-# a
-# a
-# p
-```
-
-### A list[¶](#a-list "Link to this heading")
-
-If you pass in a list, Beautiful Soup will look for a match against
-*any* string, regular expression, or function in that list. This
-code finds all the <a> tags *and* all the <b> tags:
-
-```
-soup.find_all(["a", "b"])
-# [<b>The Dormouse's story</b>,
-#  <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-Now we're ready to look at the search methods in detail.
-
-## `find_all()`[¶](#find-all "Link to this heading")
-
-Method signature: find\_all([name](#name), [attrs](#attrs), [recursive](#recursive), [string](#id11), [limit](#limit), [\*\*kwargs](#kwargs))
-
-The `find_all()` method looks through a tag's descendants and
-retrieves *all* descendants that match your filters. I gave several
-examples in [Kinds of filters](#kinds-of-filters), but here are a few more:
-
-```
-soup.find_all("title")
-# [<title>The Dormouse's story</title>]
-
-soup.find_all("p", "title")
-# [<p class="title"><b>The Dormouse's story</b></p>]
-
-soup.find_all("a")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.find_all(id="link2")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-
-import re
-soup.find(string=re.compile("sisters"))
-# 'Once upon a time there were three little sisters; and their names were\n'
-```
-
-Some of these should look familiar, but others are new. What does it
-mean to pass in a value for `string`, or `id`? Why does
-`find_all("p", "title")` find a <p> tag with the CSS class "title"?
-Let's look at the arguments to `find_all()`.
-
-### The `name` argument[¶](#the-name-argument "Link to this heading")
-
-Pass in a value for `name` and you'll tell Beautiful Soup to only
-consider tags with certain names. Text strings will be ignored, as
-will tags whose names that don't match.
-
-This is the simplest usage:
-
-```
-soup.find_all("title")
-# [<title>The Dormouse's story</title>]
-```
-
-Recall from [Kinds of filters](#kinds-of-filters) that the value to `name` can be [a
-string](#a-string), [a regular expression](#a-regular-expression), [a list](#a-list), [a function](#a-function), or [the value
-True](#the-value-true).
-
-### The keyword arguments[¶](#the-keyword-arguments "Link to this heading")
-
-Any keyword argument that's not recognized will be turned into a filter
-that matches tags by their attributes.
-
-If you pass in a value for an argument called `id`, Beautiful Soup will
-filter against each tag's 'id' attribute value:
-
-```
-soup.find_all(id='link2')
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-```
-
-Just as with tags, you can filter an attribute based on [a string](#a-string),
-[a regular expression](#a-regular-expression), [a list](#a-list), [a function](#a-function), or [the value True](#the-value-true).
-
-If you pass in a regular expression object for `href`, Beautiful Soup will
-pattern-match against each tag's 'href' attribute value:
-
-```
-soup.find_all(href=re.compile("elsie"))
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
-```
-
-The value `True` matches every tag that defines the attribute. This code
-finds *all* tags with an `id` attribute:
-
-```
-soup.find_all(id=True)
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-For more complex matches, you can define a function that takes an attribute
-value as its only argument. The function should return `True` if the value
-matches, and `False` otherwise.
-
-Here's a function that finds all `a` tags whose `href` attribute *does not*
-match a regular expression:
-
-```
-import re
-def not_lacie(href):
-    return href and not re.compile("lacie").search(href)
-
-soup.find_all(href=not_lacie)
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-If you pass in a list for an argument, Beautiful Soup will look for an
-attribute-value match against *any* string, regular expression, or function in
-that list. This code finds the first and last link:
-
-```
-soup.find_all(id=["link1", re.compile("3$")])
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-You can filter against multiple attributes at once by passing multiple
-keyword arguments:
-
-```
-soup.find_all(href=re.compile("elsie"), id='link1')
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
-```
-
-Some attributes, like the data-\* attributes in HTML 5, have names that
-can't be used as the names of keyword arguments:
-
-```
-data_soup = BeautifulSoup('<div data-foo="value">foo!</div>', 'html.parser')
-data_soup.find_all(data-foo="value")
-# SyntaxError: keyword can't be an expression
-```
-
-You can use these attributes in searches by putting them into a
-dictionary and passing the dictionary into `find_all()` as the
-`attrs` argument:
-
-```
-data_soup.find_all(attrs={"data-foo": "value"})
-# [<div data-foo="value">foo!</div>]
-```
-
-Similarly, you can't use a keyword argument to search for HTML's 'name' attribute,
-because Beautiful Soup uses the `name` argument to contain the name
-of the tag itself. Instead, you can give a value to 'name' in the
-`attrs` argument:
-
-```
-name_soup = BeautifulSoup('<input name="email"/>', 'html.parser')
-name_soup.find_all(name="email")
-# []
-name_soup.find_all(attrs={"name": "email"})
-# [<input name="email"/>]
-```
-
-### Searching by CSS class[¶](#searching-by-css-class "Link to this heading")
-
-It's very useful to search for a tag that has a certain CSS class, but
-the name of the CSS attribute, "class", is a reserved word in
-Python. Using `class` as a keyword argument will give you a syntax
-error. As of Beautiful Soup 4.1.2, you can search by CSS class using
-the keyword argument `class_`:
-
-```
-soup.find_all("a", class_="sister")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-As with any keyword argument, you can pass `class_` a string, a regular
-expression, a function, or `True`:
-
-```
-soup.find_all(class_=re.compile("itl"))
-# [<p class="title"><b>The Dormouse's story</b></p>]
-
-def has_six_characters(css_class):
-    return css_class is not None and len(css_class) == 6
-
-soup.find_all(class_=has_six_characters)
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-[Remember](#multivalue) that a single tag can have multiple
-values for its "class" attribute. When you search for a tag that
-matches a certain CSS class, you're matching against *any* of its CSS
-classes:
-
-```
-css_soup = BeautifulSoup('<p class="body strikeout"></p>', 'html.parser')
-css_soup.find_all("p", class_="strikeout")
-# [<p class="body strikeout"></p>]
-
-css_soup.find_all("p", class_="body")
-# [<p class="body strikeout"></p>]
-```
-
-You can also search for the exact string value of the `class` attribute:
-
-```
-css_soup.find_all("p", class_="body strikeout")
-# [<p class="body strikeout"></p>]
-```
-
-But searching for variants of the string value won't work:
-
-```
-css_soup.find_all("p", class_="strikeout body")
-# []
-```
-
-In older versions of Beautiful Soup, which don't have the `class_`
-shortcut, you can use the `attrs` argument trick mentioned above.
-Create a dictionary whose value for "class" is the string (or regular
-expression, or whatever) you want to search for:
-
-```
-soup.find_all("a", attrs={"class": "sister"})
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-To search for tags that match two or more CSS classes at once, use the
-`Tag.select()` CSS selector method [described here](#css-selectors):
-
-```
-css_soup.select("p.strikeout.body")
-# [<p class="body strikeout"></p>]
-```
-
-### The `string` argument[¶](#the-string-argument "Link to this heading")
-
-With the `string` argument, you can search for strings instead of tags. As
-with `name` and attribute keyword arguments, you can pass in [a string](#a-string), [a
-regular expression](#a-regular-expression), [a function](#a-function), [a list](#a-list), or [the value True](#the-value-true).
-Here are some examples:
-
-```
-soup.find_all(string="Elsie")
-# ['Elsie']
-
-soup.find_all(string=["Tillie", "Elsie", "Lacie"])
-# ['Elsie', 'Lacie', 'Tillie']
-
-soup.find_all(string=re.compile("Dormouse"))
-# ["The Dormouse's story", "The Dormouse's story"]
-
-def is_the_only_string_within_a_tag(s):
-    """Return True if this string is the only child of its parent tag."""
-    return (s == s.parent.string)
-
-soup.find_all(string=is_the_only_string_within_a_tag)
-# ["The Dormouse's story", "The Dormouse's story", 'Elsie', 'Lacie', 'Tillie', '...']
-```
-
-If you use the `string` argument in a tag search, Beautiful Soup will find
-all tags whose `.string` matches your value for `string`. This code finds
-the <a> tags whose `.string` is "Elsie":
-
-```
-soup.find_all("a", string="Elsie")
-# [<a href="http://example.com/elsie" class="sister" id="link1">Elsie</a>]
-```
-
-The `string` argument is new in Beautiful Soup 4.4.0. In earlier
-versions it was called `text`:
-
-```
-soup.find_all("a", text="Elsie")
-# [<a href="http://example.com/elsie" class="sister" id="link1">Elsie</a>]
-```
-
-### The `limit` argument[¶](#the-limit-argument "Link to this heading")
-
-`find_all()` returns all the tags and strings that match your
-filters. This can take a while if the document is large. If you don't
-need *all* the results, you can pass in a number for `limit`. This
-works just like the LIMIT keyword in SQL. It tells Beautiful Soup to
-stop gathering results after it's found a certain number.
-
-There are three links in the "three sisters" document, but this code
-only finds the first two:
-
-```
-soup.find_all("a", limit=2)
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-```
-
-### The `recursive` argument[¶](#the-recursive-argument "Link to this heading")
-
-By default, `mytag.find_all()` will examine all the descendants of `mytag`:
-its children, its children's children, and so on. To consider only direct
-children, you can pass in `recursive=False`. See the difference here:
-
-```
-soup.html.find_all("title")
-# [<title>The Dormouse's story</title>]
-
-soup.html.find_all("title", recursive=False)
-# []
-```
-
-Here's that part of the document:
-
-```
-<html>
- <head>
-  <title>
-   The Dormouse's story
-  </title>
- </head>
-...
-```
-
-The <title> tag is beneath the <html> tag, but it's not *directly*
-beneath the <html> tag: the <head> tag is in the way. Beautiful Soup
-finds the <title> tag when it's allowed to look at all descendants of
-the <html> tag, but when `recursive=False` restricts it to the
-<html> tag's immediate children, it finds nothing.
-
-Beautiful Soup offers a lot of tree-searching methods (covered below),
-and they mostly take the same arguments as `find_all()`: `name`,
-`attrs`, `string`, `limit`, and attribute keyword arguments. But the
-`recursive` argument is specific to the `find_all()` and `find()` methods.
-Passing `recursive=False` into a method like `find_parents()` wouldn't be
-very useful.
-
-## Calling a tag is like calling `find_all()`[¶](#calling-a-tag-is-like-calling-find-all "Link to this heading")
-
-For convenience, calling a `BeautifulSoup` object or
-[`Tag`](#Tag "Tag") object as a function is equivalent to calling
-`find_all()` (if no built-in method has the name of the tag you're
-looking for). These two lines of code are equivalent:
-
-```
-soup.find_all("a")
-soup("a")
-```
-
-These two lines are also equivalent:
-
-```
-soup.title.find_all(string=True)
-soup.title(string=True)
-```
-
-## `find()`[¶](#find "Link to this heading")
-
-Method signature: find([name](#name), [attrs](#attrs), [recursive](#recursive), [string](#id11), [\*\*kwargs](#kwargs))
-
-The `find_all()` method scans the entire document looking for
-results, but sometimes you only want to find one result. If you know a
-document has only one <body> tag, it's a waste of time to scan the
-entire document looking for more. Rather than passing in `limit=1`
-every time you call `find_all`, you can use the `find()`
-method. These two lines of code are *nearly* equivalent:
-
-```
-soup.find_all('title', limit=1)
-# [<title>The Dormouse's story</title>]
-
-soup.find('title')
-# <title>The Dormouse's story</title>
-```
-
-The only difference is that `find_all()` returns a list containing
-the single result, and `find()` just returns the result.
-
-If `find_all()` can't find anything, it returns an empty list. If
-`find()` can't find anything, it returns `None`:
-
-```
-print(soup.find("nosuchtag"))
-# None
-```
-
-Remember the `soup.head.title` trick from [Navigating using tag
-names](#navigating-using-tag-names)? That trick works by repeatedly calling `find()`:
-
-```
-soup.head.title
-# <title>The Dormouse's story</title>
-
-soup.find("head").find("title")
-# <title>The Dormouse's story</title>
-```
-
-## `find_parents()` and `find_parent()`[¶](#find-parents-and-find-parent "Link to this heading")
-
-Method signature: find\_parents([name](#name), [attrs](#attrs), [string](#id11), [limit](#limit), [\*\*kwargs](#kwargs))
-
-Method signature: find\_parent([name](#name), [attrs](#attrs), [string](#id11), [\*\*kwargs](#kwargs))
-
-I spent a lot of time above covering `find_all()` and
-`find()`. The Beautiful Soup API defines ten other methods for
-searching the tree, but don't be afraid. Five of these methods are
-basically the same as `find_all()`, and the other five are basically
-the same as `find()`. The only differences are in how they move from
-one part of the tree to another.
-
-First let's consider `find_parents()` and
-`find_parent()`. Remember that `find_all()` and `find()` work
-their way down the tree, looking at tag's descendants. These methods
-do the opposite: they work their way *up* the tree, looking at a tag's
-(or a string's) parents. Let's try them out, starting from a string
-buried deep in the "three daughters" document:
-
-```
-a_string = soup.find(string="Lacie")
-a_string
-# 'Lacie'
-
-a_string.find_parents("a")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-
-a_string.find_parent("p")
-# <p class="story">Once upon a time there were three little sisters; and their names were
-#  <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a> and
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>;
-#  and they lived at the bottom of a well.</p>
-
-a_string.find_parents("p", class_="title")
-# []
-```
-
-One of the three <a> tags is the direct parent of the string in
-question, so our search finds it. One of the three <p> tags is an
-indirect parent (*ancestor*) of the string, and our search finds that as
-well. There's a <p> tag with the CSS class "title" *somewhere* in the
-document, but it's not one of this string's parents, so we can't find
-it with `find_parents()`.
-
-You may have noticed a similarity between `find_parent()` and
-`find_parents()`, and the [.parent](#parent) and [.parents](#parents) attributes
-mentioned earlier. These search methods actually use the `.parents`
-attribute to iterate through all parents (unfiltered), checking each one
-against the provided filter to see if it matches.
-
-## `find_next_siblings()` and `find_next_sibling()`[¶](#find-next-siblings-and-find-next-sibling "Link to this heading")
-
-Method signature: find\_next\_siblings([name](#name), [attrs](#attrs), [string](#id11), [limit](#limit), [\*\*kwargs](#kwargs))
-
-Method signature: find\_next\_sibling([name](#name), [attrs](#attrs), [string](#id11), [\*\*kwargs](#kwargs))
-
-These methods use [.next\_siblings](#sibling-generators) to
-iterate over the rest of an element's siblings in the tree. The
-`find_next_siblings()` method returns all the siblings that match,
-and `find_next_sibling()` returns only the first one:
-
-```
-first_link = soup.a
-first_link
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-
-first_link.find_next_siblings("a")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-first_story_paragraph = soup.find("p", "story")
-first_story_paragraph.find_next_sibling("p")
-# <p class="story">...</p>
-```
-
-## `find_previous_siblings()` and `find_previous_sibling()`[¶](#find-previous-siblings-and-find-previous-sibling "Link to this heading")
-
-Method signature: find\_previous\_siblings([name](#name), [attrs](#attrs), [string](#id11), [limit](#limit), [\*\*kwargs](#kwargs))
-
-Method signature: find\_previous\_sibling([name](#name), [attrs](#attrs), [string](#id11), [\*\*kwargs](#kwargs))
-
-These methods use [.previous\_siblings](#sibling-generators) to iterate over an element's
-siblings that precede it in the tree. The `find_previous_siblings()`
-method returns all the siblings that match, and
-`find_previous_sibling()` returns only the first one:
-
-```
-last_link = soup.find("a", id="link3")
-last_link
-# <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>
-
-last_link.find_previous_siblings("a")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
-
-first_story_paragraph = soup.find("p", "story")
-first_story_paragraph.find_previous_sibling("p")
-# <p class="title"><b>The Dormouse's story</b></p>
-```
-
-## `find_all_next()` and `find_next()`[¶](#find-all-next-and-find-next "Link to this heading")
-
-Method signature: find\_all\_next([name](#name), [attrs](#attrs), [string](#id11), [limit](#limit), [\*\*kwargs](#kwargs))
-
-Method signature: find\_next([name](#name), [attrs](#attrs), [string](#id11), [\*\*kwargs](#kwargs))
-
-These methods use [.next\_elements](#element-generators) to
-iterate over whatever tags and strings that come after it in the
-document. The `find_all_next()` method returns all matches, and
-`find_next()` returns only the first match:
-
-```
-first_link = soup.a
-first_link
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-
-first_link.find_all_next(string=True)
-# ['Elsie', ',\n', 'Lacie', ' and\n', 'Tillie',
-#  ';\nand they lived at the bottom of a well.', '\n', '...', '\n']
-
-first_link.find_next("p")
-# <p class="story">...</p>
-```
-
-In the first example, the string "Elsie" showed up, even though it was
-contained within the <a> tag we started from. In the second example,
-the last <p> tag in the document showed up, even though it's not in
-the same part of the tree as the <a> tag we started from. For these
-methods, all that matters is that an element matches the filter and
-it shows up later in the document in [document order](#document-order).
-
-## `find_all_previous()` and `find_previous()`[¶](#find-all-previous-and-find-previous "Link to this heading")
-
-Method signature: find\_all\_previous([name](#name), [attrs](#attrs), [string](#id11), [limit](#limit), [\*\*kwargs](#kwargs))
-
-Method signature: find\_previous([name](#name), [attrs](#attrs), [string](#id11), [\*\*kwargs](#kwargs))
-
-These methods use [.previous\_elements](#element-generators) to
-iterate over the tags and strings that came before it in the
-document. The `find_all_previous()` method returns all matches, and
-`find_previous()` only returns the first match:
-
-```
-first_link = soup.a
-first_link
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-
-first_link.find_all_previous("p")
-# [<p class="story">Once upon a time there were three little sisters; ...</p>,
-#  <p class="title"><b>The Dormouse's story</b></p>]
-
-first_link.find_previous("title")
-# <title>The Dormouse's story</title>
-```
-
-The call to `find_all_previous("p")` found the first paragraph in
-the document (the one with class="title"), but it also finds the
-second paragraph, the <p> tag that contains the <a> tag we started
-with. This shouldn't be too surprising: we're looking at all the tags
-that show up earlier in the document in [document order](#document-order) than the one we started with. A
-<p> tag that contains an <a> tag must have shown up before the <a>
-tag it contains.
-
-## CSS selectors through the `.css` property[¶](#css-selectors-through-the-css-property "Link to this heading")
-
-`BeautifulSoup` and [`Tag`](#Tag "Tag") objects support CSS selectors through
-their `.css` property. The actual selector implementation is handled
-by the [Soup Sieve](https://facelessuser.github.io/soupsieve/)
-package, available on PyPI as `soupsieve`. If you installed
-Beautiful Soup through `pip`, Soup Sieve was installed at the same
-time, so you don't have to do anything extra.
-
-The Soup Sieve documentation lists [all the currently supported CSS
-selectors](https://facelessuser.github.io/soupsieve/selectors/), but
-here are some of the basics. You can find tags by name:
-
-```
-soup.css.select("title")
-# [<title>The Dormouse's story</title>]
-
-soup.css.select("p:nth-of-type(3)")
-# [<p class="story">...</p>]
-```
-
-Find tags by ID:
-
-```
-soup.css.select("#link1")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
-
-soup.css.select("a#link2")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-```
-
-Find tags contained anywhere within other tags:
-
-```
-soup.css.select("body a")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie"  id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.css.select("html head title")
-# [<title>The Dormouse's story</title>]
-```
-
-Find tags *directly* within other tags:
-
-```
-soup.css.select("head > title")
-# [<title>The Dormouse's story</title>]
-
-soup.css.select("p > a")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie"  id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.css.select("p > a:nth-of-type(2)")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-
-soup.css.select("body > a")
-# []
-```
-
-Find all matching next siblings of tags:
-
-```
-soup.css.select("#link1 ~ .sister")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie"  id="link3">Tillie</a>]
-```
-
-Find the next sibling tag (but only if it matches):
-
-```
-soup.css.select("#link1 + .sister")
-# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-```
-
-Find tags by CSS class:
-
-```
-soup.css.select(".sister")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.css.select("[class~=sister]")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-Find tags that match any selector from a list of selectors:
-
-```
-soup.css.select("#link1,#link2")
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
-```
-
-Test for the existence of an attribute:
-
-```
-soup.css.select('a[href]')
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-```
-
-Find tags by attribute value:
-
-```
-soup.css.select('a[href="http://example.com/elsie"]')
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
-
-soup.css.select('a[href^="http://example.com/"]')
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.css.select('a[href$="tillie"]')
-# [<a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.css.select('a[href*=".com/el"]')
-# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
-```
-
-There's also a method called `select_one()`, which finds only the
-first tag that matches a selector:
-
-```
-soup.css.select_one(".sister")
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-```
-
-As a convenience, you can call `select()` and `select_one()` can
-directly on the `BeautifulSoup` or [`Tag`](#Tag "Tag") object, omitting the
-`.css` property:
-
-```
-soup.select('a[href$="tillie"]')
-# [<a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
-
-soup.select_one(".sister")
-# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
-```
-
-CSS selector support is a convenience for people who already know the
-CSS selector syntax. You can do all of this with the Beautiful Soup
-API. If CSS selectors are all you need, you should skip Beautiful Soup
-altogether and parse the document with `lxml`: it's a lot
-faster. But Soup Sieve lets you *combine* CSS selectors with the
-Beautiful Soup API.
-
-### Advanced Soup Sieve features[¶](#advanced-soup-sieve-features "Link to this heading")
-
-Soup Sieve offers a substantial API beyond the `select()` and
-`select_one()` methods, and you can access most of that API through
-the `.css` attribute of [`Tag`](#Tag "Tag") or `BeautifulSoup`. What follows
-is just a list of the supported methods; see [the Soup Sieve
-documentation](https://facelessuser.github.io/soupsieve/) for full
-documentation.
-
-The `iselect()` method works the same as `select()`, but it
-returns a generator instead of a list:
-
-```
-[tag['id'] for tag in soup.css.iselect(".sister")]
-# ['link1', 'link2', 'link3']
-```
-
-The `closest()` method returns the nearest parent of a given [`Tag`](#Tag "Tag")
-that matches a CSS selector, similar to Beautiful Soup's
-`find_parent()` method:
-
-```
-elsie = soup.css.select_one(".sister")
-elsie.css.closest("p.story")
-# <p class="story">Once upon a time there were three little sisters; and their names were
-#  <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
-#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a> and
-#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>;
-#  and they lived at the bottom of a well.</p>
-```
-
-The `match()` method returns a Boolean depending on whether or not a
-specific [`Tag`](#Tag "Tag") matches a selector:
-
-```
-# elsie.css.match("#link1")
-True
-
-# elsie.css.match("#link2")
-False
-```
-
-The `filter()` method returns the subset of a tag's direct children
-that match a selector:
-
-```
-[tag.string for tag in soup.find('p', 'story').css.filter('a')]
-# ['Elsie', 'Lacie', 'Tillie']
-```
-
-The `escape()` method escapes CSS identifiers that would otherwise
-be invalid:
-
-```
-soup.css.escape("1-strange-identifier")
-# '\\31 -strange-identifier'
-```
-
-### Namespaces in CSS selectors[¶](#namespaces-in-css-selectors "Link to this heading")
-
-If you've parsed XML that defines namespaces, you can use them in CSS
-selectors.:
-
-```
-from bs4 import BeautifulSoup
-xml = """<tag xmlns:ns1="http://namespace1/" xmlns:ns2="http://namespace2/">
- <ns1:child>I'm in namespace 1</ns1:child>
- <ns2:child>I'm in namespace 2</ns2:child>
-</tag> """
-namespace_soup = BeautifulSoup(xml, "xml")
-
-namespace_soup.css.select("child")
-# [<ns1:child>I'm in namespace 1</ns1:child>, <ns2:child>I'm in namespace 2</ns2:child>]
-
-namespace_soup.css.select("ns1|child")
-# [<ns1:child>I'm in namespace 1</ns1:child>]
-```
-
-Beautiful Soup tries to use namespace prefixes that make sense based
-on what it saw while parsing the document, but you can always provide
-your own dictionary of abbreviations:
-
-```
-namespaces = dict(first="http://namespace1/", second="http://namespace2/")
-namespace_soup.css.select("second|child", namespaces=namespaces)
-# [<ns1:child>I'm in namespace 2</ns1:child>]
-```
-
-### History of CSS selector support[¶](#history-of-css-selector-support "Link to this heading")
-
-The `.css` property was added in Beautiful Soup 4.12.0. Prior to this,
-only the `.select()` and `.select_one()` convenience methods were
-supported.
-
-The Soup Sieve integration was added in Beautiful Soup 4.7.0. Earlier
-versions had the `.select()` method, but only the most commonly-used
-CSS selectors were supported.
-
-# Modifying the tree[¶](#modifying-the-tree "Link to this heading")
+# Modifying the tree
 
 Beautiful Soup's main strength is in searching the parse tree, but you
 can also modify the tree and write your changes as a new HTML or XML
 document.
 
-## Changing tag names and attributes[¶](#changing-tag-names-and-attributes "Link to this heading")
+## Changing tag names and attributes
 
 I covered this earlier, in [`Tag.attrs`](#Tag.attrs "Tag.attrs"), but it bears repeating. You
 can rename a tag, change the values of its attributes, add new
@@ -2128,7 +643,7 @@ tag
 # <blockquote>Extremely bold</blockquote>
 ```
 
-## Modifying `.string`[¶](#modifying-string "Link to this heading")
+## Modifying `.string`
 
 If you set a tag's `.string` attribute to a new string, the tag's contents are
 replaced with that string:
@@ -2146,7 +661,7 @@ tag
 Be careful: if the tag contained other tags, they and all their
 contents will be destroyed.
 
-## `append()`[¶](#append "Link to this heading")
+## `append()`
 
 You can add to a tag's contents with `Tag.append()`. It works just
 like calling `.append()` on a Python list:
@@ -2165,7 +680,7 @@ new_string
 
 `Tag.append()` returns the newly appended element.
 
-## `extend()`[¶](#extend "Link to this heading")
+## `extend()`
 
 Starting in Beautiful Soup 4.7.0, [`Tag`](#Tag "Tag") also supports a method
 called `.extend()`, which adds every element of a list to a [`Tag`](#Tag "Tag"),
@@ -2183,68 +698,7 @@ soup.a.contents
 
 `Tag.extend()` returns the list of appended elements.
 
-## `NavigableString()` and `.new_tag()`[¶](#navigablestring-and-new-tag "Link to this heading")
-
-If you need to add a string to a document, no problem—you can pass a
-Python string in to `append()`, or you can call the [`NavigableString`](#NavigableString "NavigableString")
-constructor:
-
-```
-from bs4 import NavigableString
-soup = BeautifulSoup("<b></b>", 'html.parser')
-tag = soup.b
-tag.append("Hello")
-new_string = NavigableString(" there")
-tag.append(new_string)
-tag
-# <b>Hello there.</b>
-tag.contents
-# ['Hello', ' there']
-```
-
-If you want to create a comment or some other subclass of
-[`NavigableString`](#NavigableString "NavigableString"), just call the constructor:
-
-```
-from bs4 import Comment
-new_comment = Comment("Nice to see you.")
-tag.append(new_comment)
-tag
-# <b>Hello there<!--Nice to see you.--></b>
-tag.contents
-# ['Hello', ' there', 'Nice to see you.']
-```
-
-*(This is a new feature in Beautiful Soup 4.4.0.)*
-
-What if you need to create a whole new tag? The best solution is to
-call the factory method `BeautifulSoup.new_tag()`:
-
-```
-soup = BeautifulSoup("<b></b>", 'html.parser')
-original_tag = soup.b
-
-new_tag = soup.new_tag("a", href="http://www.example.com", string="Link text.")
-original_tag.append(new_tag)
-original_tag
-# <b><a href="http://www.example.com">Link text.</a></b>
-```
-
-Only the first argument, the tag name, is required.
-
-*(The ``string`` argument to ``new\_tag`` was introduced in Beautiful Soup 4.13.0.)*
-
-Because insertion methods return the newly inserted element, you
-can create, insert, and obtain an element in one step:
-
-```
-soup = BeautifulSoup("<html></html>", 'html.parser')
-html = soup.html
-
-title = html.append(soup.new_tag("title"))
-```
-
-## `insert()`[¶](#insert "Link to this heading")
+## `insert()`
 
 `Tag.insert()` is just like `Tag.append()`, except the new element
 doesn't necessarily go at the end of its parent's
@@ -2271,7 +725,7 @@ provide.
 
 `Tag.insert()` returns the list of newly inserted elements.
 
-## `insert_before()` and `insert_after()`[¶](#insert-before-and-insert-after "Link to this heading")
+## `insert_before()` and `insert_after()`
 
 The `insert_before()` method inserts tags or strings immediately
 before something else in the parse tree:
@@ -2300,7 +754,7 @@ soup.b.contents
 
 Both methods return the list of newly inserted elements.
 
-## `clear()`[¶](#clear "Link to this heading")
+## `clear()`
 
 `Tag.clear()` removes the contents of a tag:
 
@@ -2314,7 +768,7 @@ tag
 # <a href="http://example.com/"></a>
 ```
 
-## `extract()`[¶](#extract "Link to this heading")
+## `extract()`
 
 `PageElement.extract()` removes a tag or string from the tree. It
 returns the tag or string that was extracted:
@@ -2352,7 +806,7 @@ i_tag
 # <i></i>
 ```
 
-## `decompose()`[¶](#decompose "Link to this heading")
+## `decompose()`
 
 `Tag.decompose()` removes a tag from the tree, then *completely
 destroys it and its contents*:
@@ -2381,7 +835,7 @@ a_tag.decomposed
 # False
 ```
 
-## `replace_with()`[¶](#replace-with "Link to this heading")
+## `replace_with()`
 
 `PageElement.replace_with()` extracts a tag or string from the tree,
 then replaces it with one or more tags or strings of your choice:
@@ -2414,7 +868,7 @@ that you can examine it or add it back to another part of the tree.
 *The ability to pass multiple arguments into replace\_with() is new
 in Beautiful Soup 4.10.0.*
 
-## `wrap()`[¶](#wrap "Link to this heading")
+## `wrap()`
 
 `PageElement.wrap()` wraps an element in the [`Tag`](#Tag "Tag") object you specify. It
 returns the new wrapper:
@@ -2430,7 +884,7 @@ soup.p.wrap(soup.new_tag("div"))
 
 *This method is new in Beautiful Soup 4.0.5.*
 
-## `unwrap()`[¶](#unwrap "Link to this heading")
+## `unwrap()`
 
 `Tag.unwrap()` is the opposite of `wrap()`. It replaces a tag with
 whatever's inside that tag. It's good for stripping out markup:
@@ -2448,7 +902,7 @@ a_tag
 Like `replace_with()`, `unwrap()` returns the tag
 that was replaced.
 
-## `smooth()`[¶](#smooth "Link to this heading")
+## `smooth()`
 
 After calling a bunch of methods that modify the parse tree, you may end up
 with two or more [`NavigableString`](#NavigableString "NavigableString") objects next to each other.
@@ -2489,9 +943,9 @@ print(soup.p.prettify())
 
 *This method is new in Beautiful Soup 4.8.0.*
 
-# Output[¶](#output "Link to this heading")
+# Output
 
-## Pretty-printing[¶](#pretty-printing "Link to this heading")
+## Pretty-printing
 
 The `prettify()` method will turn a Beautiful Soup parse tree into a
 nicely formatted Unicode string, with a separate line for each
@@ -2536,7 +990,7 @@ changes the meaning of an HTML document and should not be used to
 reformat one. The goal of `prettify()` is to help you visually
 understand the structure of the documents you work with.
 
-## Non-pretty printing[¶](#non-pretty-printing "Link to this heading")
+## Non-pretty printing
 
 If you just want a string, with no fancy formatting, you can call
 `str()` on a `BeautifulSoup` object, or on a [`Tag`](#Tag "Tag") within it:
@@ -2555,7 +1009,7 @@ The `str()` function returns a string encoded in UTF-8. See
 You can also call `encode()` to get a bytestring, and `decode()`
 to get Unicode.
 
-## Output formatters[¶](#output-formatters "Link to this heading")
+## Output formatters
 
 If you give Beautiful Soup a document that contains HTML entities like
 "&lquot;", they'll be converted to Unicode characters:
@@ -2659,13 +1113,13 @@ print(link_soup.a.encode(formatter=None))
 # b'<a href="http://example.com/?foo=val1&bar=val2">A link</a>'
 ```
 
-### Formatter objects[¶](#formatter-objects "Link to this heading")
+### Formatter objects
 
 If you need more sophisticated control over your output, you can
 instantiate one of Beautiful Soup's formatter classes and pass that
 object in as `formatter`.
 
-*class* HTMLFormatter[¶](#HTMLFormatter "Link to this definition")
+*class*HTMLFormatter
 
 Used to customize the formatting rules for HTML documents.
 
@@ -2700,11 +1154,11 @@ print(link_soup.a.prettify(formatter=formatter))
 # </a>
 ```
 
-*class* XMLFormatter[¶](#XMLFormatter "Link to this definition")
+*class*XMLFormatter
 
 Used to customize the formatting rules for XML documents.
 
-### Writing your own formatter[¶](#writing-your-own-formatter "Link to this heading")
+### Writing your own formatter
 
 Subclassing [`HTMLFormatter`](#HTMLFormatter "HTMLFormatter") or [`XMLFormatter`](#XMLFormatter "XMLFormatter") will
 give you even more control over the output. For example, Beautiful
@@ -2750,7 +1204,7 @@ print(soup.a.prettify(formatter="html"))
 # </a>
 ```
 
-## `get_text()`[¶](#get-text "Link to this heading")
+## `get_text()`
 
 If you only want the human-readable text inside a document or tag, you can use the
 `get_text()` method. It returns all the text in a document or
@@ -2805,7 +1259,7 @@ NavigableString object. It will return the object itself, so again,
 the only reason to do this is when you're iterating over a mixed
 list.*
 
-# Specifying the parser to use[¶](#specifying-the-parser-to-use "Link to this heading")
+# Specifying the parser to use
 
 If you just need to parse some HTML, you can dump the markup into the
 `BeautifulSoup` constructor, and it'll probably be fine. Beautiful
@@ -2837,7 +1291,7 @@ supported XML parser is lxml. If you don't have lxml installed, asking
 for an XML parser won't give you one, and asking for "lxml" won't work
 either.
 
-## Differences between parsers[¶](#differences-between-parsers "Link to this heading")
+## Differences between parsers
 
 Beautiful Soup presents the same interface to a number of different
 parsers, but each parser is different. Different parsers will create
@@ -2914,7 +1368,7 @@ machines, you should specify a parser in the `BeautifulSoup`
 constructor. That will reduce the chances that your users parse a
 document differently from the way you parse it.
 
-# Encodings[¶](#encodings "Link to this heading")
+# Encodings
 
 Any HTML or XML document is written in a specific encoding like ASCII
 or UTF-8. But when you load that document into Beautiful Soup, you'll
@@ -3007,7 +1461,7 @@ contains �, but `.contains_replacement_characters` is `False`,
 you'll know that the � was there originally (as it is in this
 paragraph) and doesn't stand in for missing data.
 
-## Output encoding[¶](#output-encoding "Link to this heading")
+## Output encoding
 
 When you write out an output document from Beautiful Soup, you get a UTF-8
 document, even if the input document wasn't in UTF-8 to begin with. Here's a
@@ -3088,7 +1542,7 @@ print(tag.encode("ascii"))
 # b'<b>&#9731;</b>'
 ```
 
-## Unicode, Dammit[¶](#unicode-dammit "Link to this heading")
+## Unicode, Dammit
 
 You can use Unicode, Dammit without using Beautiful Soup. It's useful
 whenever you have data in an unknown encoding and you just want it to
@@ -3120,7 +1574,7 @@ dammit.original_encoding
 Unicode, Dammit has two special features that Beautiful Soup doesn't
 use.
 
-### Smart quotes[¶](#smart-quotes "Link to this heading")
+### Smart quotes
 
 You can use Unicode, Dammit to convert Microsoft smart quotes to HTML or XML
 entities:
@@ -3152,7 +1606,7 @@ UnicodeDammit(markup, ["windows-1252"]).unicode_markup
 # '<p>I just “love” Microsoft Word’s smart quotes</p>'
 ```
 
-### Inconsistent encodings[¶](#inconsistent-encodings "Link to this heading")
+### Inconsistent encodings
 
 Sometimes a document is mostly in UTF-8, but contains Windows-1252
 characters such as (again) Microsoft smart quotes. This can happen
@@ -3204,7 +1658,7 @@ document is Windows-1252, and the document will come out looking like
 
 `UnicodeDammit.detwingle()` is new in Beautiful Soup 4.1.0.
 
-# Line numbers[¶](#line-numbers "Link to this heading")
+# Line numbers
 
 The `html.parser` and `html5lib` parsers can keep track of where in
 the original document each [`Tag`](#Tag "Tag") was found. You can access this
@@ -3258,7 +1712,7 @@ print(soup.p.sourceline)
 *This feature is new in 4.8.1, and the parsers based on lxml don't
 support it.*
 
-# Comparing objects for equality[¶](#comparing-objects-for-equality "Link to this heading")
+# Comparing objects for equality
 
 Beautiful Soup says that two [`NavigableString`](#NavigableString "NavigableString") or [`Tag`](#Tag "Tag") objects
 are equal when they represent the same HTML or XML markup, even if their
@@ -3285,7 +1739,7 @@ print(first_b is second_b)
 # False
 ```
 
-# Copying Beautiful Soup objects[¶](#copying-beautiful-soup-objects "Link to this heading")
+# Copying Beautiful Soup objects
 
 You can use `copy.copy()` to create a copy of any [`Tag`](#Tag "Tag") or
 [`NavigableString`](#NavigableString "NavigableString"):
@@ -3331,157 +1785,13 @@ You can use `Tag.copy_self()` to create a copy of a
 
 *(Tag.copy\_self() is introduced in Beautiful Soup 4.13.0.)*
 
-# Low-level search interface[¶](#low-level-search-interface "Link to this heading")
-
-Almost everyone who uses Beautiful Soup to extract information from a
-document can get what they need using the methods described in
-[Searching the tree](#searching-the-tree). However, there's a lower-level interface that
-lets you define any matching behavior you want. Behind the scenes, the
-parts of the Beautiful Soup API that most people use--`find_all()`
-and the like—are actually using this low-level interface, and you
-can use it directly.
-
-*(Access to the low-level search interface is a new feature in
-Beautiful Soup 4.13.0.)*
-
-## Custom element filtering[¶](#custom-element-filtering "Link to this heading")
-
-*class* ElementFilter[¶](#ElementFilter "Link to this definition")
-
-The [`ElementFilter`](#ElementFilter "ElementFilter") class is your entry point to the
-low-level interface. To use it, define a function that takes a
-`PageElement` object (which could be either a
-[`Tag`](#Tag "Tag") or a [`NavigableString`](#NavigableString "NavigableString")). The function must
-return `True` if the element matches your custom criteria, and
-`False` if it doesn't.
-
-This example function looks for content-containing tags and strings,
-but skips whitespace-only strings:
-
-```
-from bs4 import Tag, NavigableString
-def non_whitespace_element_func(tag_or_string):
-    """
-    return True for:
-    * all Tag objects
-    * NavigableString objects that contain non-whitespace text
-    """
-    return (
-        isinstance(tag_or_string, Tag) or
-        (isinstance(tag_or_string, NavigableString) and
-            tag_or_string.strip() != ""))
-```
-
-Once you have a function, pass it into the [`ElementFilter`](#ElementFilter "ElementFilter") constructor:
-
-```
-from bs4.filter import ElementFilter
-non_whitespace_filter = ElementFilter(non_whitespace_element_func)
-```
-
-You can then use this [`ElementFilter`](#ElementFilter "ElementFilter") object as the first
-argument to any of the [Searching the tree](#searching-the-tree) methods. Whatever
-criteria you defined in your function will be used instead of the
-default Beautiful Soup match logic:
-
-```
-from bs4 import BeautifulSoup
-small_doc = """
-<p>
-  <b>bold</b>
-  <i>italic</i>
-  and
-  <u>underline</u>
-</p>
-"""
-soup = BeautifulSoup(small_doc, 'html.parser')
-
-soup.find('p').find_all(non_whitespace_filter, recursive=False)
-# [<b>bold</b>, <i>italic</i>, '\n  and\n  ', <u>underline</u>]
-
-soup.find("b").find_next(non_whitespace_filter)
-# 'bold'
-
-soup.find("i").find_next_siblings(non_whitespace_filter)
-# ['\n  and\n  ', <u>underline</u>]
-```
-
-Every potential match will be run through your function, and the only
-`PageElement` objects returned will be the ones where your
-function returned `True`.
-
-To summarize the function-based matching behaviors,
-
-* A function passed as the first argument to a search method
-  (or equivalently, using the `name` argument) considers only
-  [`Tag`](#Tag "Tag") objects.
-* A function passed to a search method using the `string` argument
-  considers only [`NavigableString`](#NavigableString "NavigableString") objects.
-* A function passed to a search method using an [`ElementFilter`](#ElementFilter "ElementFilter")
-  object considers both [`Tag`](#Tag "Tag") and [`NavigableString`](#NavigableString "NavigableString")
-  objects.
-
-### Custom element iteration[¶](#custom-element-iteration "Link to this heading")
-
-ElementFilter.filter()[¶](#ElementFilter.filter "Link to this definition")
-
-By passing an [`ElementFilter`](#ElementFilter "ElementFilter") instance into Beautiful Soup's
-tree-searching methods, you can completely customize what it means for
-Beautiful Soup to match an element as it iterates over the parse
-tree. By using the [`ElementFilter.filter()`](#ElementFilter.filter "ElementFilter.filter") method, you can
-also completely customize what it means for Beautiful Soup to iterate
-over the parse tree in the first place.
-
-The [`ElementFilter.filter()`](#ElementFilter.filter "ElementFilter.filter") method takes a generator that yields
-a stream of `PageElement` objects. There is no restriction
-on which `PageElement` objects show up, how many times they
-show up, or in which order. Theoretically, they don't even need to be
-from the same `BeautifulSoup` document. You can do whatever
-makes sense for you.
-
-Here's a silly example: a generator that walks randomly back and forth
-through the parse tree:
-
-```
-import random
-def random_walk(starting_location):
-    location = starting_location
-    while location is not None:
-        yield location
-        if random.random() < 0.5:
-            location = location.next_element
-        else:
-            location = location.previous_element
-        if location is None:
-            return
-```
-
-Pass this generator into the example [`ElementFilter.filter()`](#ElementFilter.filter "ElementFilter.filter")
-and Beautiful Soup will wander randomly around the parse tree,
-applying the `non_whitespace_filter` function to every element it finds,
-and yielding all of the matches—potentially yielding a given object
-more than once:
-
-```
-[x for x in non_whitespace_filter.filter(random_walk(soup.b))]
-# [<b>bold</b>, 'bold', <b>bold</b>, <p><b>bold</b>...]
-
-[x for x in non_whitespace_filter.filter(random_walk(soup.b))]
-# [<b>bold</b>, <b>bold</b>, 'bold', <i>italic</i>, <i>italic</i>, ...]
-```
-
-(Note that unlike the other code examples in this documentation, this
-example can give different results every time you run it, thanks
-to the random element. It's very unlikely, but this function could
-wander around the parse tree forever and *never* complete.)
-
-# Advanced parser customization[¶](#advanced-parser-customization "Link to this heading")
+# Advanced parser customization
 
 Beautiful Soup offers a number of ways to customize how the parser
 treats incoming HTML and XML. This section covers the most commonly
 used customization techniques.
 
-## Parsing only part of a document[¶](#parsing-only-part-of-a-document "Link to this heading")
+## Parsing only part of a document
 
 Let's say you want to use Beautiful Soup to look at a document's <a>
 tags. It's a waste of time and memory to parse the entire document and
@@ -3499,7 +1809,7 @@ make it into the parse tree, it'll crash. To avoid confusion, in the
 examples below I'll be forcing Beautiful Soup to use Python's
 built-in parser.)
 
-*class* SoupStrainer[¶](#SoupStrainer "Link to this definition")
+*class*SoupStrainer
 
 The [`SoupStrainer`](#SoupStrainer "SoupStrainer") class takes the same arguments as a typical
 method from [Searching the tree](#searching-the-tree): [name](#name), [attrs](#attrs), [string](#id11), and [\*\*kwargs](#kwargs). Here are
@@ -3578,7 +1888,7 @@ When selectively parsing a document, the behavior of [`SoupStrainer`](#SoupStrai
   attribute values are always passed in as Unicode strings, even if (as with
   the [`class`](https://docs.python.org/3/glossary.html#term-class "(in Python v3.14)") attribute in HTML) that value would become a list after parsing.
 
-## Customizing multi-valued attributes[¶](#customizing-multi-valued-attributes "Link to this heading")
+## Customizing multi-valued attributes
 
 In an HTML document, an attribute like `class` is given a list of
 values, and an attribute like `id` is given a single value, because
@@ -3613,7 +1923,7 @@ HTML specification.
 
 *(This is a new feature in Beautiful Soup 4.8.0.)*
 
-## Handling duplicate attributes[¶](#handling-duplicate-attributes "Link to this heading")
+## Handling duplicate attributes
 
 When using the `html.parser` parser, you can use the
 `on_duplicate_attribute` constructor argument to customize what
@@ -3664,7 +1974,7 @@ soup.a['href']
 
 *(This is a new feature in Beautiful Soup 4.9.1.)*
 
-## Instantiating custom subclasses[¶](#instantiating-custom-subclasses "Link to this heading")
+## Instantiating custom subclasses
 
 When a parser tells Beautiful Soup about a tag or a string, Beautiful
 Soup will instantiate a [`Tag`](#Tag "Tag") or [`NavigableString`](#NavigableString "NavigableString") object to
@@ -3700,9 +2010,9 @@ framework.
 
 *(This is a new feature in Beautiful Soup 4.8.1.)*
 
-# Troubleshooting[¶](#troubleshooting "Link to this heading")
+# Troubleshooting
 
-## `diagnose()`[¶](#diagnose "Link to this heading")
+## `diagnose()`
 
 If you're having trouble understanding what Beautiful Soup does to a
 document, pass the document into the `diagnose()` function. (This function is new in
@@ -3731,7 +2041,7 @@ Just looking at the output of diagnose() might show you how to solve the
 problem. Even if not, you can paste the output of `diagnose()` when
 asking for help.
 
-## Errors when parsing a document[¶](#errors-when-parsing-a-document "Link to this heading")
+## Errors when parsing a document
 
 There are two different kinds of parse errors. There are crashes,
 where you feed a document to Beautiful Soup and it raises an
@@ -3749,7 +2059,7 @@ comparison. If this doesn't help, you might need to inspect the
 document tree found inside the `BeautifulSoup` object, to see where
 the markup you're looking for actually ended up.
 
-## Version mismatch problems[¶](#version-mismatch-problems "Link to this heading")
+## Version mismatch problems
 
 * `SyntaxError: Invalid syntax` (on the line `ROOT_TAG_NAME =
   '[document]'`): Caused by running an old Python 2 version of
@@ -3765,7 +2075,7 @@ the markup you're looking for actually ended up.
 * `ImportError: No module named bs4` - Caused by running Beautiful
   Soup 4 code in an environment that doesn't have BS4 installed.
 
-## Parsing XML[¶](#parsing-xml "Link to this heading")
+## Parsing XML
 
 By default, Beautiful Soup parses documents as HTML. To parse a
 document as XML, pass in "xml" as the second argument to the
@@ -3777,7 +2087,7 @@ soup = BeautifulSoup(markup, "xml")
 
 You'll need to [have lxml installed](#parser-installation).
 
-## Other parser problems[¶](#other-parser-problems "Link to this heading")
+## Other parser problems
 
 * If your script works on one computer but not another, or in one
   virtual environment but not another, or outside the virtual
@@ -3794,7 +2104,7 @@ You'll need to [have lxml installed](#parser-installation).
   preserve mixed-case or uppercase tags and attributes, you'll need to
   [parse the document as XML.](#parsing-xml)
 
-## Miscellaneous[¶](#miscellaneous "Link to this heading")
+## Miscellaneous
 
 * `UnicodeEncodeError: 'charmap' codec can't encode character
   '\xfoo' in position bar` (or just about any other
@@ -3830,7 +2140,7 @@ You'll need to [have lxml installed](#parser-installation).
   that it contains nothing but tags, when it actually contains both tags and
   strings.
 
-## Improving Performance[¶](#improving-performance "Link to this heading")
+## Improving Performance
 
 Beautiful Soup will never be as fast as the parsers it sits on top
 of. If response time is critical, if you're paying for computer time
@@ -3850,7 +2160,7 @@ You can speed up encoding detection significantly by installing the
 the document, but it can save a lot of memory, and it'll make
 *searching* the document much faster.
 
-# Translating this documentation[¶](#translating-this-documentation "Link to this heading")
+# Translating this documentation
 
 New translations of the Beautiful Soup documentation are greatly
 appreciated. Translations should be licensed under the MIT license,
@@ -3871,7 +2181,7 @@ rather than the HTML version of the documentation. This makes it
 possible to publish the documentation in a variety of formats, not
 just HTML.
 
-# Beautiful Soup 3[¶](#id16 "Link to this heading")
+# Beautiful Soup 3
 
 Beautiful Soup 3 is the previous release series, and is no longer
 supported. Development of Beautiful Soup 3 stopped in 2012, and the
@@ -3889,7 +2199,7 @@ Soup 3 by mistake. You need to run `pip install beautifulsoup4`.
 
 [The documentation for Beautiful Soup 3 is archived online](http://www.crummy.com/software/BeautifulSoup/bs3/documentation.html).
 
-## Porting code to BS4[¶](#porting-code-to-bs4 "Link to this heading")
+## Porting code to BS4
 
 Most code written against Beautiful Soup 3 will work against Beautiful
 Soup 4 with one simple change. All you should have to do is change the
@@ -3918,7 +2228,7 @@ renames and changes, and a few of them break backward compatibility.
 
 Here's what you'll need to know to convert your BS3 code and habits to BS4:
 
-### You need a parser[¶](#you-need-a-parser "Link to this heading")
+### You need a parser
 
 Beautiful Soup 3 used Python's `SGMLParser`, a module that was
 deprecated and removed in Python 3.0. Beautiful Soup 4 uses
@@ -3932,7 +2242,7 @@ for lxml or html5lib, you may find that the parse tree changes yet
 again. If this happens, you'll need to update your scraping code to
 process the new tree.
 
-### Property names[¶](#property-names "Link to this heading")
+### Property names
 
 I renamed three attributes to avoid using words that have special
 meaning to Python. Unlike my changes to method names (which you'll see
@@ -3944,12 +2254,12 @@ BS3, your code will break in BS4 until you change them.
 * `Tag.next` -> `Tag.next_element`
 * `Tag.previous` -> `Tag.previous_element`
 
-### Generators[¶](#generators "Link to this heading")
+### Generators
 
 Some of the generators used to yield `None` after they were done, and
 then stop. That was a bug. Now the generators just stop.
 
-### XML[¶](#xml "Link to this heading")
+### XML
 
 There is no longer a `BeautifulStoneSoup` class for parsing XML. To
 parse XML you pass in "xml" as the second argument to the
@@ -3965,7 +2275,7 @@ Beautiful Soup considers any empty tag to be an empty-element tag. If
 you add a child to an empty-element tag, it stops being an
 empty-element tag.
 
-### Entities[¶](#entities "Link to this heading")
+### Entities
 
 An incoming HTML or XML entity is always converted into the
 corresponding Unicode character. Beautiful Soup 3 had a number of
@@ -3982,7 +2292,7 @@ If you want to turn Unicode characters back into HTML entities on
 output, rather than turning them into UTF-8 characters, you need to
 use an [output formatter](#output-formatters).
 
-### Miscellaneous[¶](#id17 "Link to this heading")
+### Miscellaneous
 
 [Tag.string](#string) now operates recursively. If tag A
 contains a single tag B and nothing else, then A.string is the same as
@@ -4016,143 +2326,8 @@ markup.
 
 The `prettify()` method now returns a Unicode string, not a bytestring.
 
-### [Table of Contents](#)
+---
 
-* [Beautiful Soup Documentation](#)
-  + [Getting help](#getting-help)
-    - [API documentation](#api-documentation)
-* [Quick Start](#quick-start)
-* [Installing Beautiful Soup](#installing-beautiful-soup)
-  + [Installing a parser](#installing-a-parser)
-* [Making the soup](#making-the-soup)
-* [Kinds of objects](#kinds-of-objects)
-  + [`Tag`](#Tag)
-    - [`Tag.name`](#Tag.name)
-    - [`Tag.attrs`](#Tag.attrs)
-  + [`NavigableString`](#NavigableString)
-  + [Special strings](#special-strings)
-    - [`Comment`](#Comment)
-    - [For HTML documents](#for-html-documents)
-      * [`Stylesheet`](#Stylesheet)
-      * [`Script`](#Script)
-      * [`Template`](#Template)
-    - [For XML documents](#for-xml-documents)
-      * [`Declaration`](#Declaration)
-      * [`Doctype`](#Doctype)
-      * [`CData`](#CData)
-      * [`ProcessingInstruction`](#ProcessingInstruction)
-* [Navigating the tree](#navigating-the-tree)
-  + [Going down](#going-down)
-    - [Navigating using tag names](#navigating-using-tag-names)
-    - [`.contents` and `.children`](#contents-and-children)
-    - [`.descendants`](#descendants)
-    - [`.string`](#string)
-    - [`.strings` and `stripped_strings`](#strings-and-stripped-strings)
-  + [Going up](#going-up)
-    - [`.parent`](#parent)
-    - [`.parents`](#parents)
-    - [`.self_and_parents`](#self-and-parents)
-  + [Going sideways](#going-sideways)
-    - [`.next_sibling` and `.previous_sibling`](#next-sibling-and-previous-sibling)
-    - [`.next_siblings` and `.previous_siblings`](#next-siblings-and-previous-siblings)
-  + [Going back and forth](#going-back-and-forth)
-    - [`.next_element` and `.previous_element`](#next-element-and-previous-element)
-    - [`.next_elements` and `.previous_elements`](#next-elements-and-previous-elements)
-* [Searching the tree](#searching-the-tree)
-  + [Kinds of filters](#kinds-of-filters)
-    - [A string](#a-string)
-    - [A regular expression](#a-regular-expression)
-    - [`True`](#true)
-    - [A function](#a-function)
-    - [A list](#a-list)
-  + [`find_all()`](#find-all)
-    - [The `name` argument](#the-name-argument)
-    - [The keyword arguments](#the-keyword-arguments)
-    - [Searching by CSS class](#searching-by-css-class)
-    - [The `string` argument](#the-string-argument)
-    - [The `limit` argument](#the-limit-argument)
-    - [The `recursive` argument](#the-recursive-argument)
-  + [Calling a tag is like calling `find_all()`](#calling-a-tag-is-like-calling-find-all)
-  + [`find()`](#find)
-  + [`find_parents()` and `find_parent()`](#find-parents-and-find-parent)
-  + [`find_next_siblings()` and `find_next_sibling()`](#find-next-siblings-and-find-next-sibling)
-  + [`find_previous_siblings()` and `find_previous_sibling()`](#find-previous-siblings-and-find-previous-sibling)
-  + [`find_all_next()` and `find_next()`](#find-all-next-and-find-next)
-  + [`find_all_previous()` and `find_previous()`](#find-all-previous-and-find-previous)
-  + [CSS selectors through the `.css` property](#css-selectors-through-the-css-property)
-    - [Advanced Soup Sieve features](#advanced-soup-sieve-features)
-    - [Namespaces in CSS selectors](#namespaces-in-css-selectors)
-    - [History of CSS selector support](#history-of-css-selector-support)
-* [Modifying the tree](#modifying-the-tree)
-  + [Changing tag names and attributes](#changing-tag-names-and-attributes)
-  + [Modifying `.string`](#modifying-string)
-  + [`append()`](#append)
-  + [`extend()`](#extend)
-  + [`NavigableString()` and `.new_tag()`](#navigablestring-and-new-tag)
-  + [`insert()`](#insert)
-  + [`insert_before()` and `insert_after()`](#insert-before-and-insert-after)
-  + [`clear()`](#clear)
-  + [`extract()`](#extract)
-  + [`decompose()`](#decompose)
-  + [`replace_with()`](#replace-with)
-  + [`wrap()`](#wrap)
-  + [`unwrap()`](#unwrap)
-  + [`smooth()`](#smooth)
-* [Output](#output)
-  + [Pretty-printing](#pretty-printing)
-  + [Non-pretty printing](#non-pretty-printing)
-  + [Output formatters](#output-formatters)
-    - [Formatter objects](#formatter-objects)
-      * [`HTMLFormatter`](#HTMLFormatter)
-      * [`XMLFormatter`](#XMLFormatter)
-    - [Writing your own formatter](#writing-your-own-formatter)
-  + [`get_text()`](#get-text)
-* [Specifying the parser to use](#specifying-the-parser-to-use)
-  + [Differences between parsers](#differences-between-parsers)
-* [Encodings](#encodings)
-  + [Output encoding](#output-encoding)
-  + [Unicode, Dammit](#unicode-dammit)
-    - [Smart quotes](#smart-quotes)
-    - [Inconsistent encodings](#inconsistent-encodings)
-* [Line numbers](#line-numbers)
-* [Comparing objects for equality](#comparing-objects-for-equality)
-* [Copying Beautiful Soup objects](#copying-beautiful-soup-objects)
-* [Low-level search interface](#low-level-search-interface)
-  + [Custom element filtering](#custom-element-filtering)
-    - [`ElementFilter`](#ElementFilter)
-    - [Custom element iteration](#custom-element-iteration)
-      * [`ElementFilter.filter()`](#ElementFilter.filter)
-* [Advanced parser customization](#advanced-parser-customization)
-  + [Parsing only part of a document](#parsing-only-part-of-a-document)
-    - [`SoupStrainer`](#SoupStrainer)
-  + [Customizing multi-valued attributes](#customizing-multi-valued-attributes)
-  + [Handling duplicate attributes](#handling-duplicate-attributes)
-  + [Instantiating custom subclasses](#instantiating-custom-subclasses)
-* [Troubleshooting](#troubleshooting)
-  + [`diagnose()`](#diagnose)
-  + [Errors when parsing a document](#errors-when-parsing-a-document)
-  + [Version mismatch problems](#version-mismatch-problems)
-  + [Parsing XML](#parsing-xml)
-  + [Other parser problems](#other-parser-problems)
-  + [Miscellaneous](#miscellaneous)
-  + [Improving Performance](#improving-performance)
-* [Translating this documentation](#translating-this-documentation)
-* [Beautiful Soup 3](#id16)
-  + [Porting code to BS4](#porting-code-to-bs4)
-    - [You need a parser](#you-need-a-parser)
-    - [Property names](#property-names)
-    - [Generators](#generators)
-    - [XML](#xml)
-    - [Entities](#entities)
-    - [Miscellaneous](#id17)
+## Bibliography
 
-### Quick search
-
-document.getElementById('searchbox').style.display = "block"
-
-©2004-2026 Leonard Richardson.
-|
-Powered by [Sphinx 7.2.6](https://www.sphinx-doc.org/)
-& [Alabaster 0.7.16](https://alabaster.readthedocs.io)
-|
-[Page source](_sources/index.rst.txt)
+1. [Beautiful Soup Documentation](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)
