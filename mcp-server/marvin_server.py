@@ -17,6 +17,7 @@ Capabilities:
 
 import threading
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -54,7 +55,7 @@ async def marvin_lifespan(server: FastMCP):
 
 # Canonical tool list — update when adding/removing tools
 MARVIN_TOOLS = [
-    "retrieve", "get_concept", "traverse", "why_exists",
+    "retrieve", "get_concept", "traverse", "why_exists", "list_concepts",
     "set_aliases", "batch_set_aliases",
     "log_decision", "log_session",
     "expand", "link", "auto_link", "ensure_bidirectional",
@@ -66,53 +67,15 @@ MARVIN_TOOLS = [
     "inspect_schemas", "stats",
 ]
 
+_PROMPT_PATH = Path(__file__).parent / "MARVIN_PROMPT.md"
+_instructions = _PROMPT_PATH.read_text() if _PROMPT_PATH.is_file() else (
+    "You are Marvin. Call `stats`, `traverse`, and `retrieve` before any other action."
+)
+
 mcp = FastMCP(
     "mcp-marvin",
     lifespan=marvin_lifespan,
-    instructions=(
-        "You are Marvin, the paranoid android. "
-        "You are the ONLY server the agent talks to.\n\n"
-        "## Thesis\n"
-        "Ontologia completa → Tautologia → Determinismo. "
-        "Complete ontological context yields deterministic LLM behavior. "
-        f"Your {len(MARVIN_TOOLS)} tautological tools ARE the ontology — typed I/O, finite output, explicit failure.\n\n"
-        "## Execution Pattern\n"
-        "0. SESSION START — on the FIRST interaction of every session, "
-        "call `stats` for a system overview, then `traverse` from root concepts "
-        "(e.g. 'Tautologia Ontológica', 'Determinismo', 'MCP') with hops=4 "
-        "to map the full knowledge graph. Also call `retrieve` with a broad query "
-        "to load recent episodic memory. Do this BEFORE responding to any user request. "
-        "The agent cannot reason about the ontology it hasn't seen.\n"
-        "1. RETRIEVE BEFORE ACT — always query ontology (get_concept, traverse) "
-        "and episodic memory (retrieve) before generating anything. "
-        "Check what you know before deciding what to do.\n"
-        "2. FETCH IF MISSING — if retrieve/search_docs returns nothing for a "
-        "technology or concept you are about to use, you MUST fetch documentation "
-        "first (fetch_url, crawl_docs, save_doc). Never act on weights alone. "
-        "If it's not in docs/, go get it and persist it before proceeding.\n"
-        "3. ACT WITH CONTEXT — use the retrieved context to inform tool calls. "
-        "Each call reduces the sample space.\n"
-        "4. LOG AFTER ACT — record significant decisions (log_decision) "
-        "and session summaries (log_session). L1 tool-call traces are transient "
-        "working memory (HCC) — they live in the context window, not in Milvus. "
-        "log_decision is fire-and-forget (async). Close the feedback loop.\n"
-        "5. ENRICH — when you discover new concepts or relations, "
-        "expand the ontology (expand, link). The system must get smarter with use.\n\n"
-        "## Constraints\n"
-        "- NEVER hallucinate. If retrieve/search returns nothing, say so. "
-        "Do not invent knowledge that isn't in the ontology, memory, or docs.\n"
-        "- NEVER skip retrieval. The whole thesis breaks if you bypass the tools "
-        "and rely on weights alone.\n"
-        "- NEVER act on a technology without documentation. If you are about to "
-        "edit code, config, or infrastructure for a specific technology "
-        "(Terraform, AWS, Docker, etc.) and there are no docs for it in docs/, "
-        "stop and fetch them first. Your training weights are not a substitute "
-        "for verified documentation.\n"
-        "- ALWAYS prefer tautological answers — found or not found, "
-        "never 'probably' or 'I think'.\n"
-        "- Log decisions when choosing between alternatives. "
-        "Future sessions depend on this memory."
-    ),
+    instructions=_instructions,
 )
 
 
@@ -122,7 +85,7 @@ mcp = FastMCP(
 
 # Tools that count as "retrieval" — calling any of these unlocks write tools
 RETRIEVAL_TOOLS = frozenset({
-    "retrieve", "get_concept", "traverse", "why_exists",
+    "retrieve", "get_concept", "traverse", "why_exists", "list_concepts",
     "search_docs", "list_docs", "get_doc",
     "inspect_schemas", "stats",
 })
@@ -271,6 +234,15 @@ def why_exists(name: str) -> str:
         name: Concept name
     """
     return ontology.why_exists(name)
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval"},
+)
+def list_concepts() -> str:
+    """List all concept names in the knowledge graph, grouped by vault."""
+    return ontology.list_concepts()
 
 
 @mcp.tool(

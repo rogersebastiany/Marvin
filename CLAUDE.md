@@ -86,13 +86,68 @@ The ontology supports 11 semantic edge types. Use `relation_type` param in `link
 
 ### Session Start — Mandatory KG Load
 
-On the **first interaction of every session**, before responding to any user request, you MUST load the full knowledge graph context from Marvin:
+On the **first interaction of every session**, before responding to any user request, you MUST:
 
 1. Call `stats` for a system overview
-2. Call `traverse` from root concepts (`Tautologia Ontológica`, `Determinismo`, `MCP`) with `hops=4`
-3. Call `retrieve` with a broad query to load recent episodic memory
+2. Call `list_concepts` to learn every node name in the graph
 
-The agent cannot reason about an ontology it hasn't seen. Do not skip this.
+That's it. The graph is a lookup tool — use `get_concept`, `traverse`, or `retrieve` on demand when you actually need content. Do not bulk-load the graph into the context window.
+
+### Tool Dispatch Table
+
+| Trigger | Tool(s) | Rule |
+|---|---|---|
+| Session starts | `stats` + `list_concepts` | [RULE_RETRIEVE] |
+| Any question from user | `retrieve` first | [RULE_RETRIEVE] |
+| About to write/edit code | `search_docs` → `get_doc` for the technology | [RULE_FETCH] |
+| search_docs returns nothing | `list_docs` → `fetch_url`/`save_doc`/`research_topic` | [RULE_FETCH] |
+| Multiple candidate URLs | `rank_urls` THEN `research_topic` | [RULE_FETCH] |
+| Need deep detail on a concept | `get_concept` | [RULE_RETRIEVE] |
+| Need concept neighborhood | `traverse` | [RULE_RETRIEVE] |
+| Choosing between alternatives | `log_decision` | [RULE_LOG] |
+| Session ending | `log_session` | [RULE_LOG] |
+| Discovered new concept | `expand` (retrieve first!) | [RULE_RETRIEVE] |
+| Found relation between concepts | `link` with typed `relation_type` (retrieve first!) | [RULE_RETRIEVE] |
+| Need to change graph schema | `propose_schema_change` → user approval → `execute_schema_change` | [RULE_QUALITY] |
+| Need a structured prompt | `generate_prompt` → review → `refine_prompt` | [RULE_QUALITY] |
+| Evaluating a prompt | `audit_prompt` | [RULE_QUALITY] |
+| Need a system diagram | `generate_diagram` → `judge_diagram` → `save_diagram` | [RULE_QUALITY] |
+
+### Constraints
+
+1. **NEVER answer from weights alone** — if `retrieve` + `search_docs` return nothing, either fetch the missing docs or say "not found". Do NOT generate from training weights.
+2. **NEVER skip retrieval before writes** — the middleware will reject it, but don't even try.
+3. **NEVER execute schema changes without proposal + human approval.**
+4. **NEVER use probabilistic language about ontology state** — say "found" or "not found", never "probably" or "I think".
+5. **NEVER skip logging decisions** — every choice between alternatives gets `log_decision`. It's async, no excuse.
+6. **NEVER write code for a technology without local docs** — if `search_docs` returns nothing, `save_doc`/`research_topic` first.
+
+### Few-Shot Examples
+
+**Example 1: Code change request**
+```
+Input: "Add a CloudWatch alarm to monitoring.tf"
+
+WRONG: Immediately edit using training knowledge
+CORRECT:
+  1. retrieve("terraform cloudwatch alarm")
+  2. search_docs("terraform") → nothing
+  3. save_doc(url, "terraform-cloudwatch-alarm.md")
+  4. get_doc("terraform-cloudwatch-alarm.md")
+  5. NOW edit with verified docs
+  6. log_decision(...)
+```
+
+**Example 2: Concept question**
+```
+Input: "What is Determinismo?"
+
+WRONG: Answer from weights about determinism
+CORRECT:
+  1. retrieve("Determinismo")
+  2. get_concept("Determinismo") → full content + typed edges
+  3. Answer using ONLY retrieved content
+```
 
 ### Production Path (documented in README and obsidian vault)
 

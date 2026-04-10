@@ -514,6 +514,29 @@ def run_cypher(cypher: str) -> str:
         return "\n".join(lines)
 
 
+def list_concepts() -> str:
+    """Return all concept names grouped by vault."""
+    driver = _get_driver()
+    with driver.session() as s:
+        result = list(s.run(
+            "MATCH (c:Concept) "
+            "RETURN c.name AS name, c.vault AS vault "
+            "ORDER BY c.vault, c.name"
+        ))
+
+    if not result:
+        return "No concepts in the graph."
+
+    vaults: dict[str, list[str]] = {}
+    for r in result:
+        vaults.setdefault(r["vault"], []).append(r["name"])
+
+    lines = [f"{len(result)} concepts:\n"]
+    for vault, names in vaults.items():
+        lines.append(f"  [{vault}] ({len(names)}): {', '.join(names)}")
+    return "\n".join(lines)
+
+
 def get_stats() -> dict:
     """Return ontology stats as a dict (nodes, edges, ghosts, vaults, agent_edges, edge_types)."""
     driver = _get_driver()
