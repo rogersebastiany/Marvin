@@ -16,9 +16,10 @@ Capabilities:
 """
 
 import threading
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.exceptions import ToolError
 
@@ -117,10 +118,7 @@ GUARDED_TOOLS = frozenset({
 # fetch_url is allowed because it IS retrieval (from the web)
 # propose_schema_change is allowed because it doesn't execute anything
 # log_* are always allowed — you should always be able to log
-# list_diagrams, get_diagram, audit_prompt are read-only
-
-
-_RETRIEVED_FLAG = Path(__file__).parent / ".retrieved"
+# list_diagrams, get_diagram, audit_prompt, rank_urls are read-only
 
 
 class RetrieveBeforeActMiddleware(Middleware):
@@ -129,28 +127,24 @@ class RetrieveBeforeActMiddleware(Middleware):
     This is NOT a prompt bias — it's a hard gate. The server refuses to execute
     guarded tools unless at least one retrieval tool has been called in the session.
 
-    State survives hot-reload via a temp file (.retrieved).
+    Uses per-session state via FastMCP Context — no file flags.
     """
-
-    def __init__(self):
-        self._retrieved = _RETRIEVED_FLAG.exists()
-
-    def _mark_retrieved(self):
-        self._retrieved = True
-        _RETRIEVED_FLAG.touch()
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         tool_name = context.message.name
+        ctx = context.fastmcp_context
 
-        if tool_name in RETRIEVAL_TOOLS:
-            self._mark_retrieved()
+        if tool_name in RETRIEVAL_TOOLS and ctx:
+            await ctx.set_state("retrieved", True)
 
-        if tool_name in GUARDED_TOOLS and not self._retrieved:
-            raise ToolError(
-                f"BLOCKED: '{tool_name}' requires prior retrieval. "
-                f"Call one of {sorted(RETRIEVAL_TOOLS)} first. "
-                f"The thesis says: retrieve before act."
-            )
+        if tool_name in GUARDED_TOOLS:
+            retrieved = (await ctx.get_state("retrieved")) if ctx else False
+            if not retrieved:
+                raise ToolError(
+                    f"BLOCKED: '{tool_name}' requires prior retrieval. "
+                    f"Call one of {sorted(RETRIEVAL_TOOLS)} first. "
+                    f"The thesis says: retrieve before act."
+                )
 
         return await call_next(context)
 
@@ -163,7 +157,10 @@ mcp.add_middleware(RetrieveBeforeActMiddleware())
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval"},
+)
 def retrieve(query: str, include_memory: bool = True, include_docs: bool = True, limit: int = 10) -> str:
     """Unified retrieval across ontology, episodic memory, and docs.
 
@@ -207,7 +204,10 @@ def retrieve(query: str, include_memory: bool = True, include_docs: bool = True,
     return "\n\n".join(sections)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval"},
+)
 def get_concept(name: str) -> str:
     """Get a concept with full content and all relations from the ontology.
 
@@ -217,7 +217,10 @@ def get_concept(name: str) -> str:
     return ontology.get_concept(name)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval"},
+)
 def traverse(name: str, hops: int = 2) -> str:
     """Walk the knowledge graph from a concept, returning its neighborhood.
 
@@ -228,7 +231,10 @@ def traverse(name: str, hops: int = 2) -> str:
     return ontology.traverse(name, hops)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval"},
+)
 def why_exists(name: str) -> str:
     """Explain why a concept exists in the ontology — edge reasoning.
 
@@ -238,7 +244,10 @@ def why_exists(name: str) -> str:
     return ontology.why_exists(name)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "idempotentHint": True},
+    tags={"enrichment"},
+)
 def set_aliases(name: str, aliases: list[str]) -> str:
     """Set English aliases for a concept. Enables cross-language search.
 
@@ -252,7 +261,10 @@ def set_aliases(name: str, aliases: list[str]) -> str:
     return ontology.set_aliases(name, aliases)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "idempotentHint": True},
+    tags={"enrichment"},
+)
 def batch_set_aliases(mappings: list[dict]) -> str:
     """Set aliases for multiple concepts at once.
 
@@ -268,7 +280,10 @@ def batch_set_aliases(mappings: list[dict]) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"logging"},
+)
 def log_decision(
     objective: str,
     options_considered: str,
@@ -295,7 +310,10 @@ def log_decision(
     return f"Logging decision (async): {objective[:60]}"
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"logging"},
+)
 def log_session(
     objective: str,
     approach: str,
@@ -325,7 +343,10 @@ def log_session(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"enrichment"},
+)
 def expand(
     concept_name: str,
     summary: str = "",
@@ -351,7 +372,10 @@ def expand(
     return ontology.expand(concept_name, summary, content, relate_to, reasoning, relation_type)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"enrichment"},
+)
 def link(source: str, target: str, reasoning: str, relation_type: str = "RELATES_TO") -> str:
     """Create a direct relation between two existing concepts.
 
@@ -368,7 +392,10 @@ def link(source: str, target: str, reasoning: str, relation_type: str = "RELATES
     return ontology.expand(source, relate_to=target, reasoning=reasoning, relation_type=relation_type)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"enrichment"},
+)
 def auto_link(name: str = "") -> str:
     """Scan concept content for references to other concepts and auto-create links.
 
@@ -381,7 +408,10 @@ def auto_link(name: str = "") -> str:
     return ontology.auto_link(name)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "idempotentHint": True},
+    tags={"enrichment"},
+)
 def ensure_bidirectional(name: str = "") -> str:
     """For every A→B edge, ensure B→A also exists.
 
@@ -399,7 +429,10 @@ def ensure_bidirectional(name: str = "") -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"evolution"},
+)
 def propose_schema_change(description: str, cypher: str) -> str:
     """Propose a schema change to Neo4j or Milvus.
 
@@ -418,7 +451,10 @@ def propose_schema_change(description: str, cypher: str) -> str:
     )
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "destructiveHint": True},
+    tags={"evolution"},
+)
 def execute_schema_change(cypher: str, confirmed: bool = False) -> str:
     """Execute a previously proposed schema change.
 
@@ -429,7 +465,7 @@ def execute_schema_change(cypher: str, confirmed: bool = False) -> str:
         confirmed: Must be True (human has approved)
     """
     if not confirmed:
-        return "Rejected: confirmed must be True. Show the proposal to the human first."
+        raise ToolError("Rejected: confirmed must be True. Show the proposal to the human first.")
 
     result = ontology.run_cypher(cypher)
     return f"Schema change applied.\n\nResult:\n{result}"
@@ -440,7 +476,10 @@ def execute_schema_change(cypher: str, confirmed: bool = False) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"documentation", "retrieval"},
+)
 def search_docs(query: str) -> str:
     """Search local documentation files for a keyword or phrase.
 
@@ -450,13 +489,19 @@ def search_docs(query: str) -> str:
     return docs_backend.search_docs(query)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"documentation", "retrieval"},
+)
 def list_docs() -> list[str]:
     """List all available local documentation files."""
     return docs_backend.list_docs()
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"documentation", "retrieval"},
+)
 def get_doc(filename: str) -> str:
     """Read a local documentation file.
 
@@ -466,7 +511,10 @@ def get_doc(filename: str) -> str:
     return docs_backend.read_doc(filename)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+    tags={"documentation"},
+)
 def fetch_url(url: str) -> str:
     """Fetch a webpage and return as markdown.
 
@@ -476,7 +524,10 @@ def fetch_url(url: str) -> str:
     return web_to_docs_backend.convert_url(url)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "openWorldHint": True},
+    tags={"documentation"},
+)
 def save_doc(url: str, filename: str) -> str:
     """Fetch a webpage and save as local documentation.
 
@@ -487,7 +538,10 @@ def save_doc(url: str, filename: str) -> str:
     return web_to_docs_backend.save_as_doc(url, filename)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+    tags={"documentation"},
+)
 def rank_urls(urls: list[str]) -> str:
     """Probe URLs and rank them by documentation quality BEFORE fetching.
 
@@ -503,7 +557,10 @@ def rank_urls(urls: list[str]) -> str:
     return web_to_docs_backend.rank_urls(urls)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "openWorldHint": True},
+    tags={"documentation"},
+)
 def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
     """Crawl a documentation site and save pages as local docs.
 
@@ -515,7 +572,10 @@ def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
     return web_to_docs_backend.crawl_docs(url, max_pages, path_prefix)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False, "openWorldHint": True},
+    tags={"documentation"},
+)
 def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
     """Fetch multiple URLs, merge into a single consolidated doc with bibliography.
 
@@ -541,7 +601,10 @@ def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"prompt-engineering"},
+)
 def generate_prompt(task_description: str, domain: str = "general") -> str:
     """Generate a structured prompt using the Prompt Architect framework.
 
@@ -553,7 +616,10 @@ def generate_prompt(task_description: str, domain: str = "general") -> str:
     return prompt_engineer_backend.generate_prompt(task_description, domain, catalog)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"prompt-engineering"},
+)
 def refine_prompt(original_prompt: str, feedback: str) -> str:
     """Refine an existing prompt based on feedback.
 
@@ -564,7 +630,10 @@ def refine_prompt(original_prompt: str, feedback: str) -> str:
     return prompt_engineer_backend.refine_prompt(original_prompt, feedback)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"prompt-engineering"},
+)
 def audit_prompt(prompt_to_audit: str) -> str:
     """Audit a prompt against the Prompt Architect framework.
 
@@ -579,7 +648,10 @@ def audit_prompt(prompt_to_audit: str) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"diagrams"},
+)
 def generate_diagram(system_description: str, diagram_type: str = "auto", save_as: str = "") -> str:
     """Generate a Mermaid.js system design diagram.
 
@@ -591,7 +663,10 @@ def generate_diagram(system_description: str, diagram_type: str = "auto", save_a
     return system_design_backend.generate_diagram(system_description, diagram_type, save_as)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"diagrams"},
+)
 def judge_diagram(mermaid_code: str) -> str:
     """Review a Mermaid.js diagram for correctness and quality.
 
@@ -601,7 +676,10 @@ def judge_diagram(mermaid_code: str) -> str:
     return system_design_backend.judge_diagram(mermaid_code)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"diagrams"},
+)
 def save_diagram(mermaid_code: str, filename: str) -> str:
     """Save a mermaid diagram to diagrams/.
 
@@ -612,13 +690,19 @@ def save_diagram(mermaid_code: str, filename: str) -> str:
     return system_design_backend.save_diagram(mermaid_code, filename)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"diagrams"},
+)
 def list_diagrams() -> list[str]:
     """List all saved mermaid diagrams."""
     return system_design_backend.list_diagrams()
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"diagrams"},
+)
 def get_diagram(filename: str) -> str:
     """Read a saved mermaid diagram.
 
@@ -633,7 +717,10 @@ def get_diagram(filename: str) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"introspection"},
+)
 def inspect_schemas() -> str:
     """Show current schemas for Neo4j and Milvus."""
     neo4j_schema = ontology.get_schema()
@@ -641,7 +728,10 @@ def inspect_schemas() -> str:
     return f"{neo4j_schema}\n\n---\n\n{milvus_schema}"
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"introspection"},
+)
 def stats() -> str:
     """Quick overview of the entire knowledge system."""
     s = ontology.get_stats()
