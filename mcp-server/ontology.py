@@ -23,7 +23,6 @@ RELATION_TYPES = [
     "IMPLEMENTS",
     "PROVES",
     "REQUIRES",
-    "TRANSLATES_TO",
     "EXTENDS",
     "CONTRADICTS",
     "ENABLES",
@@ -35,7 +34,6 @@ RELATION_TYPES = [
 # Symmetric types: A→B implies B→A with the same type
 SYMMETRIC_TYPES = frozenset({
     "RELATES_TO",
-    "TRANSLATES_TO",
     "CONTRADICTS",
 })
 
@@ -443,8 +441,8 @@ def auto_link(name: str = "") -> str:
 def ensure_bidirectional(name: str = "") -> str:
     """For every A→B symmetric edge, ensure B→A also exists (same type).
 
-    Only processes symmetric relationship types (RELATES_TO, TRANSLATES_TO,
-    CONTRADICTS). Directional types (IMPLEMENTS, REQUIRES, COMPOSES, etc.)
+    Only processes symmetric relationship types (RELATES_TO, CONTRADICTS).
+    Directional types (IMPLEMENTS, REQUIRES, COMPOSES, etc.)
     are left as-is — A IMPLEMENTS B does not mean B IMPLEMENTS A.
 
     If name is given, only process edges involving that concept.

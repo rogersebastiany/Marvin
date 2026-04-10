@@ -367,7 +367,7 @@ def expand(
         relate_to: Target concept for an edge
         reasoning: Why this relation exists
         relation_type: Edge type — one of RELATES_TO, IMPLEMENTS, PROVES, REQUIRES,
-            TRANSLATES_TO, EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
+            EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
             EVOLVES_FROM. Defaults to RELATES_TO.
     """
     return ontology.expand(concept_name, summary, content, relate_to, reasoning, relation_type)
@@ -387,7 +387,7 @@ def link(source: str, target: str, reasoning: str, relation_type: str = "RELATES
         target: Target concept name
         reasoning: Why this relation exists
         relation_type: Edge type — one of RELATES_TO, IMPLEMENTS, PROVES, REQUIRES,
-            TRANSLATES_TO, EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
+            EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
             EVOLVES_FROM. Defaults to RELATES_TO.
     """
     return ontology.expand(source, relate_to=target, reasoning=reasoning, relation_type=relation_type)

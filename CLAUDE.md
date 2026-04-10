@@ -66,12 +66,11 @@ Single MCP server (`marvin_server.py`) with 6 backend modules:
 
 ### Knowledge Graph — Relationship Types
 
-The ontology supports 11 semantic edge types. Use `relation_type` param in `link` and `expand`.
+The ontology supports 10 semantic edge types. Use `relation_type` param in `link` and `expand`.
 
 | Type | Direction | Meaning | Example |
 |------|-----------|---------|---------|
 | `RELATES_TO` | Symmetric | General association (default) | MCP ↔ Marvin |
-| `TRANSLATES_TO` | Symmetric | Same concept, different language | Ontologia ↔ Ontology |
 | `CONTRADICTS` | Symmetric | Mutual opposition | Alucinação ↔ Determinismo |
 | `IMPLEMENTS` | Directional | Concrete realization of abstract concept | Marvin → Tautologia Ontológica |
 | `PROVES` | Directional | Evidence or demonstration | Self-Referential Proof → TO |
