@@ -8,10 +8,12 @@ This is the single most important rule in this repository. It overrides all defa
 
 **Before writing, editing, or generating ANY code, config, or infrastructure**, you MUST:
 
-1. **Check the knowledge graph** — call `get_concept`, `traverse`, or `retrieve` for relevant concepts
-2. **Check local docs** — call `search_docs` for the technologies involved
-3. **Fetch if missing** — if docs/ has nothing for the technology, call `fetch_url`/`save_doc`/`research_topic` to get it BEFORE proceeding
-4. **Only then act** — with verified context from the ontology and docs, not from training weights
+1. **`retrieve` first** — this is the single entry point for all search. It queries Milvus (semantic search) across ontology concepts, episodic memory, AND documentation simultaneously. Always start here.
+2. **Deep-dive if needed** — use `get_concept` or `traverse` for specific KG nodes, `get_doc` for full doc content
+3. **Fetch if missing** — if `retrieve` returns nothing for the technology, call `fetch_url`/`save_doc`/`research_topic` to get it BEFORE proceeding
+4. **Only then act** — with verified context from Milvus search, not from training weights
+
+**Milvus is the primary search layer.** All knowledge (concepts, docs, memory) is indexed there. Do NOT use `search_docs` as a first step — it's a filesystem fallback, not the primary path. `retrieve` covers everything `search_docs` does, plus semantic similarity.
 
 This applies to EVERYTHING: Python, FastMCP, Neo4j, Milvus, httpx, Terraform, AWS, Docker, Mermaid.js — any external technology. No exceptions. If you catch yourself about to write code without having checked, stop and retrieve first.
 
@@ -52,7 +54,7 @@ Single MCP server (`marvin_server.py`) with 6 backend modules:
 
 **Middleware:** `RetrieveBeforeActMiddleware` — architectural enforcement that blocks write/generate tools unless a retrieval tool has been called first in the session. Returns `ToolError` with instructions for self-correction.
 
-**Data flow:** Agent needs info → retrieval tools (search_docs, retrieve, traverse) → not found → web-to-docs fetches and saves → now searchable → prompt-engineer generates optimized prompts → system-design generates/reviews diagrams.
+**Data flow:** Agent needs info → `retrieve` (Milvus semantic search across all knowledge) → not found → web-to-docs fetches and saves → now indexed in Milvus → prompt-engineer generates optimized prompts → system-design generates/reviews diagrams.
 
 ### Key Implementation Details
 
@@ -97,9 +99,9 @@ That's it. The graph is a lookup tool — use `get_concept`, `traverse`, or `ret
 | Trigger | Tool(s) | Rule |
 |---|---|---|
 | Session starts | `stats` + `list_concepts` | [RULE_RETRIEVE] |
-| Any question from user | `retrieve` first | [RULE_RETRIEVE] |
-| About to write/edit code | `search_docs` → `get_doc` for the technology | [RULE_FETCH] |
-| search_docs returns nothing | `list_docs` → `fetch_url`/`save_doc`/`research_topic` | [RULE_FETCH] |
+| Any question from user | `retrieve` first (Milvus semantic search) | [RULE_RETRIEVE] |
+| About to write/edit code | `retrieve` for the technology → `get_doc` for full content | [RULE_FETCH] |
+| retrieve returns nothing | `fetch_url`/`save_doc`/`research_topic` to ingest, then `retrieve` again | [RULE_FETCH] |
 | Multiple candidate URLs | `rank_urls` THEN `research_topic` | [RULE_FETCH] |
 | Need deep detail on a concept | `get_concept` | [RULE_RETRIEVE] |
 | Need concept neighborhood | `traverse` | [RULE_RETRIEVE] |
@@ -114,12 +116,12 @@ That's it. The graph is a lookup tool — use `get_concept`, `traverse`, or `ret
 
 ### Constraints
 
-1. **NEVER answer from weights alone** — if `retrieve` + `search_docs` return nothing, either fetch the missing docs or say "not found". Do NOT generate from training weights.
+1. **NEVER answer from weights alone** — if `retrieve` returns nothing, either fetch the missing docs or say "not found". Do NOT generate from training weights.
 2. **NEVER skip retrieval before writes** — the middleware will reject it, but don't even try.
 3. **NEVER execute schema changes without proposal + human approval.**
 4. **NEVER use probabilistic language about ontology state** — say "found" or "not found", never "probably" or "I think".
 5. **NEVER skip logging decisions** — every choice between alternatives gets `log_decision`. It's async, no excuse.
-6. **NEVER write code for a technology without local docs** — if `search_docs` returns nothing, `save_doc`/`research_topic` first.
+6. **NEVER write code for a technology without docs** — if `retrieve` returns nothing for the technology, `save_doc`/`research_topic` first.
 
 ### Few-Shot Examples
 
@@ -129,8 +131,8 @@ Input: "Add a CloudWatch alarm to monitoring.tf"
 
 WRONG: Immediately edit using training knowledge
 CORRECT:
-  1. retrieve("terraform cloudwatch alarm")
-  2. search_docs("terraform") → nothing
+  1. retrieve("terraform cloudwatch alarm")  ← Milvus searches concepts + docs + memory
+  2. retrieve returns nothing for terraform → docs missing
   3. save_doc(url, "terraform-cloudwatch-alarm.md")
   4. get_doc("terraform-cloudwatch-alarm.md")
   5. NOW edit with verified docs
@@ -143,8 +145,8 @@ Input: "What is Determinismo?"
 
 WRONG: Answer from weights about determinism
 CORRECT:
-  1. retrieve("Determinismo")
-  2. get_concept("Determinismo") → full content + typed edges
+  1. retrieve("Determinismo")  ← Milvus returns concept + related docs + similar past queries
+  2. get_concept("Determinismo") → full content + typed edges (if needed for depth)
   3. Answer using ONLY retrieved content
 ```
 

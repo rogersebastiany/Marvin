@@ -42,6 +42,7 @@ async def marvin_lifespan(server: FastMCP):
     ontology._get_driver()
     memory._ensure_connected()
     memory._get_openai()
+    memory.ensure_collections()
     try:
         yield {}
     finally:
