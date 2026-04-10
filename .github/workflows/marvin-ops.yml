@@ -42,59 +42,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    services:
-      neo4j:
-        image: neo4j:5-community
-        ports:
-          - 7687:7687
-        env:
-          NEO4J_AUTH: neo4j/tautologia
-          NEO4J_PLUGINS: '["apoc"]'
-        options: >-
-          --health-cmd "cypher-shell -u neo4j -p tautologia 'RETURN 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
-      etcd:
-        image: quay.io/coreos/etcd:v3.5.18
-        env:
-          ETCD_AUTO_COMPACTION_MODE: revision
-          ETCD_AUTO_COMPACTION_RETENTION: '1000'
-          ETCD_QUOTA_BACKEND_BYTES: '4294967296'
-          ETCD_SNAPSHOT_COUNT: '50000'
-        options: >-
-          --health-cmd "etcdctl endpoint health"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      minio:
-        image: minio/minio:RELEASE.2024-09-22T00-33-43Z
-        env:
-          MINIO_ACCESS_KEY: minioadmin
-          MINIO_SECRET_KEY: minioadmin
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/live"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      milvus:
-        image: milvusdb/milvus:v2.5.4
-        ports:
-          - 19530:19530
-        env:
-          ETCD_ENDPOINTS: etcd:2379
-          MINIO_ADDRESS: minio:9000
-        options: >-
-          --health-cmd "curl -f http://localhost:9091/healthz"
-          --health-interval 15s
-          --health-timeout 10s
-          --health-retries 10
-
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start infrastructure
+        run: docker compose up -d --wait --wait-timeout 120
 
       - uses: astral-sh/setup-uv@v4
         with:
@@ -147,3 +99,7 @@ jobs:
           name: self-audit-report
           path: mcp-server/docs/self-audit-report.md
           if-no-files-found: ignore
+
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose down
