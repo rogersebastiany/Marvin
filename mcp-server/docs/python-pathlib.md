@@ -1,4 +1,4 @@
-# Python pathlib
+# Python pathlib — Object-Oriented Filesystem Paths
 
 
 ---
