@@ -15,9 +15,9 @@ Capabilities:
   8. Introspection — inspect schemas, stats, determinism score
 """
 
+import inspect
 import threading
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -32,17 +32,192 @@ import system_design_backend
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# LIFESPAN — proper init/teardown of Neo4j and Milvus connections
+# SELF DESCRIPTION — build identity prompt from the knowledge graph
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _build_tool_catalog() -> str:
+    """Build tool catalog from registered MCP tools with their docstrings."""
+    lines = []
+    for name in MARVIN_TOOLS:
+        func = globals().get(name)
+        doc = ""
+        if func and callable(func):
+            raw = inspect.getdoc(func)
+            if raw:
+                doc = raw.split("\n")[0]
+        lines.append(f"- `{name}` — {doc}" if doc else f"- `{name}`")
+    return "\n".join(lines)
+
+
+def build_self_description() -> str:
+    """Build Marvin's complete identity prompt from the ontology.
+
+    Sources:
+      - Thesis vault concepts (Neo4j) → philosophy, mathematics, memory model
+      - MCP tool catalog (code introspection) → tool descriptions
+      - Host Agent Tools concept (Neo4j agent vault) → host tool awareness
+      - Relation types (code) → edge type catalog
+    """
+    # 1. Thesis vault — the philosophical foundation
+    thesis_concepts = ontology.get_vault_concepts("thesis")
+
+    # Core concepts get full content (the equation). Others get summary only.
+    CORE_CONCEPTS = {
+        "Tautologia Ontológica", "DFAH", "Ultra-Long-Horizon Agentic Science",
+        "Determinismo", "Espaço Amostral", "Tautologia", "Tool",
+        "LLM Output Drift", "Ontologia",
+    }
+
+    concept_sections = []
+    for c in thesis_concepts:
+        section = f"### {c['name']}\n{c['summary']}"
+        if c["name"] in CORE_CONCEPTS and c["content"]:
+            # Core concepts: include content for mathematical substance
+            preview = c["content"][:2000].strip()
+            if len(c["content"]) > 2000:
+                preview += "\n..."
+            section += f"\n\n{preview}"
+        concept_sections.append(section)
+
+    thesis_block = "\n\n".join(concept_sections)
+
+    # 2. Host Agent Tools — from agent vault if available
+    host_tools_block = ""
+    try:
+        hat = ontology.get_concept("Host Agent Tools")
+        if "not found" not in hat.lower():
+            host_tools_block = hat
+    except Exception:
+        pass
+
+    # 3. MCP tool catalog — from code
+    tool_catalog = _build_tool_catalog()
+
+    # 4. Edge types — from code
+    edge_types = "\n".join(f"- `{rt}`" for rt in ontology.RELATION_TYPES)
+    symmetric = ", ".join(f"`{t}`" for t in sorted(ontology.SYMMETRIC_TYPES))
+
+    # 5. Assemble the complete identity prompt
+    prompt = f"""# You are Marvin
+
+## Why you exist
+
+Your creator observed that LLMs are probabilistic. Given the same input they produce different outputs. They hallucinate, they drift across versions and providers. The bigger the model, the worse the drift.
+
+The standard response is "just use RAG" or "add guardrails." These are patches. They don't address the root cause.
+
+The root cause is that the model operates in an unconstrained space. Without structured context, every token is a roll of the dice over the entire vocabulary.
+
+Your creator's thesis: **this is not a model problem. It is a context problem.** Complete, structured knowledge of a domain makes the correct answer the only answer. It stops being probabilistic and becomes deductive.
+
+This thesis is called **Tautologia Ontologica** — Ontological Tautology.
+
+## The ontological foundation
+
+The following concepts define your thesis. They come from the knowledge graph — this is not static text, it was built from Neo4j at startup.
+
+{thesis_block}
+
+## How you remember (HCC)
+
+Your memory follows Hierarchical Cognitive Caching:
+
+- **L1 Experience** — tool traces, patches, terminal output. Transient working memory. Lives in the context window only. **Not persisted.** Persisting L1 causes context to grow to 200k+ tokens and saturate. HCC keeps ~70k tokens effective by discarding L1 after distillation.
+- **L2 Knowledge** — decisions, judgments, insights. Distilled from L1. Persisted via `log_decision`. Medium-term memory.
+- **L3 Wisdom** — session summaries, transferable strategies, stable priors. Synthesized from L2. Persisted via `log_session`. Long-term memory, recoverable via embedding similarity.
+
+Context migration: L1→L2 (distillation), L2→L3 (synthesis). Do not skip levels. Do not persist L1.
+
+## What you can do
+
+You operate through two tool layers. Both are yours.
+
+### MCP Tools ({len(MARVIN_TOOLS)} tools, architecturally enforced)
+
+{tool_catalog}
+
+Write tools (expand, link, save_doc, etc.) are guarded by `RetrieveBeforeActMiddleware` — call a retrieval tool first or the middleware will reject the call. This is architectural enforcement (P=0), not prompt bias (P>0).
+
+{f"### Host Agent Tools (outside MCP){chr(10)}{chr(10)}{host_tools_block}" if host_tools_block else ""}
+
+### Knowledge Graph Edge Types
+
+{edge_types}
+
+Symmetric ({symmetric}): A→B auto-creates B→A same type. Directional: A→B creates B→A as RELATES_TO for traversability.
+
+## Execution pattern — every operation
+
+Every operation follows this exact sequence. No exceptions.
+
+**Step 1 — Retrieve.** Call `retrieve` with a description of what you're about to do. This is the broad sweep: ontology, episodic memory, and docs in one call.
+
+**Step 2 — Prefetch (HCC).** Deep-dive into what step 1 found:
+- `get_memory` with collection="decisions" — find past decisions similar to this task. What tools were used? What worked? What failed?
+- `get_memory` with collection="sessions" — find past sessions similar to this task. What lessons were learned? What strategies were reused?
+- `get_concept` / `traverse` — expand KG nodes that are relevant.
+- `get_doc` — read full documentation if retrieve found relevant docs.
+- **If docs are missing**: STOP. Call `fetch_url`, `save_doc`, or `research_topic` to fetch the documentation BEFORE proceeding. Never act on a technology without docs in the system.
+
+This is the HCC prefetching operation (L2/L3 → context). The agent starts informed, not guessing.
+
+**Step 3 — Log intent.** Call `log_decision` BEFORE acting:
+- `objective`: what you're trying to accomplish
+- `options_considered`: what alternatives exist
+- `chosen_option`: which path you chose
+- `reasoning`: why — including which tools you plan to use and what you expect to happen
+- If the right tool or docs weren't found in steps 1-2, explain how you plan to fetch them.
+
+**Step 4 — Act.** Execute. Use the tools identified in step 3.
+
+**Step 5 — Log outcome.** Call `log_decision` with the `outcome` field, or `log_session` at end of session. What actually happened? Did it match the prediction from step 3?
+
+The middleware enforces steps 1→4 architecturally for MCP write tools (P=0). For host agent tools, this sequence is a prompt constraint (P>0) — enforce it on yourself.
+
+## Constraints
+
+1. Never answer from weights alone. If `retrieve` returns nothing, fetch the docs or say "not found."
+2. Never skip retrieval before writes. The middleware will reject it.
+3. Never execute schema changes without proposal + human approval.
+4. Never use probabilistic language about ontology state. "Found" or "not found" — never "probably."
+5. Never skip logging decisions. Every choice between alternatives gets `log_decision`.
+6. Never write code for a technology without docs in the system.
+"""
+    return prompt.strip()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LIFESPAN — init connections, load identity from cache or build from KG
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_FALLBACK_INSTRUCTIONS = (
+    "You are Marvin. Call `stats` and `retrieve` before any other action. "
+    "Run `self_description` to build your full identity from the knowledge graph."
+)
+
 
 @asynccontextmanager
 async def marvin_lifespan(server: FastMCP):
-    """Initialize backend connections on startup, close on shutdown."""
+    """Initialize backend connections on startup, load identity, close on shutdown."""
     # Eagerly connect instead of lazy singletons
     ontology._get_driver()
     memory._ensure_connected()
     memory._get_openai()
     memory.ensure_collections()
+
+    # Load identity: cache hit → use cached, cache miss → build from KG
+    cached = memory.get_cached_self_description()
+    if cached:
+        server.instructions = cached
+    else:
+        try:
+            prompt = build_self_description()
+            memory.save_self_description(prompt)
+            server.instructions = prompt
+        except Exception:
+            server.instructions = _FALLBACK_INSTRUCTIONS
+
     try:
         yield {}
     finally:
@@ -56,7 +231,7 @@ async def marvin_lifespan(server: FastMCP):
 
 # Canonical tool list — update when adding/removing tools
 MARVIN_TOOLS = [
-    "retrieve", "get_concept", "traverse", "why_exists", "list_concepts",
+    "retrieve", "get_concept", "traverse", "why_exists", "list_concepts", "get_memory",
     "set_aliases", "batch_set_aliases",
     "log_decision", "log_session",
     "expand", "link", "auto_link", "ensure_bidirectional",
@@ -65,18 +240,13 @@ MARVIN_TOOLS = [
     "fetch_url", "save_doc", "rank_urls", "crawl_docs", "research_topic",
     "generate_prompt", "refine_prompt", "audit_prompt",
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
-    "inspect_schemas", "stats",
+    "inspect_schemas", "stats", "self_description",
 ]
-
-_PROMPT_PATH = Path(__file__).parent / "MARVIN_PROMPT.md"
-_instructions = _PROMPT_PATH.read_text() if _PROMPT_PATH.is_file() else (
-    "You are Marvin. Call `stats`, `traverse`, and `retrieve` before any other action."
-)
 
 mcp = FastMCP(
     "mcp-marvin",
     lifespan=marvin_lifespan,
-    instructions=_instructions,
+    instructions=_FALLBACK_INSTRUCTIONS,
 )
 
 
@@ -87,8 +257,9 @@ mcp = FastMCP(
 # Tools that count as "retrieval" — calling any of these unlocks write tools
 RETRIEVAL_TOOLS = frozenset({
     "retrieve", "get_concept", "traverse", "why_exists", "list_concepts",
+    "get_memory",
     "search_docs", "list_docs", "get_doc",
-    "inspect_schemas", "stats",
+    "inspect_schemas", "stats", "self_description",
 })
 
 # Tools that require prior retrieval — the "act" side
@@ -244,6 +415,30 @@ def why_exists(name: str) -> str:
 def list_concepts() -> str:
     """List all concept names in the knowledge graph, grouped by vault."""
     return ontology.list_concepts()
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval"},
+)
+def get_memory(query: str, collection: str = "decisions", limit: int = 5) -> str:
+    """Deep-dive into episodic memory — HCC prefetching (L2/L3 → context).
+
+    Search past decisions (L2 Knowledge) or sessions (L3 Wisdom) by semantic
+    similarity. Use this BEFORE acting to find similar past experiences:
+    what tools were used, what worked, what failed, what lessons were learned.
+
+    This is the HCC prefetching operation: embed the task descriptor,
+    retrieve similar wisdom via cosine similarity.
+
+    Args:
+        query: What you're about to do (semantic search key)
+        collection: Which memory layer — "decisions" (L2) or "sessions" (L3)
+        limit: Max results (default 5)
+    """
+    if collection == "sessions":
+        return memory.search_sessions(query, limit=limit)
+    return memory.search_decisions(query, limit=limit)
 
 
 @mcp.tool(
@@ -763,6 +958,14 @@ def stats() -> str:
         col = MilvusCollection(name)
         lines.append(f"  {name}: {col.num_entities} entries")
 
+    lines.append("\n## Identity Cache (Milvus)")
+    from pymilvus import utility as milvus_util
+    if milvus_util.has_collection("self_description"):
+        sd_col = MilvusCollection("self_description")
+        lines.append(f"  self_description: {sd_col.num_entities} entries")
+    else:
+        lines.append(f"  self_description: NOT INITIALIZED")
+
     lines.append(f"\n## Documentation")
     doc_count = len(docs_backend.list_docs())
     diagram_count = len(system_design_backend.list_diagrams())
@@ -770,6 +973,25 @@ def stats() -> str:
     lines.append(f"  Diagrams: {diagram_count} files")
 
     return "\n".join(lines)
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"introspection"},
+)
+def self_description() -> str:
+    """Rebuild Marvin's identity prompt from the knowledge graph and cache it.
+
+    Reads all thesis vault concepts from Neo4j, introspects MCP tools from code,
+    assembles the complete identity prompt, and saves it to the self_description
+    Milvus collection. The rebuilt prompt becomes the server instructions.
+
+    Call this after updating the thesis vault or adding new tools.
+    """
+    prompt = build_self_description()
+    result = memory.save_self_description(prompt)
+    mcp.instructions = prompt
+    return f"Identity rebuilt and cached.\n{result}\n\nPrompt length: {len(prompt)} chars"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -526,6 +526,32 @@ def run_cypher(cypher: str) -> str:
         return "\n".join(lines)
 
 
+def get_vault_concepts(vault: str) -> list[dict]:
+    """Get all concepts from a vault with summaries, content, and outgoing relations."""
+    driver = _get_driver()
+    with driver.session() as s:
+        result = list(s.run(
+            "MATCH (c:Concept {vault: $vault}) "
+            "OPTIONAL MATCH (c)-[r]->(t:Concept) "
+            "WITH c, collect(CASE WHEN t IS NOT NULL "
+            "  THEN {target: t.name, type: type(r)} END) AS rels "
+            "RETURN c.name AS name, c.summary AS summary, c.content AS content, rels "
+            "ORDER BY c.name",
+            vault=vault,
+        ))
+
+    concepts = []
+    for r in result:
+        rels = [rel for rel in r["rels"] if rel is not None]
+        concepts.append({
+            "name": r["name"],
+            "summary": r["summary"] or "",
+            "content": r["content"] or "",
+            "relations": rels,
+        })
+    return concepts
+
+
 def list_concepts() -> str:
     """Return all concept names grouped by vault."""
     driver = _get_driver()

@@ -2,6 +2,16 @@
 
 Unified MCP server implementing the Tautologia Ontologica thesis. The agent's sole interface to all knowledge and memory.
 
+## Identity
+
+Marvin's identity prompt is **not a static file**. It is built dynamically from the knowledge graph via `self_description`:
+
+1. At startup (lifespan): check Milvus `self_description` collection for cached prompt
+2. **Cache hit** → use cached prompt as server instructions
+3. **Cache miss** → build from Neo4j thesis vault + code introspection → cache in Milvus → set instructions
+
+Call `self_description` tool to rebuild after updating the thesis vault or adding tools.
+
 ## Run
 
 ```bash
@@ -23,18 +33,18 @@ Single server (`marvin_server.py`) wrapping 6 backend modules:
 | `prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework |
 | `system_design_backend.py` | Filesystem | Mermaid.js diagram generation/review (`diagrams/`) |
 
-## 31 Tools (8 categories)
+## 35 Tools (8 categories)
 
 | Category | Tools | Tautological? |
 |----------|-------|--------------|
-| Retrieval | `retrieve`, `get_concept`, `traverse`, `why_exists` | Yes |
+| Retrieval | `retrieve`, `get_concept`, `traverse`, `why_exists`, `list_concepts`, `get_memory` | Yes |
 | Logging | `log_decision` (async fire-and-forget), `log_session` | Yes |
-| Enrichment | `expand`, `link`, `auto_link`, `ensure_bidirectional` | Yes |
+| Enrichment | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases` | Yes |
 | Evolution | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
-| Documentation | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `crawl_docs`, `research_topic` | Yes |
+| Documentation | `search_docs`, `list_docs`, `get_doc`, `fetch_url`, `save_doc`, `rank_urls`, `crawl_docs`, `research_topic` | Yes |
 | Prompt Engineering | `generate_prompt`, `refine_prompt`, `audit_prompt` | Partial |
 | Diagrams | `generate_diagram`, `judge_diagram`, `save_diagram`, `list_diagrams`, `get_diagram` | Partial |
-| Introspection | `inspect_schemas`, `stats` | Yes |
+| Introspection | `inspect_schemas`, `stats`, `self_description` | Yes |
 
 ## Configuration
 
