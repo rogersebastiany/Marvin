@@ -4,8 +4,10 @@ Ontology backend — Python library wrapping Neo4j.
 Not an MCP server. Used internally by mcp-marvin.
 """
 
+import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
@@ -17,31 +19,20 @@ NEO4J_AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautolo
 
 _driver = None
 
-# All semantic relationship types in the graph
-RELATION_TYPES = [
-    "RELATES_TO",
-    "IMPLEMENTS",
-    "PROVES",
-    "REQUIRES",
-    "EXTENDS",
-    "CONTRADICTS",
-    "ENABLES",
-    "EXEMPLIFIES",
-    "COMPOSES",
-    "EVOLVES_FROM",
-]
+# Load relation types from single source of truth
+_RELATION_TYPES_PATH = Path(__file__).parent / "relation_types.json"
+_RELATION_TYPES_DATA: dict = json.loads(_RELATION_TYPES_PATH.read_text())
 
-# Symmetric types: A→B implies B→A with the same type
-SYMMETRIC_TYPES = frozenset({
-    "RELATES_TO",
-    "CONTRADICTS",
-})
-
-# Directional types: A→B does NOT imply B→A
-# IMPLEMENTS, PROVES, REQUIRES, EXTENDS, ENABLES, EXEMPLIFIES, COMPOSES, EVOLVES_FROM
+RELATION_TYPES: list[str] = list(_RELATION_TYPES_DATA.keys())
+SYMMETRIC_TYPES: frozenset[str] = frozenset(
+    name for name, meta in _RELATION_TYPES_DATA.items() if meta["symmetric"]
+)
+RELATION_DESCRIPTIONS: dict[str, str] = {
+    name: meta["description"] for name, meta in _RELATION_TYPES_DATA.items()
+}
 
 # Cypher fragment for matching any relationship type
-_ANY_REL = "|".join(RELATION_TYPES)  # "RELATES_TO|IMPLEMENTS|PROVES|..."
+_ANY_REL = "|".join(RELATION_TYPES)
 
 
 def _get_driver():
@@ -524,6 +515,32 @@ def run_cypher(cypher: str) -> str:
             parts = [f"{k}={rec[k]}" for k in keys]
             lines.append("  ".join(parts))
         return "\n".join(lines)
+
+
+def get_vault_concepts(vault: str) -> list[dict]:
+    """Get all concepts from a vault with summaries, content, and outgoing relations."""
+    driver = _get_driver()
+    with driver.session() as s:
+        result = list(s.run(
+            "MATCH (c:Concept {vault: $vault}) "
+            "OPTIONAL MATCH (c)-[r]->(t:Concept) "
+            "WITH c, collect(CASE WHEN t IS NOT NULL "
+            "  THEN {target: t.name, type: type(r)} END) AS rels "
+            "RETURN c.name AS name, c.summary AS summary, c.content AS content, rels "
+            "ORDER BY c.name",
+            vault=vault,
+        ))
+
+    concepts = []
+    for r in result:
+        rels = [rel for rel in r["rels"] if rel is not None]
+        concepts.append({
+            "name": r["name"],
+            "summary": r["summary"] or "",
+            "content": r["content"] or "",
+            "relations": rels,
+        })
+    return concepts
 
 
 def list_concepts() -> str:

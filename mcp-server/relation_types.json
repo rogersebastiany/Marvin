@@ -1,0 +1,66 @@
+{
+  "RELATES_TO": {
+    "symmetric": true,
+    "description": "General association, no specific semantic relationship (default)"
+  },
+  "IMPLEMENTS": {
+    "symmetric": false,
+    "description": "Source is a concrete realization of target (abstract → concrete)"
+  },
+  "PROVES": {
+    "symmetric": false,
+    "description": "Source provides evidence or demonstration of target"
+  },
+  "REQUIRES": {
+    "symmetric": false,
+    "description": "Source depends on or needs target as precondition"
+  },
+  "EXTENDS": {
+    "symmetric": false,
+    "description": "Source specializes or enhances target"
+  },
+  "CONTRADICTS": {
+    "symmetric": true,
+    "description": "Source and target are in mutual opposition"
+  },
+  "ENABLES": {
+    "symmetric": false,
+    "description": "Source makes target possible"
+  },
+  "EXEMPLIFIES": {
+    "symmetric": false,
+    "description": "Source is an instance or illustration of target"
+  },
+  "COMPOSES": {
+    "symmetric": false,
+    "description": "Source is a building block / part of target"
+  },
+  "EVOLVES_FROM": {
+    "symmetric": false,
+    "description": "Source has historical lineage from target"
+  },
+  "INFERS": {
+    "symmetric": false,
+    "description": "Source logically derives or concludes target through reasoning"
+  },
+  "FORMALIZES": {
+    "symmetric": false,
+    "description": "Source is the mathematical or formal expression of target"
+  },
+  "DEFINES": {
+    "symmetric": false,
+    "description": "Source establishes the boundary, scope, or meaning of target"
+  },
+  "ANALOGOUS_TO": {
+    "symmetric": true,
+    "description": "Source functions like target in a different domain or abstraction layer"
+  },
+  "REDUCES": {
+    "symmetric": false,
+    "description": "Source constrains, narrows, or diminishes target"
+  },
+  "MITIGATES": {
+    "symmetric": false,
+    "description": "Source counteracts or diminishes the negative effect of target"
+  }
+}

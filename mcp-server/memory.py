@@ -385,10 +385,60 @@ def index_concepts(concepts: list[dict]) -> str:
     return f"Indexed {len(entries)} concepts."
 
 
+# ── Self Description (Identity Cache) ─────────────────────────────────────
+
+
+def save_self_description(content: str) -> str:
+    """Save the built identity prompt to Milvus. Overwrites previous entry."""
+    _ensure_connected()
+    col = Collection("self_description")
+    col.load()
+
+    # Clear existing
+    if col.num_entities > 0:
+        col.delete(expr='id != ""')
+        col.flush()
+
+    now = datetime.now(timezone.utc).isoformat()
+    vector = _embed(f"marvin self description identity prompt {content[:4000]}")
+
+    col.insert([
+        ["self_description_v1"],
+        [content[:65535]],
+        [now],
+        [vector],
+    ])
+    col.flush()
+    return f"Self description cached ({len(content)} chars, {now})"
+
+
+def get_cached_self_description() -> str | None:
+    """Fetch the cached self description from Milvus. Returns None on miss."""
+    _ensure_connected()
+    if not utility.has_collection("self_description"):
+        return None
+
+    col = Collection("self_description")
+    col.load()
+
+    if col.num_entities == 0:
+        return None
+
+    results = col.query(
+        expr='id == "self_description_v1"',
+        output_fields=["content", "timestamp"],
+        limit=1,
+    )
+    if not results:
+        return None
+
+    return results[0]["content"]
+
+
 # ── Schema ──────────────────────────────────────────────────────────────────
 
 
-ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts"]
+ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts", "self_description"]
 
 EMBEDDING_DIM = 1536  # text-embedding-3-small
 
@@ -455,6 +505,15 @@ _COLLECTION_DEFS = {
             FieldSchema("vault", DataType.VARCHAR, max_length=60),
             FieldSchema("summary", DataType.VARCHAR, max_length=1000),
             FieldSchema("content", DataType.VARCHAR, max_length=8000),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+    "self_description": {
+        "description": "Identity cache — materialized view of ontology for server instructions",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=64),
+            FieldSchema("content", DataType.VARCHAR, max_length=65535),
+            FieldSchema("timestamp", DataType.VARCHAR, max_length=64),
             FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
         ],
     },
