@@ -6,7 +6,7 @@ talks to Neo4j, Milvus, docs, or any other backend directly — only through Mar
 
 Capabilities:
   1. Retrieval     — unified search across ontology (Neo4j) + memory (Milvus) + docs
-  2. Logging       — record tool calls, decisions, sessions to episodic memory
+  2. Logging       — record decisions (L2) and sessions (L3) to episodic memory
   3. Enrichment    — expand the knowledge graph with new concepts and relations
   4. Evolution     — propose and apply schema changes (human-in-the-loop)
   5. Docs          — search, browse, and fetch external documentation
@@ -14,6 +14,9 @@ Capabilities:
   7. Diagrams      — generate, review, save Mermaid.js system design diagrams
   8. Introspection — inspect schemas, stats, determinism score
 """
+
+import threading
+from pathlib import Path
 
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -30,11 +33,11 @@ import system_design_backend
 MARVIN_TOOLS = [
     "retrieve", "get_concept", "traverse", "why_exists",
     "set_aliases", "batch_set_aliases",
-    "log_tool_call", "log_decision", "log_session",
+    "log_decision", "log_session",
     "expand", "link", "auto_link", "ensure_bidirectional",
     "propose_schema_change", "execute_schema_change",
     "search_docs", "list_docs", "get_doc",
-    "fetch_url", "save_doc", "crawl_docs", "research_topic",
+    "fetch_url", "save_doc", "rank_urls", "crawl_docs", "research_topic",
     "generate_prompt", "refine_prompt", "audit_prompt",
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
     "inspect_schemas", "stats",
@@ -65,9 +68,10 @@ mcp = FastMCP(
         "If it's not in docs/, go get it and persist it before proceeding.\n"
         "3. ACT WITH CONTEXT — use the retrieved context to inform tool calls. "
         "Each call reduces the sample space.\n"
-        "4. LOG AFTER ACT — record significant actions (log_tool_call), "
-        "decisions (log_decision), and session summaries (log_session). "
-        "Close the feedback loop.\n"
+        "4. LOG AFTER ACT — record significant decisions (log_decision) "
+        "and session summaries (log_session). L1 tool-call traces are transient "
+        "working memory (HCC) — they live in the context window, not in Milvus. "
+        "log_decision is fire-and-forget (async). Close the feedback loop.\n"
         "5. ENRICH — when you discover new concepts or relations, "
         "expand the ontology (expand, link). The system must get smarter with use.\n\n"
         "## Constraints\n"
@@ -116,21 +120,30 @@ GUARDED_TOOLS = frozenset({
 # list_diagrams, get_diagram, audit_prompt are read-only
 
 
+_RETRIEVED_FLAG = Path(__file__).parent / ".retrieved"
+
+
 class RetrieveBeforeActMiddleware(Middleware):
     """Architectural enforcement: reject write tools if no retrieval happened first.
 
     This is NOT a prompt bias — it's a hard gate. The server refuses to execute
     guarded tools unless at least one retrieval tool has been called in the session.
+
+    State survives hot-reload via a temp file (.retrieved).
     """
 
     def __init__(self):
-        self._retrieved = False
+        self._retrieved = _RETRIEVED_FLAG.exists()
+
+    def _mark_retrieved(self):
+        self._retrieved = True
+        _RETRIEVED_FLAG.touch()
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         tool_name = context.message.name
 
         if tool_name in RETRIEVAL_TOOLS:
-            self._retrieved = True
+            self._mark_retrieved()
 
         if tool_name in GUARDED_TOOLS and not self._retrieved:
             raise ToolError(
@@ -251,30 +264,8 @@ def batch_set_aliases(mappings: list[dict]) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# LOGGING (Episodic Memory)
+# LOGGING (Episodic Memory — L2 Knowledge + L3 Wisdom only, no L1 tool traces)
 # ═══════════════════════════════════════════════════════════════════════════════
-
-
-@mcp.tool()
-def log_tool_call(
-    tool_name: str,
-    parameters: str,
-    result_summary: str,
-    success: bool,
-    context: str = "",
-    session_id: str = "",
-) -> str:
-    """Record a tool invocation to episodic memory (L1 Experience).
-
-    Args:
-        tool_name: Which tool was called
-        parameters: Parameters passed
-        result_summary: Brief result summary
-        success: Whether it succeeded
-        context: What was the agent trying to accomplish
-        session_id: Session this belongs to
-    """
-    return memory.log_tool_call(tool_name, parameters, result_summary, success, context, session_id)
 
 
 @mcp.tool()
@@ -286,7 +277,7 @@ def log_decision(
     outcome: str = "",
     session_id: str = "",
 ) -> str:
-    """Record a decision to episodic memory (L2 Knowledge).
+    """Record a decision to episodic memory (L2 Knowledge). Fire-and-forget — returns immediately.
 
     Args:
         objective: What was the goal
@@ -296,7 +287,12 @@ def log_decision(
         outcome: How it turned out
         session_id: Session this belongs to
     """
-    return memory.log_decision(objective, options_considered, chosen_option, reasoning, outcome, session_id)
+    threading.Thread(
+        target=memory.log_decision,
+        args=(objective, options_considered, chosen_option, reasoning, outcome, session_id),
+        daemon=True,
+    ).start()
+    return f"Logging decision (async): {objective[:60]}"
 
 
 @mcp.tool()
@@ -489,6 +485,22 @@ def save_doc(url: str, filename: str) -> str:
         filename: Name to save as (e.g. 'lambda-docs.md')
     """
     return web_to_docs_backend.save_as_doc(url, filename)
+
+
+@mcp.tool()
+def rank_urls(urls: list[str]) -> str:
+    """Probe URLs and rank them by documentation quality BEFORE fetching.
+
+    Does a lightweight structural analysis of each page to score how likely
+    it is to be a real documentation page vs. an index/landing/nav page.
+
+    Call this BEFORE research_topic to pick the best URLs.
+    URLs scoring 60+ are good docs pages. Below 35 = index/nav pages.
+
+    Args:
+        urls: List of URLs to probe and rank
+    """
+    return web_to_docs_backend.rank_urls(urls)
 
 
 @mcp.tool()
