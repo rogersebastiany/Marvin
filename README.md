@@ -55,9 +55,9 @@ Marvin implements the hard version. The agent's `mcp.json` contains exactly one 
 ```
 Agent (Claude Code / any MCP client)
   │
-  └── mcp-marvin (sole MCP server — 29 tools)
+  └── mcp-marvin (sole MCP server — 32 tools)
         ├── Neo4j (knowledge graph — ontology)
-        │     320+ concepts, 3000+ relations
+        │     374 concepts, 6204 relations, 10 semantic edge types
         │     Thesis + Implementation + Agent + Docs vaults
         │
         ├── Milvus (vector DB — episodic memory)
@@ -101,7 +101,7 @@ The ablation study in the paper validates this design: without L1, performance d
 
 ---
 
-## Marvin's Tools (29 total)
+## Marvin's Tools (32 total)
 
 ### Retrieval (4 tools)
 | Tool | What It Does |
@@ -118,13 +118,15 @@ The ablation study in the paper validates this design: without L1, performance d
 | `log_decision` | Record a decision with reasoning (L2 Knowledge) |
 | `log_session` | Record a session summary (L3 Wisdom) |
 
-### Enrichment (4 tools)
+### Enrichment (6 tools)
 | Tool | What It Does |
 |---|---|
-| `expand` | Add a new concept or relation to the knowledge graph |
-| `link` | Create a direct non-linear relation between two existing concepts |
+| `expand` | Add a new concept or relation (with `relation_type` param for semantic edges) |
+| `link` | Create a typed relation between two concepts (IMPLEMENTS, PROVES, COMPOSES, etc.) |
 | `auto_link` | Scan concept content for references to other concepts, auto-create edges |
-| `ensure_bidirectional` | For every A→B edge, ensure B→A also exists |
+| `ensure_bidirectional` | For symmetric edges (RELATES_TO, TRANSLATES_TO, CONTRADICTS), ensure B→A exists |
+| `set_aliases` | Set English aliases for a concept (cross-language search) |
+| `batch_set_aliases` | Set aliases for multiple concepts at once |
 
 ### Evolution — Human-in-the-Loop (2 tools)
 | Tool | What It Does |
@@ -132,7 +134,7 @@ The ablation study in the paper validates this design: without L1, performance d
 | `propose_schema_change` | Propose a schema change (returns proposal for human review) |
 | `execute_schema_change` | Apply a schema change (requires `confirmed=True` — human gate) |
 
-### Documentation (6 tools)
+### Documentation (7 tools)
 | Tool | What It Does |
 |---|---|
 | `search_docs` | Search local markdown docs by keyword |
@@ -141,6 +143,7 @@ The ablation study in the paper validates this design: without L1, performance d
 | `fetch_url` | Fetch a webpage and return as markdown |
 | `save_doc` | Fetch a webpage and save as local doc |
 | `crawl_docs` | Crawl a doc site, saving pages locally |
+| `research_topic` | Multi-URL fetch → consolidated doc with bibliography and diff vs existing |
 
 ### Prompt Engineering (3 tools)
 | Tool | What It Does |
@@ -181,11 +184,16 @@ The ablation study in the paper validates this design: without L1, performance d
   updated_at: datetime
 })
 
--[:RELATES_TO {
+-[:RELATES_TO | :IMPLEMENTS | :PROVES | :REQUIRES | :TRANSLATES_TO |
+  :EXTENDS | :CONTRADICTS | :ENABLES | :EXEMPLIFIES | :COMPOSES |
+  :EVOLVES_FROM {
   weight: float,
   reasoning: string,
   discovered_by: "vault_import" | "agent" | "auto_link" | "bidirectional"
 }]->
+
+Symmetric types (A→B implies B→A): RELATES_TO, TRANSLATES_TO, CONTRADICTS
+Directional types (A→B only): IMPLEMENTS, PROVES, REQUIRES, EXTENDS, ENABLES, EXEMPLIFIES, COMPOSES, EVOLVES_FROM
 ```
 
 ### Vault Sources
@@ -196,7 +204,7 @@ The ablation study in the paper validates this design: without L1, performance d
 
 - **Both vaults** — 3 concepts that bridge theory and implementation: Acumulação Cognitiva, Tool Tautológica, Enforcement Arquitetural.
 
-- **Docs vault** — 210+ fetched documentation files covering Python, AWS, Kotlin, Neo4j, Milvus, Docker, MCP, Mermaid.js, SE patterns, CI/CD, OWASP, OpenTelemetry, and more.
+- **Docs vault** — 222 fetched documentation files covering Python, AWS, Kotlin, Neo4j, Milvus, Docker, MCP, Mermaid.js, SE patterns, CI/CD, OWASP, OpenTelemetry, and more.
 
 - **Agent vault** — 20+ concepts discovered by Marvin's self-improvement loop, including Python, AWS Infrastructure, Kotlin, and cross-domain bridge concepts. Auto-classified as `agent` — distinguishable from human-authored knowledge.
 
@@ -204,15 +212,18 @@ The ablation study in the paper validates this design: without L1, performance d
 
 The `load-vaults/determinism_report.py` script measures how close the graph is to ontological completeness:
 
-| Metric | Score | Weight |
-|---|---|---|
-| Ghost Coverage (defined/referenced) | 100% | 0.20 |
-| Content Coverage (has substance) | 100% | 0.15 |
-| Summary Coverage (has summary) | 98%+ | 0.05 |
-| Connectivity (no orphans, min 3 edges) | 82%+ | 0.20 |
-| Bidirectionality (A→B and B→A) | 100% | 0.10 |
-| Vault Bridging (theory↔implementation) | Improving | 0.15 |
-| Tool Tautology (29 tools classified) | 90%+ | 0.15 |
+| Metric | Score | Status | Weight |
+|---|---|---|---|
+| Ghost Coverage (defined/referenced) | 100.0% | TAUTOLOGICAL | 0.20 |
+| Content Coverage (has substance) | 100.0% | TAUTOLOGICAL | 0.15 |
+| Summary Coverage (has summary) | 98.7% | TAUTOLOGICAL | 0.05 |
+| Connectivity (no orphans, min 3 edges) | 83.3% | HIGH | 0.20 |
+| Bidirectionality (A→B and B→A) | 100.0% | TAUTOLOGICAL | 0.10 |
+| Vault Bridging (theory↔implementation) | 40.9% | LOW | 0.15 |
+| Tool Tautology (32 tools classified) | 89.7% | HIGH | 0.15 |
+| **Composite Determinism Score** | **86.2%** | **HIGH** | |
+
+*Last run: 2026-04-09 — 374 concepts, 6204 edges, 0 ghosts, 10 edge types*
 
 Run `cd load-vaults && uv run python determinism_report.py` for current metrics.
 
@@ -249,14 +260,14 @@ Memory is append-only — the agent accumulates experience monotonically. Search
 ```
 Marvin/
 ├── mcp-server/                  ← Marvin + all backends
-│   ├── marvin_server.py             ← THE server (27 tools, 8 categories)
+│   ├── marvin_server.py             ← THE server (32 tools, 8 categories)
 │   ├── ontology.py                  ← Neo4j backend
 │   ├── memory.py                    ← Milvus backend
 │   ├── docs_backend.py              ← Local docs search/browse
 │   ├── web_to_docs_backend.py       ← Web → markdown fetcher
 │   ├── prompt_engineer_backend.py   ← Prompt Architect framework
 │   ├── system_design_backend.py     ← Mermaid.js diagrams
-│   ├── docs/                        ← Local documentation (210+ files)
+│   ├── docs/                        ← Local documentation (222 files)
 │   ├── diagrams/                    ← Saved Mermaid diagrams (3 files)
 │   ├── .cursor/mcp.json             ← MCP config (only mcp-marvin)
 │   ├── pyproject.toml               ← Python deps (uv)
