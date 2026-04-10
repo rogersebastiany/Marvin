@@ -9,26 +9,34 @@ Sources:
 
 Schema:
   - Nodes: :Concept {name, vault, summary, content, ghost, created_at, updated_at}
-  - Edges: :RELATES_TO {type, weight, reasoning, discovered_by}
+  - Edges: Typed from relation_types.json {weight, reasoning, discovered_by}
+
+Pipeline:
+  1. Parse — Obsidian vaults, docs, diagrams → concepts + edges with context
+  2. Classify — OpenAI classifies edge types from sentence context (can be skipped)
+  3. Load — MERGE into Neo4j with pre-typed edges
 
 Behavior:
   - Uses MERGE, not DELETE — agent-discovered concepts/relations survive re-runs.
   - Vault-sourced nodes get updated content on re-run (vault wins for its own nodes).
   - Nodes with vault="agent" are NEVER touched — they belong to the agent.
+  - Edge types loaded from mcp-server/relation_types.json (single source of truth).
 """
 
+import json
 import os
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import openai
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
 # Import relationship type definitions from ontology backend
 sys.path.insert(0, str(Path(__file__).parent.parent / "mcp-server"))
-from ontology import RELATION_TYPES, SYMMETRIC_TYPES
+from ontology import RELATION_DESCRIPTIONS, RELATION_TYPES, SYMMETRIC_TYPES
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -112,10 +120,135 @@ SKIP_DIRS = {".obsidian", "poc docs", "diagrams", "docs"}
 
 WIKILINK_RE = re.compile(r"\[\[([^\]|\\]+)(?:\\?\|[^\]]+)?\]\]")
 
+# Sentence-level regex: split on period, colon, or newline boundaries
+_SENTENCE_RE = re.compile(r"[.!?\n]")
+
 
 def extract_wikilinks(content: str) -> list[str]:
     """Extract all wikilink targets from markdown content."""
     return list(set(WIKILINK_RE.findall(content)))
+
+
+def extract_wikilinks_with_context(content: str) -> list[dict]:
+    """Extract wikilinks with the sentence they appear in.
+
+    Returns list of {target, context} where context is the surrounding sentence.
+    Deduplicates by target — keeps the richest context sentence.
+    """
+    results: dict[str, str] = {}
+    for match in WIKILINK_RE.finditer(content):
+        target = match.group(1)
+        # Find sentence boundaries around the match
+        start = content.rfind("\n", 0, match.start())
+        if start == -1:
+            start = 0
+        end = content.find("\n", match.end())
+        if end == -1:
+            end = len(content)
+        sentence = content[start:end].strip()
+        # Strip markdown formatting for cleaner context
+        sentence = WIKILINK_RE.sub(lambda m: m.group(1), sentence)
+        sentence = sentence.lstrip("#- ").strip()
+        # Keep the longest/richest context per target
+        if target not in results or len(sentence) > len(results[target]):
+            results[target] = sentence[:500]
+    return [{"target": t, "context": c} for t, c in results.items()]
+
+
+def _build_classifier_prompt() -> str:
+    """Build the classifier prompt from relation_types.json descriptions."""
+    type_lines = "\n".join(f"- {name}: {desc}" for name, desc in RELATION_DESCRIPTIONS.items())
+    return f"""Classify the relationship between two concepts based on context.
+
+Edge types:
+{type_lines}
+
+Respond with ONLY the edge type name. If the context is a bare list ("Relaciona-se com: ...") or too vague to determine a specific type, respond RELATES_TO."""
+
+
+_BARE_LIST_RE = re.compile(r"^(Relaciona-se com|Related to)\s*:", re.IGNORECASE)
+
+
+def classify_edges(edges: list[dict], batch_size: int = 50, summaries: dict[str, str] | None = None) -> list[dict]:
+    """Classify edge types using OpenAI. Mutates edges in-place, adding rel_type field.
+
+    Args:
+        edges: list of {source, target, context, vault, ...}
+        batch_size: edges per API call (batched as multi-line prompt)
+        summaries: optional {concept_name: summary} for enriching bare-list contexts
+
+    Returns the same list with rel_type added to each edge.
+    """
+    client = openai.OpenAI()
+    valid_types = set(RELATION_TYPES)
+    type_names = ", ".join(RELATION_TYPES)
+    summaries = summaries or {}
+
+    # Build rules from descriptions
+    rules = "\n".join(f"- {name}: {desc}" for name, desc in RELATION_DESCRIPTIONS.items())
+
+    classified = 0
+    for i in range(0, len(edges), batch_size):
+        batch = edges[i : i + batch_size]
+
+        lines = []
+        for j, e in enumerate(batch):
+            ctx = e["context"][:200]
+            # Enrich bare-list contexts with concept summaries
+            if _BARE_LIST_RE.match(ctx) or len(ctx.strip()) < 20:
+                src_sum = summaries.get(e["source"], "")
+                tgt_sum = summaries.get(e["target"], "")
+                if src_sum or tgt_sum:
+                    ctx = f"[Source: {src_sum[:150]}] [Target: {tgt_sum[:150]}]"
+            lines.append(f"{j}. Source: {e['source']} | Target: {e['target']} | Context: {ctx}")
+
+        prompt = f"""Classify each relationship. For each line, respond with ONLY the number and edge type, one per line.
+
+Edge types: {type_names}
+
+Rules:
+{rules}
+
+Use RELATES_TO only when no other type fits.
+
+Edges:
+{chr(10).join(lines)}"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=batch_size * 10,
+        )
+
+        # Parse response lines
+        type_map = {}
+        for line in response.choices[0].message.content.strip().split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(".", 1)
+            if len(parts) == 2:
+                try:
+                    idx = int(parts[0].strip())
+                    edge_type = parts[1].strip().upper().replace(" ", "")
+                    if edge_type in valid_types:
+                        type_map[idx] = edge_type
+                except (ValueError, IndexError):
+                    pass
+
+        for j, e in enumerate(batch):
+            e["rel_type"] = type_map.get(j, "RELATES_TO")
+            classified += 1
+
+    # Summary
+    type_counts: dict[str, int] = {}
+    for e in edges:
+        t = e["rel_type"]
+        type_counts[t] = type_counts.get(t, 0) + 1
+    print(f"  Classified {classified} edges: {type_counts}")
+
+    return edges
 
 
 def extract_summary(content: str) -> str:
@@ -128,7 +261,7 @@ def extract_summary(content: str) -> str:
 
 
 def load_vault(vault_name: str, vault_path: Path) -> tuple[list[dict], list[dict]]:
-    """Parse an Obsidian vault into concepts and edges."""
+    """Parse an Obsidian vault into concepts and edges with context."""
     concepts = []
     edges = []
 
@@ -143,7 +276,7 @@ def load_vault(vault_name: str, vault_path: Path) -> tuple[list[dict], list[dict
         name = md_file.stem
         content = md_file.read_text(encoding="utf-8")
         summary = extract_summary(content)
-        links = extract_wikilinks(content)
+        links_with_ctx = extract_wikilinks_with_context(content)
 
         concepts.append({
             "name": name,
@@ -153,10 +286,11 @@ def load_vault(vault_name: str, vault_path: Path) -> tuple[list[dict], list[dict
             "ghost": False,
         })
 
-        for target in links:
+        for link in links_with_ctx:
             edges.append({
                 "source": name,
-                "target": target,
+                "target": link["target"],
+                "context": link["context"],
                 "vault": vault_name,
             })
 
@@ -280,10 +414,11 @@ def _get_driver():
 
 
 def auto_link_all(driver):
-    """Scan ALL concept content for references to other concept names and create edges.
+    """Scan ALL concept content for references to other concept names and create typed edges.
 
     Unlike the MCP tool version (which only processes isolated nodes),
     this processes every concept to maximize cross-vault connectivity.
+    Edges are classified via OpenAI using the surrounding sentence as context.
     """
     with driver.session() as s:
         all_names = [
@@ -292,12 +427,13 @@ def auto_link_all(driver):
         # Pre-filter: skip very short names (≤2 chars) to avoid false positives
         linkable_names = [n for n in all_names if len(n) > 2]
 
-        # Get ALL concepts with content
+        # Get ALL concepts with content + summaries
         targets = list(s.run(
             "MATCH (c:Concept) "
             "WHERE c.content IS NOT NULL AND size(c.content) > 10 "
-            "RETURN c.name AS name, c.content AS content"
+            "RETURN c.name AS name, c.content AS content, c.summary AS summary"
         ))
+        summaries = {t["name"]: t["summary"] or "" for t in targets}
 
         if not targets:
             print("Auto-link: no concepts with content to process.")
@@ -311,35 +447,56 @@ def auto_link_all(driver):
         ):
             existing_edges.add((r["src"], r["tgt"]))
 
-        total_links = 0
         new_edges = []
         for t in targets:
             concept_name = t["name"]
-            content = (t["content"] or "").lower()
+            content_raw = t["content"] or ""
+            content_lower = content_raw.lower()
 
             for candidate in linkable_names:
                 if candidate == concept_name:
                     continue
                 if (concept_name, candidate) in existing_edges:
                     continue
-                if candidate.lower() in content:
-                    new_edges.append((concept_name, candidate))
+                pos = content_lower.find(candidate.lower())
+                if pos >= 0:
+                    # Extract sentence context around the match
+                    start = content_raw.rfind("\n", 0, pos)
+                    start = 0 if start == -1 else start
+                    end = content_raw.find("\n", pos + len(candidate))
+                    end = len(content_raw) if end == -1 else end
+                    context = content_raw[start:end].strip()[:500]
+
+                    new_edges.append({
+                        "source": concept_name,
+                        "target": candidate,
+                        "context": context,
+                        "vault": "auto_link",
+                    })
                     existing_edges.add((concept_name, candidate))
 
-        # Batch create edges
-        if new_edges:
-            for src, tgt in new_edges:
-                s.run(
-                    "MATCH (a:Concept {name: $src}) "
-                    "MATCH (b:Concept {name: $tgt}) "
-                    "CREATE (a)-[r:RELATES_TO {discovered_by: 'auto_link', "
-                    "  weight: 1.0, reasoning: $reasoning}]->(b)",
-                    src=src, tgt=tgt,
-                    reasoning=f"Concept '{tgt}' found in content of '{src}'",
-                )
-            total_links = len(new_edges)
+        if not new_edges:
+            print("Auto-link: no new links found.")
+            return
 
-        print(f"Auto-link: created {total_links} links from {len(targets)} concept(s)")
+        # Classify then create
+        print(f"Auto-link: classifying {len(new_edges)} new edges...")
+        classify_edges(new_edges, summaries=summaries)
+
+        for e in new_edges:
+            rel_type = e.get("rel_type", "RELATES_TO")
+            if rel_type not in RELATION_TYPES:
+                rel_type = "RELATES_TO"
+            s.run(
+                f"MATCH (a:Concept {{name: $src}}) "
+                f"MATCH (b:Concept {{name: $tgt}}) "
+                f"CREATE (a)-[r:{rel_type} {{discovered_by: 'auto_link', "
+                f"  weight: 1.0, reasoning: $reasoning}}]->(b)",
+                src=e["source"], tgt=e["target"],
+                reasoning=f"Concept '{e['target']}' found in content of '{e['source']}'",
+            )
+
+        print(f"Auto-link: created {len(new_edges)} typed links from {len(targets)} concept(s)")
 
 
 def ensure_bidirectional_all(driver):
@@ -458,27 +615,41 @@ def load_to_neo4j(concepts: list[dict], edges: list[dict]):
             alias_count += 1
         print(f"Aliases: set {alias_count} EN aliases on PT concepts")
 
-        # MERGE edges — only for vault-sourced edges (don't touch agent edges)
+        # MERGE edges with pre-classified types (don't touch agent edges)
         edge_count = 0
         for e in edges:
+            rel_type = e.get("rel_type", "RELATES_TO")
+            if rel_type not in RELATION_TYPES:
+                rel_type = "RELATES_TO"
+
+            # Delete old RELATES_TO if we're upgrading to a typed edge
+            if rel_type != "RELATES_TO":
+                session.run(
+                    "MATCH (a:Concept {name: $source})-[r:RELATES_TO]->(b:Concept {name: $target}) "
+                    "WHERE r.discovered_by = 'vault_import' "
+                    "DELETE r",
+                    source=e["source"],
+                    target=e["target"],
+                )
+
+            # Neo4j doesn't allow parameterized relationship types in MERGE,
+            # so we use a validated type from RELATION_TYPES
             result = session.run(
-                """
-                MATCH (a:Concept {name: $source})
-                MATCH (b:Concept {name: $target})
-                MERGE (a)-[r:RELATES_TO]->(b)
-                ON CREATE SET r.discovered_by = 'vault_import',
-                              r.weight = 1.0,
-                              r.reasoning = $reasoning
-                RETURN r
-                """,
+                f"MATCH (a:Concept {{name: $source}}) "
+                f"MATCH (b:Concept {{name: $target}}) "
+                f"MERGE (a)-[r:{rel_type}]->(b) "
+                f"ON CREATE SET r.discovered_by = 'vault_import', "
+                f"              r.weight = 1.0, "
+                f"              r.reasoning = $reasoning "
+                f"RETURN r",
                 source=e["source"],
                 target=e["target"],
-                reasoning=f"Wikilink in {e['vault']} vault: [[{e['target']}]]",
+                reasoning=f"Wikilink in {e['vault']} vault: [[{e['target']}]] — classified from context",
             )
             if result.single():
                 edge_count += 1
 
-        print(f"Edges: {edge_count} merged (vault-sourced)")
+        print(f"Edges: {edge_count} merged (vault-sourced, pre-classified)")
 
         # Stats
         result = session.run(
@@ -516,6 +687,9 @@ def index_to_milvus(merged_concepts: list[dict]):
     # Import from mcp-server
     sys.path.insert(0, str(Path(__file__).parent.parent / "mcp-server"))
     import memory
+
+    # Ensure collections exist (needed after a full wipe)
+    memory.ensure_collections()
 
     # 1. Index doc chunks
     print(f"\nIndexing docs into Milvus (doc_chunks)...")
@@ -596,7 +770,14 @@ def main():
     merged.extend(ghosts)
     print(f"Ghost nodes: {len(ghosts)}")
 
-    # Load into Neo4j
+    # Build summaries lookup for enriching bare-list contexts
+    summaries = {c["name"]: c["summary"] for c in merged if c.get("summary")}
+
+    # Classify edges (separate step — can be cached/skipped)
+    print(f"\nClassifying {len(all_edges)} edges...")
+    classify_edges(all_edges, summaries=summaries)
+
+    # Load into Neo4j (receives pre-typed edges)
     print(f"\nLoading into Neo4j at {NEO4J_URI}...")
     load_to_neo4j(merged, all_edges)
 

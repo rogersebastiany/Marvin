@@ -277,24 +277,19 @@ def compute_diff(code: dict, kg: dict) -> dict:
     if always_allowed:
         diff["middleware_gaps"] = sorted(always_allowed)
 
-    # 4. Relation types: code RELATION_TYPES vs what KG actually uses
-    # Parse ontology.py for RELATION_TYPES
-    ontology_path = REPO_ROOT / "ontology.py"
-    if ontology_path.exists():
-        tree = ast.parse(ontology_path.read_text())
-        for node in ast.iter_child_nodes(tree):
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id == "RELATION_TYPES":
-                        code_rel_types = set(_extract_set_or_list(node.value))
-                        kg_rel_types = {rt for rt, _ in kg["relation_types_in_kg"]}
-                        in_code_not_kg = code_rel_types - kg_rel_types
-                        in_kg_not_code = kg_rel_types - code_rel_types
-                        if in_code_not_kg or in_kg_not_code:
-                            diff["relation_type_drift"] = {
-                                "defined_not_used": sorted(in_code_not_kg),
-                                "used_not_defined": sorted(in_kg_not_code),
-                            }
+    # 4. Relation types: relation_types.json vs what KG actually uses
+    rel_types_path = REPO_ROOT / "relation_types.json"
+    if rel_types_path.exists():
+        import json as _json
+        code_rel_types = set(_json.loads(rel_types_path.read_text()).keys())
+        kg_rel_types = {rt for rt, _ in kg["relation_types_in_kg"]}
+        in_code_not_kg = code_rel_types - kg_rel_types
+        in_kg_not_code = kg_rel_types - code_rel_types
+        if in_code_not_kg or in_kg_not_code:
+            diff["relation_type_drift"] = {
+                "defined_not_used": sorted(in_code_not_kg),
+                "used_not_defined": sorted(in_kg_not_code),
+            }
 
     # 5. Stale references in KG content (e.g. removed tools, old architecture)
     removed_patterns = {

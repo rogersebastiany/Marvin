@@ -95,7 +95,10 @@ def build_self_description() -> str:
     tool_catalog = _build_tool_catalog()
 
     # 4. Edge types — from code
-    edge_types = "\n".join(f"- `{rt}`" for rt in ontology.RELATION_TYPES)
+    edge_types = "\n".join(
+        f"- `{rt}` — {ontology.RELATION_DESCRIPTIONS.get(rt, '')}"
+        for rt in ontology.RELATION_TYPES
+    )
     symmetric = ", ".join(f"`{t}`" for t in sorted(ontology.SYMMETRIC_TYPES))
 
     # 5. Assemble the complete identity prompt

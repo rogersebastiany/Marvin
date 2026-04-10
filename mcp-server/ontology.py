@@ -4,8 +4,10 @@ Ontology backend — Python library wrapping Neo4j.
 Not an MCP server. Used internally by mcp-marvin.
 """
 
+import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
@@ -17,31 +19,20 @@ NEO4J_AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautolo
 
 _driver = None
 
-# All semantic relationship types in the graph
-RELATION_TYPES = [
-    "RELATES_TO",
-    "IMPLEMENTS",
-    "PROVES",
-    "REQUIRES",
-    "EXTENDS",
-    "CONTRADICTS",
-    "ENABLES",
-    "EXEMPLIFIES",
-    "COMPOSES",
-    "EVOLVES_FROM",
-]
+# Load relation types from single source of truth
+_RELATION_TYPES_PATH = Path(__file__).parent / "relation_types.json"
+_RELATION_TYPES_DATA: dict = json.loads(_RELATION_TYPES_PATH.read_text())
 
-# Symmetric types: A→B implies B→A with the same type
-SYMMETRIC_TYPES = frozenset({
-    "RELATES_TO",
-    "CONTRADICTS",
-})
-
-# Directional types: A→B does NOT imply B→A
-# IMPLEMENTS, PROVES, REQUIRES, EXTENDS, ENABLES, EXEMPLIFIES, COMPOSES, EVOLVES_FROM
+RELATION_TYPES: list[str] = list(_RELATION_TYPES_DATA.keys())
+SYMMETRIC_TYPES: frozenset[str] = frozenset(
+    name for name, meta in _RELATION_TYPES_DATA.items() if meta["symmetric"]
+)
+RELATION_DESCRIPTIONS: dict[str, str] = {
+    name: meta["description"] for name, meta in _RELATION_TYPES_DATA.items()
+}
 
 # Cypher fragment for matching any relationship type
-_ANY_REL = "|".join(RELATION_TYPES)  # "RELATES_TO|IMPLEMENTS|PROVES|..."
+_ANY_REL = "|".join(RELATION_TYPES)
 
 
 def _get_driver():
