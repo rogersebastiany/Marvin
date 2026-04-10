@@ -70,8 +70,8 @@ jobs:
             echo "command=all" >> "$GITHUB_OUTPUT"
             echo "threshold=0" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "command=audit" >> "$GITHUB_OUTPUT"
-            echo "threshold=5" >> "$GITHUB_OUTPUT"
+            echo "command=all" >> "$GITHUB_OUTPUT"
+            echo "threshold=0" >> "$GITHUB_OUTPUT"
           else
             echo "command=all" >> "$GITHUB_OUTPUT"
             echo "threshold=0" >> "$GITHUB_OUTPUT"
