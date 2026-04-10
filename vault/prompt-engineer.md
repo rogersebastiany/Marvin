@@ -26,17 +26,13 @@ Quatro [[Primitivas MCP|tools]], dois [[Primitivas MCP|prompts]]:
 
 No import time, o server descobre tools dos irmãos:
 
+No [[Marvin]] unificado, o catálogo é construído diretamente a partir da lista `MARVIN_TOOLS` em `marvin_server.py`:
+
 ```python
-def _discover_mcp_tools() -> str:
-    from server import mcp as docs_mcp
-    from web_to_docs_server import mcp as web_mcp
-    from system_design_server import mcp as design_mcp
-    # ... asyncio.run() para listar tools de cada server
+catalog = "\n".join(f"- `{t}`" for t in MARVIN_TOOLS)
 ```
 
-Isso cria um acoplamento: os 3 servers irmãos devem ser importáveis quando o prompt-engineer inicia. O `asyncio.run()` dentro do import pode conflitar se o event loop já estiver rodando — caveat para produção.
-
-O resultado é o `MCP_TOOL_CATALOG` — string com todas as tools formatadas — injetado em `generate_prompt` e `refine_prompt`. É a [[Ontologia como Código|ontologia]] das capacidades do sistema.
+Injetado em `generate_prompt` e `refine_prompt`. É a [[Ontologia como Código|ontologia]] das capacidades do sistema — sem acoplamento entre módulos.
 
 ## Papel na Tese
 

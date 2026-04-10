@@ -507,6 +507,51 @@ def load_to_neo4j(concepts: list[dict], edges: list[dict]):
     print("\nDone.")
 
 
+def index_to_milvus(merged_concepts: list[dict]):
+    """Index docs and concepts into Milvus for semantic search.
+
+    Indexes vault-sourced concepts from the merge + agent-owned concepts
+    from Neo4j (since those aren't in the vault files).
+    """
+    # Import from mcp-server
+    sys.path.insert(0, str(Path(__file__).parent.parent / "mcp-server"))
+    import memory
+
+    # 1. Index doc chunks
+    print(f"\nIndexing docs into Milvus (doc_chunks)...")
+    result = memory.index_docs(str(DOCS_DIR))
+    print(f"  {result}")
+
+    # 2. Collect ALL concepts: vault-sourced + agent-owned from Neo4j
+    indexable = [
+        c for c in merged_concepts
+        if not c.get("ghost") and len(c.get("content", "")) > 50
+    ]
+
+    # Also pull agent-owned concepts from Neo4j
+    driver = _get_driver()
+    with driver.session() as s:
+        agent_concepts = list(s.run(
+            "MATCH (c:Concept) WHERE c.vault = 'agent' "
+            "AND c.content IS NOT NULL AND size(c.content) > 50 "
+            "RETURN c.name AS name, c.vault AS vault, "
+            "c.summary AS summary, c.content AS content"
+        ))
+        for r in agent_concepts:
+            indexable.append({
+                "name": r["name"],
+                "vault": r["vault"],
+                "summary": r["summary"] or "",
+                "content": r["content"] or "",
+            })
+    driver.close()
+
+    print(f"Indexing concepts into Milvus (concepts)...")
+    print(f"  {len(indexable)} concepts ({len(agent_concepts)} agent-owned)")
+    result = memory.index_concepts(indexable)
+    print(f"  {result}")
+
+
 def main():
     all_concepts = []
     all_edges = []
@@ -564,6 +609,9 @@ def main():
     print("Ensuring bidirectionality...")
     ensure_bidirectional_all(driver)
     driver.close()
+
+    # Index into Milvus for semantic search
+    index_to_milvus(merged)
 
 
 if __name__ == "__main__":

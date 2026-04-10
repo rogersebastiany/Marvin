@@ -18,10 +18,26 @@ def _safe_path(filename: str) -> Path | None:
 
 
 def search_docs(query: str) -> str:
-    """Search across all documentation files for a keyword or phrase."""
+    """Semantic search over docs via Milvus. Keyword fallback if Milvus is down."""
     if not query.strip():
         return "Please provide a non-empty search query."
 
+    # Primary: semantic search via Milvus
+    try:
+        import memory
+        hits = memory.search_doc_chunks(query, limit=5)
+        if hits:
+            parts = [f"Found {len(hits)} result(s) for '{query}':\n"]
+            for h in hits:
+                parts.append(
+                    f"**{h.get('doc_name', '?')}.md** — {h.get('heading', '')} "
+                    f"(score={h['score']:.3f}):\n```\n{h.get('content', '')[:500]}\n```"
+                )
+            return "\n\n".join(parts)
+    except Exception:
+        pass
+
+    # Fallback: keyword grep (Milvus down or empty)
     query_lower = query.lower()
     results: list[str] = []
 
@@ -34,9 +50,10 @@ def search_docs(query: str) -> str:
                 snippet = "\n".join(lines[start:end])
                 results.append(f"**{doc.name}** (line {i + 1}):\n```\n{snippet}\n```")
 
-    if not results:
-        return f"No results found for '{query}'."
-    return f"Found {len(results)} match(es):\n\n" + "\n\n".join(results)
+    if results:
+        return f"Found {len(results)} match(es) (keyword fallback):\n\n" + "\n\n".join(results)
+
+    return f"No results found for '{query}'."
 
 
 def list_docs() -> list[str]:

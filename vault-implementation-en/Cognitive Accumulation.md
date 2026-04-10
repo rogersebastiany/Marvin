@@ -36,7 +36,7 @@ The evolution to [[Neo4j]] + [[Milvus]] adds:
 
 Three [[Cognitive Accumulation]] operations mapped to the [[Self-Improvement Loop]]:
 
-- **Prefetching**: Before acting, the agent retrieves similar wisdom from Milvus (`search_sessions`, `search_decisions`). It starts informed.
+- **Prefetching**: Before acting, the agent calls `retrieve()` which searches similar wisdom in Milvus (decisions and sessions). It starts informed.
 - **Context Hit**: During execution, it retrieves recent experience (`search_tool_calls`). It reuses what worked.
 - **Context Promotion**: After completion, it distills experience into a decision (`log_decision`) and a decision into a session (`log_session`). It crystallizes learning.
 

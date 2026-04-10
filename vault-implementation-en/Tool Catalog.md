@@ -4,29 +4,26 @@ The complete list of all [[MCP Primitives|tools]] available across all servers, 
 
 ---
 
-## Auto-Discovery
+## Architecture
 
-The `prompt_engineer_server.py` imports the 3 sibling servers and lists their tools:
+[[Marvin]] is a unified [[FastMCP]] server. The catalog is a Python list in `marvin_server.py`:
 
 ```python
-from server import mcp as docs_mcp
-from web_to_docs_server import mcp as web_mcp
-from system_design_server import mcp as design_mcp
-
-servers = [
-    ("docs-server", docs_mcp),
-    ("web-to-docs", web_mcp),
-    ("system-design", design_mcp),
+MARVIN_TOOLS = [
+    "retrieve", "get_concept", "traverse", "why_exists", "list_concepts",
+    "set_aliases", "batch_set_aliases",
+    "log_decision", "log_session",
+    "expand", "link", "auto_link", "ensure_bidirectional",
+    "propose_schema_change", "execute_schema_change",
+    "search_docs", "list_docs", "get_doc",
+    "fetch_url", "save_doc", "rank_urls", "crawl_docs", "research_topic",
+    "generate_prompt", "refine_prompt", "audit_prompt",
+    "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
+    "inspect_schemas", "stats",
 ]
-
-async def _gather():
-    catalog = []
-    for server_name, server_mcp in servers:
-        tools = await server_mcp.list_tools()
-        # formats each tool: name, params, description
 ```
 
-`asyncio.run()` executes the synchronous discovery at import time. The result is stored in `MCP_TOOL_CATALOG` -- a global constant used in all prompt-engineer tools.
+Each tool is a function decorated with `@mcp.tool()` in `marvin_server.py`, delegating to one of 6 backend modules. The catalog is injected into `generate_prompt` and `refine_prompt` so that every generated prompt includes the full tool list.
 
 ## The Catalog as Ontology
 

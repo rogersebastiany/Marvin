@@ -116,15 +116,66 @@ def create_sessions():
     return col
 
 
+def create_doc_chunks():
+    """Semantic index for documentation — one row per section/chunk."""
+    fields = [
+        FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=128),
+        FieldSchema(name="doc_name", dtype=DataType.VARCHAR, max_length=256),
+        FieldSchema(name="chunk_index", dtype=DataType.INT64),
+        FieldSchema(name="heading", dtype=DataType.VARCHAR, max_length=512),
+        FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=8192),
+        FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+    ]
+    schema = CollectionSchema(fields, description="Semantic index — doc chunks")
+    col = Collection("doc_chunks", schema)
+    col.create_index(
+        field_name="embedding",
+        index_params={
+            "metric_type": "COSINE",
+            "index_type": "IVF_FLAT",
+            "params": {"nlist": 128},
+        },
+    )
+    print("  Created doc_chunks (semantic doc index)")
+    return col
+
+
+def create_concepts():
+    """Semantic index for KG concepts — one row per concept."""
+    fields = [
+        FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=128),
+        FieldSchema(name="name", dtype=DataType.VARCHAR, max_length=256),
+        FieldSchema(name="vault", dtype=DataType.VARCHAR, max_length=64),
+        FieldSchema(name="summary", dtype=DataType.VARCHAR, max_length=1024),
+        FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=8192),
+        FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+    ]
+    schema = CollectionSchema(fields, description="Semantic index — KG concepts")
+    col = Collection("concepts", schema)
+    col.create_index(
+        field_name="embedding",
+        index_params={
+            "metric_type": "COSINE",
+            "index_type": "IVF_FLAT",
+            "params": {"nlist": 128},
+        },
+    )
+    print("  Created concepts (semantic concept index)")
+    return col
+
+
+ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts"]
+
+
 def drop_all():
-    for name in ["tool_calls", "decisions", "sessions"]:
+    for name in ALL_COLLECTIONS:
         if utility.has_collection(name):
             utility.drop_collection(name)
             print(f"  Dropped {name}")
 
 
 def status():
-    for name in ["tool_calls", "decisions", "sessions"]:
+    for name in ALL_COLLECTIONS:
         if utility.has_collection(name):
             col = Collection(name)
             col.load()
@@ -150,25 +201,22 @@ def main():
         drop_all()
 
     print("Creating Milvus collections...")
-    existing = []
-    for name in ["tool_calls", "decisions", "sessions"]:
-        if utility.has_collection(name):
-            existing.append(name)
+    creators = {
+        "tool_calls": create_tool_calls,
+        "decisions": create_decisions,
+        "sessions": create_sessions,
+        "doc_chunks": create_doc_chunks,
+        "concepts": create_concepts,
+    }
+    existing = [n for n in ALL_COLLECTIONS if utility.has_collection(n)]
 
     if existing:
         print(f"  Already exist: {', '.join(existing)}")
         print(f"  Use --drop to recreate.")
-        # Only create missing ones
-        if "tool_calls" not in existing:
-            create_tool_calls()
-        if "decisions" not in existing:
-            create_decisions()
-        if "sessions" not in existing:
-            create_sessions()
-    else:
-        create_tool_calls()
-        create_decisions()
-        create_sessions()
+
+    for name, creator in creators.items():
+        if name not in existing:
+            creator()
 
     print("\nVerifying...")
     status()

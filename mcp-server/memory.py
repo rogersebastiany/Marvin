@@ -37,10 +37,21 @@ def _get_openai():
 
 
 def _embed(text: str) -> list[float]:
-    """Embed text using OpenAI."""
+    """Embed a single text using OpenAI."""
     client = _get_openai()
     response = client.embeddings.create(input=text, model=EMBEDDING_MODEL)
     return response.data[0].embedding
+
+
+def _embed_batch(texts: list[str], batch_size: int = 100) -> list[list[float]]:
+    """Embed multiple texts in batches. Returns vectors in same order."""
+    client = _get_openai()
+    all_vectors = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        response = client.embeddings.create(input=batch, model=EMBEDDING_MODEL)
+        all_vectors.extend([d.embedding for d in response.data])
+    return all_vectors
 
 
 def _search_collection(collection_name: str, query: str, limit: int, output_fields: list[str]) -> list[dict]:
@@ -213,11 +224,175 @@ def log_session(
     return f"Logged session: {objective[:60]} ({record_id})"
 
 
+# ── Semantic Search (doc_chunks + concepts) ────────────────────────────────
+
+
+def search_doc_chunks(query: str, limit: int = 5) -> list[dict]:
+    """Semantic search over doc chunks. Returns list of {score, doc_name, heading, content}."""
+    fields = ["doc_name", "heading", "content"]
+    return _search_collection("doc_chunks", query, limit, fields)
+
+
+def search_concepts_semantic(query: str, limit: int = 5) -> list[dict]:
+    """Semantic search over concepts. Returns list of {score, name, vault, summary}."""
+    fields = ["name", "vault", "summary"]
+    return _search_collection("concepts", query, limit, fields)
+
+
+# ── Indexing (called by load_vaults and rebuild scripts) ────────────────────
+
+
+def _chunk_markdown(text: str, doc_name: str) -> list[dict]:
+    """Split markdown by ## headers into chunks."""
+    import re
+    chunks = []
+    # Split on ## but keep the heading
+    parts = re.split(r"(?=^## )", text, flags=re.MULTILINE)
+
+    for i, part in enumerate(parts):
+        part = part.strip()
+        if not part:
+            continue
+
+        # Extract heading
+        lines = part.split("\n", 1)
+        heading = lines[0].lstrip("#").strip() if lines[0].startswith("#") else doc_name
+        content = lines[1].strip() if len(lines) > 1 else part
+
+        # Skip tiny chunks (navigation fragments, empty sections)
+        if len(content) < 50:
+            continue
+
+        chunks.append({
+            "id": f"{doc_name}::{i}",
+            "doc_name": doc_name,
+            "chunk_index": i,
+            "heading": heading[:500].encode("utf-8")[:500].decode("utf-8", errors="ignore"),
+            "content": content[:8000].encode("utf-8")[:8000].decode("utf-8", errors="ignore"),
+            "embed_text": f"{heading}\n{content}"[:8000],
+        })
+
+    return chunks
+
+
+def index_docs(docs_dir: str) -> str:
+    """Index all markdown docs into Milvus doc_chunks collection.
+
+    Drops and recreates all entries. Call after docs change.
+    """
+    from pathlib import Path
+    _ensure_connected()
+
+    docs_path = Path(docs_dir)
+    if not docs_path.exists():
+        return f"Docs directory not found: {docs_dir}"
+
+    # Collect all chunks
+    all_chunks = []
+    for md_file in sorted(docs_path.glob("*.md")):
+        text = md_file.read_text()
+        if len(text) < 200:
+            continue
+        chunks = _chunk_markdown(text, md_file.stem)
+        all_chunks.extend(chunks)
+
+    if not all_chunks:
+        return "No chunks to index."
+
+    # Batch embed
+    embed_texts = [c["embed_text"] for c in all_chunks]
+    vectors = _embed_batch(embed_texts)
+
+    # Clear existing entries
+    col = Collection("doc_chunks")
+    col.load()
+    # Delete all existing — use expression on doc_name
+    if col.num_entities > 0:
+        col.delete(expr='doc_name != ""')
+        col.flush()
+
+    # Insert in batches
+    batch_size = 200
+    for i in range(0, len(all_chunks), batch_size):
+        batch = all_chunks[i : i + batch_size]
+        batch_vectors = vectors[i : i + batch_size]
+        col.insert([
+            [c["id"] for c in batch],
+            [c["doc_name"] for c in batch],
+            [c["chunk_index"] for c in batch],
+            [c["heading"] for c in batch],
+            [c["content"] for c in batch],
+            batch_vectors,
+        ])
+    col.flush()
+
+    return f"Indexed {len(all_chunks)} chunks from {len(list(docs_path.glob('*.md')))} docs."
+
+
+def index_concepts(concepts: list[dict]) -> str:
+    """Index concepts into Milvus concepts collection.
+
+    Args:
+        concepts: list of dicts with keys: name, vault, summary, content
+    """
+    _ensure_connected()
+
+    if not concepts:
+        return "No concepts to index."
+
+    # Build embed text: name + summary + first N chars of content
+    entries = []
+    for c in concepts:
+        content_preview = (c.get("content") or "")[:2000]
+        embed_text = f"{c['name']}\n{c.get('summary', '')}\n{content_preview}"
+        entries.append({
+            "id": f"concept::{c['name']}",
+            "name": c["name"][:250],
+            "vault": (c.get("vault") or "")[:60],
+            "summary": (c.get("summary") or "")[:1000].encode("utf-8")[:1000].decode("utf-8", errors="ignore"),
+            "content": content_preview[:8000].encode("utf-8")[:8000].decode("utf-8", errors="ignore"),
+            "embed_text": embed_text[:8000],
+        })
+
+    # Batch embed
+    vectors = _embed_batch([e["embed_text"] for e in entries])
+
+    # Clear existing
+    col = Collection("concepts")
+    col.load()
+    if col.num_entities > 0:
+        col.delete(expr='name != ""')
+        col.flush()
+
+    # Insert in batches
+    batch_size = 200
+    for i in range(0, len(entries), batch_size):
+        batch = entries[i : i + batch_size]
+        batch_vectors = vectors[i : i + batch_size]
+        col.insert([
+            [e["id"] for e in batch],
+            [e["name"] for e in batch],
+            [e["vault"] for e in batch],
+            [e["summary"] for e in batch],
+            [e["content"] for e in batch],
+            batch_vectors,
+        ])
+    col.flush()
+
+    return f"Indexed {len(entries)} concepts."
+
+
+# ── Schema ──────────────────────────────────────────────────────────────────
+
+
+ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts"]
+
+
 def get_schema() -> str:
     """Return current Milvus schema (collections, fields, indexes)."""
     _ensure_connected()
     lines = ["# Milvus Schema\n"]
-    for name in ["tool_calls", "decisions", "sessions"]:
+    for name in ALL_COLLECTIONS:
         if not utility.has_collection(name):
             lines.append(f"## {name}: NOT FOUND")
             continue

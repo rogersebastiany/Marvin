@@ -40,7 +40,7 @@ O artigo [[Ultra-Long-Horizon Agentic Science]] valida este design com o HCC:
 | L1 — Evolving Experience | Tool calls logadas no [[Milvus]] |
 | L2 — Refined Knowledge | Decisões logadas no [[Milvus]] |
 | L3 — Prior Wisdom | Sessões logadas no [[Milvus]] |
-| Context Prefetching | `search_decisions` antes de agir |
+| Context Prefetching | `retrieve()` busca memória antes de agir |
 | Context Promotion | Conceitos descobertos → [[Neo4j]] via `expand` |
 
 A diferença: HCC usa sumarização/compressão. Nós usamos [[Embedding|embeddings]] + similaridade de cosseno. Mas a estrutura de três tiers é a mesma, e a ablation study do HCC valida que todas as três camadas são necessárias.

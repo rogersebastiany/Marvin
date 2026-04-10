@@ -1,6 +1,6 @@
 # Agente na POC
 
-Qualquer cliente [[MCP]] que consome os 4 servers da POC. Pode ser uma IDE (Cursor, VS Code, JetBrains), Claude Code, ou qualquer agente com suporte a MCP. Opera via [[ReAct na POC|ReAct]] com as [[Primitivas MCP|tools]] disponíveis via [[stdio]].
+Qualquer cliente [[MCP]] que consome as 33 tools do [[Marvin]] (servidor unificado). Pode ser uma IDE (Cursor, VS Code, JetBrains), Claude Code, ou qualquer agente com suporte a MCP. Opera via [[ReAct na POC|ReAct]] com as [[Primitivas MCP|tools]] disponíveis via [[stdio]].
 
 ---
 

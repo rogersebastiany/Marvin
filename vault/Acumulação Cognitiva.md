@@ -36,7 +36,7 @@ A evolução para [[Neo4j]] + [[Milvus]] adiciona:
 
 Três operações da [[Acumulação Cognitiva]] mapeadas para o [[Loop de Auto-Melhoria]]:
 
-- **Prefetching**: Antes de agir, o agente busca sabedoria similar no Milvus (`search_sessions`, `search_decisions`). Começa informado.
+- **Prefetching**: Antes de agir, o agente chama `retrieve()` que busca sabedoria similar no Milvus (decisões e sessões). Começa informado.
 - **Context Hit**: Durante a execução, busca experiência recente (`search_tool_calls`). Reutiliza o que funcionou.
 - **Context Promotion**: Após completar, destila experiência em decisão (`log_decision`) e decisão em sessão (`log_session`). Cristaliza aprendizado.
 

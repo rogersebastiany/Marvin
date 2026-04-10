@@ -8,20 +8,20 @@ MCP server that exposes the [[Milvus]] vector database as tools for the [[Agent 
 
 | Tool | Description |
 |---|---|
-| `search_tool_calls` | Searches past tool calls similar to a query |
-| `search_decisions` | Searches past decisions similar to a query |
-| `search_sessions` | Searches past sessions similar to a query |
-| `log_tool_call` | Records a tool call (tool, params, result, context) |
-| `log_decision` | Records a decision (objective, options, choice, reasoning) |
-| `log_session` | Records a session summary (objective, approach, result, lessons) |
+In unified [[Marvin]], episodic memory is accessed via:
+- `retrieve()` — unified search that internally queries `search_tool_calls`, `search_decisions`, `search_sessions` in [[Milvus]]
+- `log_decision` — records a decision (objective, options, choice, reasoning)
+- `log_session` — records a session summary (objective, approach, result, lessons)
+
+The search functions (`search_*`) are internal to `memory.py` — the agent never calls them directly, only through `retrieve()`.
 
 ## Search Before Acting
 
-The usage pattern: before making a decision, the agent searches [[Milvus]] for similar actions. "Have I done something like this before? Did it work? What did I learn?"
+The usage pattern: before making a decision, the agent calls `retrieve()` which searches [[Milvus]] for similar actions. "Have I done something like this before? Did it work? What did I learn?"
 
 ```
-Agent receives objective -> search_decisions("migrate service to ECS")
-    | finds similar past decision
+Agent receives objective -> retrieve("migrate service to ECS")
+    | finds similar past decision (via Milvus)
     | "last time, using Fargate was better than EC2 because..."
 Agent decides informed -> executes -> log_decision(result)
 ```

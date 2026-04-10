@@ -52,7 +52,21 @@ def _get_driver():
 
 
 def query(text: str, limit: int = 10) -> str:
-    """Search concepts by name, summary, content, or aliases."""
+    """Semantic search over concepts via Milvus. Keyword fallback if Milvus is down."""
+    # Primary: semantic search via Milvus
+    try:
+        import memory
+        hits = memory.search_concepts_semantic(text, limit=limit)
+        if hits:
+            lines = [f"Found {len(hits)} concept(s):\n"]
+            for h in hits:
+                summary = f" — {h['summary']}" if h.get("summary") else ""
+                lines.append(f"- [{h.get('vault', '?')}] {h.get('name', '?')} (score={h['score']:.3f}){summary}")
+            return "\n".join(lines)
+    except Exception:
+        pass
+
+    # Fallback: keyword search in Neo4j
     driver = _get_driver()
     with driver.session() as s:
         result = s.run(
@@ -73,16 +87,16 @@ def query(text: str, limit: int = 10) -> str:
         )
         records = list(result)
 
-    if not records:
-        return f"No concepts found for '{text}'."
+    if records:
+        lines = [f"Found {len(records)} concept(s) (keyword fallback):\n"]
+        for r in records:
+            ghost = " (ghost)" if r["ghost"] else ""
+            summary = f" — {r['summary']}" if r["summary"] else ""
+            aliases = f" (aka: {', '.join(r['aliases'])})" if r["aliases"] else ""
+            lines.append(f"- [{r['vault']}] {r['name']}{ghost}{aliases}{summary}")
+        return "\n".join(lines)
 
-    lines = [f"Found {len(records)} concept(s):\n"]
-    for r in records:
-        ghost = " (ghost)" if r["ghost"] else ""
-        summary = f" — {r['summary']}" if r["summary"] else ""
-        aliases = f" (aka: {', '.join(r['aliases'])})" if r["aliases"] else ""
-        lines.append(f"- [{r['vault']}] {r['name']}{ghost}{aliases}{summary}")
-    return "\n".join(lines)
+    return f"No concepts found for '{text}'."
 
 
 def set_aliases(name: str, aliases: list[str]) -> str:
