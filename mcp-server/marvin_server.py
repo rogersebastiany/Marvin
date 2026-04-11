@@ -18,10 +18,12 @@ Capabilities:
 import inspect
 import threading
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.exceptions import ToolError
+from pydantic import Field
 
 import ontology
 import memory
@@ -244,7 +246,12 @@ MARVIN_TOOLS = [
     "generate_prompt", "refine_prompt", "audit_prompt",
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
     "inspect_schemas", "stats", "self_description",
+    "get_user_score",
+    "refine_plan", "save_plan",
 ]
+# Single source of truth — anything that needs the tool count must read len(MARVIN_TOOLS)
+# at runtime, never hardcode. See vault/Marvin.md (intentionally has no tool count to
+# avoid drift) and the self_description builder.
 
 mcp = FastMCP(
     "mcp-marvin",
@@ -266,7 +273,10 @@ mcp = FastMCP(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Tier 1a — Milvus tools: these ARE the S→A reduction. Set the gate flag.
-MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs"})
+# refine_plan is included because it actively contrasts a draft against
+# Milvus (one search per collection per iteration) — that's the S→A reduction
+# operating on a plan rather than a free-form query.
+MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan"})
 
 # Tier 1b — Safe overviews: ungated, but do NOT set the flag.
 # Seeing a menu of names is not a semantic reduction.
@@ -289,6 +299,7 @@ WRITE_TOOLS = frozenset({
     "save_doc", "crawl_docs", "research_topic",
     "generate_prompt", "refine_prompt",
     "generate_diagram", "save_diagram",
+    "save_plan",
 })
 
 # Union of tiers 2+3 for the gate check
@@ -461,19 +472,100 @@ def get_memory(query: str, collection: str = "decisions", limit: int = 5) -> str
 
     Args:
         query: What you're about to do (semantic search key)
-        collection: Which memory layer — "decisions" (L2) or "sessions" (L3)
+        collection: Which memory layer — "decisions" (L2), "sessions" (L3), or "plans"
         limit: Max results (default 5)
     """
     if collection == "sessions":
         return memory.search_sessions(query, limit=limit)
+    if collection == "plans":
+        return memory.search_plans(query, limit=limit)
     return memory.search_decisions(query, limit=limit)
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval", "planning"},
+)
+def refine_plan(
+    draft: Annotated[str, Field(min_length=50, max_length=20000, description="The plan draft to contrast against Milvus prior art")],
+    iterations: Annotated[int, Field(ge=1, le=5, description="1 = single-shot critique; 2+ = semantic walk with text re-embedding")] = 1,
+    k_per_collection: Annotated[int, Field(ge=1, le=10, description="Top-k results per collection per iteration")] = 5,
+) -> dict:
+    """Contrast a plan draft against Milvus prior art — tautological refinement.
+
+    Embeds the draft, searches 5 Milvus collections (concepts, decisions,
+    sessions, doc_chunks, plans) for semantically related prior art, and
+    returns the ressalvas — concerns, prior decisions, related docs, existing
+    plans — that the draft should address.
+
+    With iterations=1: single-shot critique. Surfaces direct priors.
+    With iterations=2+: semantic walk. Each iteration re-embeds
+    (draft + accumulated ressalvas text) to explore second-order neighbors.
+    Stays in the embedding manifold (no Hadamard product).
+
+    This is a retrieval tool — sets the Milvus gate flag. Use it before
+    writing code, configs, or saving plans.
+
+    Args:
+        draft: The plan draft text (markdown, spec, etc.)
+        iterations: Number of refinement passes (1-5, default 1)
+        k_per_collection: Results per collection per pass (1-10, default 5)
+    """
+    return memory.refine_plan_vector_walk(
+        draft=draft,
+        iterations=iterations,
+        k_per_collection=k_per_collection,
+    )
+
+
+_PLAN_NAME_RE = r"^[\w\-]+$"
+_PLAN_STATUS_RE = r"^(draft|approved|in_progress|done|archived)$"
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": False, "idempotentHint": True},
+    tags={"planning"},
+)
+def save_plan(
+    name: Annotated[str, Field(min_length=1, max_length=100, pattern=_PLAN_NAME_RE, description="Slug identifier — upserts on name collision")],
+    title: Annotated[str, Field(min_length=1, max_length=200)],
+    status: Annotated[str, Field(pattern=_PLAN_STATUS_RE, description="draft | approved | in_progress | done | archived")],
+    summary: Annotated[str, Field(max_length=1000)],
+    content: Annotated[str, Field(max_length=50000, description="Full plan markdown")],
+) -> str:
+    """Upsert a plan into the plans collection in Milvus.
+
+    Plans become first-class retrievable memory. Future sessions can find
+    prior planning work via `retrieve` / `get_memory(collection='plans')`.
+
+    Upsert semantics: if a plan with the same `name` exists, it is replaced.
+    Typical flow: refine_plan → review ressalvas → save_plan(status='draft')
+    → iterate → save_plan(status='approved') when ready.
+
+    Args:
+        name: Slug identifier (alphanumeric, dash, underscore)
+        title: Human-readable title
+        status: draft | approved | in_progress | done | archived
+        summary: One-paragraph overview
+        content: Full plan markdown
+    """
+    return memory.save_plan(
+        name=name,
+        title=title,
+        status=status,
+        summary=summary,
+        content=content,
+    )
 
 
 @mcp.tool(
     annotations={"readOnlyHint": False, "idempotentHint": True},
     tags={"enrichment"},
 )
-def set_aliases(name: str, aliases: list[str]) -> str:
+def set_aliases(
+    name: Annotated[str, Field(max_length=200)],
+    aliases: Annotated[list[str], Field(max_length=20)],
+) -> str:
     """Set English aliases for a concept. Enables cross-language search.
 
     Use this to add English translations to Portuguese concept names so that
@@ -490,7 +582,15 @@ def set_aliases(name: str, aliases: list[str]) -> str:
     annotations={"readOnlyHint": False, "idempotentHint": True},
     tags={"enrichment"},
 )
-def batch_set_aliases(mappings: list[dict]) -> str:
+def batch_set_aliases(
+    mappings: Annotated[
+        list[dict],
+        Field(
+            max_length=500,
+            description="Up to 500 alias mappings: [{'name': ..., 'aliases': [...]}]",
+        ),
+    ],
+) -> str:
     """Set aliases for multiple concepts at once.
 
     Args:
@@ -573,12 +673,12 @@ def log_session(
     tags={"enrichment"},
 )
 def expand(
-    concept_name: str,
-    summary: str = "",
-    content: str = "",
-    relate_to: str = "",
-    reasoning: str = "",
-    relation_type: str = "RELATES_TO",
+    concept_name: Annotated[str, Field(max_length=200)],
+    summary: Annotated[str, Field(max_length=1000)] = "",
+    content: Annotated[str, Field(max_length=50000)] = "",
+    relate_to: Annotated[str, Field(max_length=200)] = "",
+    reasoning: Annotated[str, Field(max_length=2000)] = "",
+    relation_type: Annotated[str, Field(max_length=32)] = "RELATES_TO",
 ) -> str:
     """Add a new concept or relation to the knowledge graph.
 
@@ -601,7 +701,12 @@ def expand(
     annotations={"readOnlyHint": False},
     tags={"enrichment"},
 )
-def link(source: str, target: str, reasoning: str, relation_type: str = "RELATES_TO") -> str:
+def link(
+    source: Annotated[str, Field(max_length=200)],
+    target: Annotated[str, Field(max_length=200)],
+    reasoning: Annotated[str, Field(max_length=2000)],
+    relation_type: Annotated[str, Field(max_length=32)] = "RELATES_TO",
+) -> str:
     """Create a direct relation between two existing concepts.
 
     For non-linear, cross-cutting connections discovered during operation.
@@ -621,7 +726,7 @@ def link(source: str, target: str, reasoning: str, relation_type: str = "RELATES
     annotations={"readOnlyHint": False},
     tags={"enrichment"},
 )
-def auto_link(name: str = "") -> str:
+def auto_link(name: Annotated[str, Field(max_length=200)] = "") -> str:
     """Scan concept content for references to other concepts and auto-create links.
 
     Tautological: if concept name X appears in concept Y's content, create Y→X.
@@ -740,7 +845,7 @@ def get_doc(filename: str) -> str:
     annotations={"readOnlyHint": True, "openWorldHint": True},
     tags={"documentation"},
 )
-def fetch_url(url: str) -> str:
+def fetch_url(url: Annotated[str, Field(max_length=2000)]) -> str:
     """Fetch a webpage and return as markdown.
 
     Args:
@@ -753,7 +858,10 @@ def fetch_url(url: str) -> str:
     annotations={"readOnlyHint": False, "openWorldHint": True},
     tags={"documentation"},
 )
-def save_doc(url: str, filename: str) -> str:
+def save_doc(
+    url: Annotated[str, Field(max_length=2000)],
+    filename: Annotated[str, Field(max_length=200, pattern=r"^[\w\-. ]+\.md$")],
+) -> str:
     """Fetch a webpage and save as local documentation.
 
     Args:
@@ -767,7 +875,7 @@ def save_doc(url: str, filename: str) -> str:
     annotations={"readOnlyHint": True, "openWorldHint": True},
     tags={"documentation"},
 )
-def rank_urls(urls: list[str]) -> str:
+def rank_urls(urls: Annotated[list[str], Field(max_length=30)]) -> str:
     """Probe URLs and rank them by documentation quality BEFORE fetching.
 
     Does a lightweight structural analysis of each page to score how likely
@@ -786,7 +894,12 @@ def rank_urls(urls: list[str]) -> str:
     annotations={"readOnlyHint": False, "openWorldHint": True},
     tags={"documentation"},
 )
-async def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "", ctx: Context = None) -> str:
+async def crawl_docs(
+    url: Annotated[str, Field(max_length=2000)],
+    max_pages: Annotated[int, Field(ge=1, le=100)] = 20,
+    path_prefix: Annotated[str, Field(max_length=500)] = "",
+    ctx: Context = None,
+) -> str:
     """Crawl a documentation site and save pages as local docs.
 
     Args:
@@ -803,7 +916,12 @@ async def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "", ctx: 
     annotations={"readOnlyHint": False, "openWorldHint": True},
     tags={"documentation"},
 )
-async def research_topic(urls: list[str], topic: str, save_as: str = "", ctx: Context = None) -> str:
+async def research_topic(
+    urls: Annotated[list[str], Field(max_length=20, description="Up to 20 URLs")],
+    topic: Annotated[str, Field(max_length=500)],
+    save_as: Annotated[str, Field(max_length=200)] = "",
+    ctx: Context = None,
+) -> str:
     """Fetch multiple URLs, merge into a single consolidated doc with bibliography.
 
     New web-to-docs flow:
@@ -834,7 +952,10 @@ async def research_topic(urls: list[str], topic: str, save_as: str = "", ctx: Co
     annotations={"readOnlyHint": True},
     tags={"prompt-engineering"},
 )
-def generate_prompt(task_description: str, domain: str = "general") -> str:
+def generate_prompt(
+    task_description: Annotated[str, Field(max_length=5000)],
+    domain: Annotated[str, Field(max_length=100)] = "general",
+) -> str:
     """Generate a structured prompt using the Prompt Architect framework.
 
     Args:
@@ -849,7 +970,10 @@ def generate_prompt(task_description: str, domain: str = "general") -> str:
     annotations={"readOnlyHint": True},
     tags={"prompt-engineering"},
 )
-def refine_prompt(original_prompt: str, feedback: str) -> str:
+def refine_prompt(
+    original_prompt: Annotated[str, Field(max_length=10000)],
+    feedback: Annotated[str, Field(max_length=2000)],
+) -> str:
     """Refine an existing prompt based on feedback.
 
     Args:
@@ -1020,6 +1144,70 @@ def self_description() -> str:
     result = memory.save_self_description(prompt)
     mcp.instructions = prompt
     return f"Identity rebuilt and cached.\n{result}\n\nPrompt length: {len(prompt)} chars"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WHATSAPP CHANNEL
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_WHATSAPP_DB = "/home/rgr/lab/marvin-whatsapp/marvin_memory.db"
+
+_TONE_TIERS = [
+    (0.75, "warm"),
+    (0.50, "professional"),
+    (0.25, "dry"),
+    (0.00, "sarcastic"),
+]
+
+
+def _tone_tier(score: float) -> str:
+    for threshold, label in _TONE_TIERS:
+        if score >= threshold:
+            return label
+    return "sarcastic"
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"whatsapp"},
+)
+def get_user_score(phone: str = "") -> str:
+    """Look up WhatsApp user politeness scores from the conversation database.
+
+    Args:
+        phone: Phone number to look up (e.g. '5511999999999'). If omitted, returns all users.
+    """
+    import sqlite3
+
+    if not os.path.exists(_WHATSAPP_DB):
+        return "WhatsApp memory database not found. Is brain.py running?"
+
+    db = sqlite3.connect(f"file:{_WHATSAPP_DB}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+
+    if phone:
+        rows = db.execute(
+            "SELECT phone, name, politeness, msg_count FROM users WHERE phone = ?",
+            (phone,),
+        ).fetchall()
+    else:
+        rows = db.execute(
+            "SELECT phone, name, politeness, msg_count FROM users ORDER BY msg_count DESC",
+        ).fetchall()
+
+    db.close()
+
+    if not rows:
+        return f"No user found{' for phone ' + phone if phone else ''}."
+
+    lines = ["| Phone | Name | Politeness | Messages | Tone |",
+             "|-------|------|-----------|----------|------|"]
+    for r in rows:
+        tier = _tone_tier(r["politeness"])
+        name = r["name"] or "—"
+        lines.append(f"| {r['phone']} | {name} | {r['politeness']:.3f} | {r['msg_count']} | {tier} |")
+
+    return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
