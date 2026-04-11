@@ -41,6 +41,18 @@ SOURCE_FILES = [
     "system_design_backend.py",
 ]
 
+# Maps backend module → (concept name in KG, semantic relation type)
+# Single source of truth shared by self_audit.compute_diff() and marvin_ops.cmd_improve().
+# REQUIRES = external dependency. COMPOSES = internal module Marvin is made of.
+BACKEND_CONCEPT_MAP = {
+    "ontology": ("Neo4j", "REQUIRES"),
+    "memory": ("Milvus", "REQUIRES"),
+    "docs_backend": ("docs-server", "COMPOSES"),
+    "web_to_docs_backend": ("web-to-docs", "COMPOSES"),
+    "prompt_engineer_backend": ("prompt-engineer", "COMPOSES"),
+    "system_design_backend": ("system-design", "COMPOSES"),
+}
+
 # Concepts in the KG that directly describe Marvin's implementation
 MARVIN_IMPLEMENTATION_CONCEPTS = [
     "Marvin",
@@ -102,7 +114,9 @@ def extract_code_structure() -> dict:
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name) and target.id in (
-                            "MARVIN_TOOLS", "RETRIEVAL_TOOLS", "GUARDED_TOOLS",
+                            "MARVIN_TOOLS",
+                            "MILVUS_TOOLS", "NEO4J_READ_TOOLS", "WRITE_TOOLS",
+                            "GATED_TOOLS", "OVERVIEW_TOOLS",
                         ):
                             structure["constants"][target.id] = _extract_set_or_list(node.value)
 
@@ -268,12 +282,17 @@ def compute_diff(code: dict, kg: dict) -> dict:
             "decorated_not_in_list": sorted(code_tools - canonical),
         }
 
-    # 3. RETRIEVAL_TOOLS + GUARDED_TOOLS coverage
-    retrieval = set(code["constants"].get("RETRIEVAL_TOOLS", []))
-    guarded = set(code["constants"].get("GUARDED_TOOLS", []))
-    unclassified = code_tools - retrieval - guarded
-    # Some tools are intentionally unclassified (always-allowed), but flag for review
-    always_allowed = code_tools - retrieval - guarded
+    # 3. Middleware tier coverage — every code tool should either be a
+    # MILVUS_TOOLS (gate-setter), OVERVIEW_TOOLS (ungated menu), NEO4J_READ_TOOLS
+    # (gated read), or WRITE_TOOLS (gated write). Anything else is
+    # intentionally always-allowed (log_*, propose_*, fetch_url, rank_urls,
+    # audit_prompt, judge_diagram) — flag for review, not an error.
+    milvus = set(code["constants"].get("MILVUS_TOOLS", []))
+    overview = set(code["constants"].get("OVERVIEW_TOOLS", []))
+    neo4j_read = set(code["constants"].get("NEO4J_READ_TOOLS", []))
+    write = set(code["constants"].get("WRITE_TOOLS", []))
+    classified = milvus | overview | neo4j_read | write
+    always_allowed = code_tools - classified
     if always_allowed:
         diff["middleware_gaps"] = sorted(always_allowed)
 
@@ -314,23 +333,15 @@ def compute_diff(code: dict, kg: dict) -> dict:
                 })
 
     # 6. Concepts that should describe code features but are missing/outdated
-    # Check if the KG has concepts for each backend module
-    backend_concept_map = {
-        "ontology": "Neo4j",
-        "memory": "Milvus",
-        "docs_backend": "docs-server",
-        "web_to_docs_backend": "web-to-docs",
-        "prompt_engineer_backend": "prompt-engineer",
-        "system_design_backend": "system-design",
-    }
-
+    # Uses module-level BACKEND_CONCEPT_MAP — single source of truth shared with marvin_ops.
     all_related = {r["target"] for r in kg["marvin_relations"]}
     all_related |= {r["target"] for r in kg.get("marvin_incoming", [])}
-    for module, concept_name in backend_concept_map.items():
+    for module, (concept_name, relation_type) in BACKEND_CONCEPT_MAP.items():
         if concept_name not in all_related:
             diff["concept_gaps"].append({
                 "module": module,
                 "expected_concept": concept_name,
+                "expected_relation": relation_type,
                 "issue": f"Marvin has no relation to '{concept_name}' in KG",
             })
 
@@ -423,13 +434,19 @@ def generate_report(code: dict, kg: dict, diff: dict) -> str:
     lines.append("")
     lines.append(f"### Tools ({len(code['tools'])})")
     lines.append("")
+    milvus = set(code["constants"].get("MILVUS_TOOLS", []))
+    overview = set(code["constants"].get("OVERVIEW_TOOLS", []))
+    neo4j_read = set(code["constants"].get("NEO4J_READ_TOOLS", []))
+    write = set(code["constants"].get("WRITE_TOOLS", []))
     for t in sorted(code["tools"]):
-        retrieval = code["constants"].get("RETRIEVAL_TOOLS", [])
-        guarded = code["constants"].get("GUARDED_TOOLS", [])
-        if t in retrieval:
-            classification = "retrieval"
-        elif t in guarded:
-            classification = "guarded"
+        if t in milvus:
+            classification = "milvus (gate-setter)"
+        elif t in overview:
+            classification = "overview (ungated)"
+        elif t in neo4j_read:
+            classification = "neo4j-read (gated)"
+        elif t in write:
+            classification = "write (gated)"
         else:
             classification = "always-allowed"
         lines.append(f"- `{t}` [{classification}]")

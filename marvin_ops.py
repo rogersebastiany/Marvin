@@ -322,17 +322,21 @@ def cmd_improve(reporter: Reporter) -> bool:
         reporter.step("improve", f"Fixed tool count: updated Marvin concept to {actual_count} tools")
         fixes += 1
 
-    # 3. Fix: concept gaps → create missing relations
+    # 3. Fix: concept gaps → create missing relations using the semantic edge type
+    # declared in self_audit.BACKEND_CONCEPT_MAP. REQUIRES for external deps
+    # (Neo4j, Milvus), COMPOSES for internal modules. Never RELATES_TO — the
+    # thesis (Grafo Dirigido Completo) demands every edge carry semantic type.
     for gap in diff.get("concept_gaps", []):
         expected = gap["expected_concept"]
         module = gap["module"]
+        relation_type = gap.get("expected_relation", "RELATES_TO")
         ontology.expand(
             concept_name="Marvin",
             relate_to=expected,
-            relation_type="RELATES_TO",
-            reasoning=f"marvin-ops auto-fix: Marvin backend module '{module}' maps to concept '{expected}'",
+            relation_type=relation_type,
+            reasoning=f"marvin-ops auto-fix: Marvin backend module '{module}' maps to concept '{expected}' via {relation_type}",
         )
-        reporter.step("improve", f"Fixed concept gap: linked Marvin → {expected}")
+        reporter.step("improve", f"Fixed concept gap: Marvin —[{relation_type}]→ {expected}")
         fixes += 1
 
     # 4. Fix: relation types defined but not used → create seed edges
