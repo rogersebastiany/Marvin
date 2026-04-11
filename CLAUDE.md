@@ -11,7 +11,7 @@ Before writing, editing, or generating ANY code, config, or infrastructure:
 
 This applies to every technology: Python, FastMCP, Neo4j, Milvus, httpx, Terraform, AWS, Docker — no exceptions. Correct output from weights is luck, not construction.
 
-The MCP server enforces this architecturally for Marvin tools via `RetrieveBeforeActMiddleware`. You must also enforce it on yourself for host tool actions (file edits, bash commands, code generation).
+The MCP server enforces this architecturally via the Milvus Gate (`RetrieveBeforeActMiddleware`): ALL Neo4j access (reads AND writes) is blocked unless `retrieve`, `get_memory`, or `search_docs` was called first. You must also enforce it on yourself for host tool actions (file edits, bash commands, code generation).
 
 ## Session Start
 
@@ -46,7 +46,7 @@ Single server (`marvin_server.py`) with 6 backend modules:
 | `prompt_engineer_backend.py` | Transformer-Driven Prompt Architect framework |
 | `system_design_backend.py` | Mermaid.js diagrams |
 
-**Middleware:** `RetrieveBeforeActMiddleware` blocks write tools unless retrieval happened first. Returns `ToolError` for self-correction.
+**Middleware (Milvus Gate):** `RetrieveBeforeActMiddleware` blocks ALL Neo4j reads (`get_concept`, `traverse`, `why_exists`) and write tools unless `retrieve`, `get_memory`, or `search_docs` was called first. Returns `ToolError` for self-correction. `list_concepts` is ungated (overview only, does not set the gate flag).
 
 ### Knowledge Graph — Edge Types
 

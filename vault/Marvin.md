@@ -1,6 +1,6 @@
 # Marvin
 
-O servidor MCP unificado que implementa a [[Tautologia Ontológica]] na prática. Um único processo (`marvin_server.py`) que expõe 35 tools tautológicas ao [[Agente na POC|agente]] via [[MCP]].
+O servidor MCP unificado que implementa a [[Tautologia Ontológica]] na prática. Um único processo (`marvin_server.py`) que expõe todas as tools tautológicas ao [[Agente na POC|agente]] via [[MCP]]. A contagem viva está no [[Catálogo de Tools]] — nunca hardcoded aqui para evitar drift com o código.
 
 ---
 
@@ -35,7 +35,7 @@ O `self_audit.py` compara o AST do código contra o knowledge graph. Operações
 
 ## [[Catálogo de Tools]]
 
-35 tools em 8 categorias. Cada tool é uma [[Tool Tautológica]] — retorna dados verificados ou falha explicitamente. Nunca inventa.
+As tools estão organizadas em 8 categorias. Cada uma é uma [[Tool Tautológica]] — retorna dados verificados ou falha explicitamente. Nunca inventa. O catálogo exato é introspectado de `MARVIN_TOOLS` em runtime.
 
 ---
 

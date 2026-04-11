@@ -1,6 +1,6 @@
 # Marvin
 
-The unified MCP server that implements [[Ontological Tautology]] in practice. A single process (`marvin_server.py`) exposing 35 tautological tools to the [[Agent in POC|agent]] via [[MCP]].
+The unified MCP server that implements [[Ontological Tautology]] in practice. A single process (`marvin_server.py`) exposing all tautological tools to the [[Agent in POC|agent]] via [[MCP]]. The live count lives in the [[Tool Catalog]] — never hardcoded here to avoid drift with the code.
 
 ---
 
@@ -35,7 +35,7 @@ Marvin's identity is not a static file. It's built dynamically from the [[Neo4j]
 
 ## [[Tool Catalog]]
 
-35 tools across 8 categories. Each tool is a [[Tautological Tool]] — returns verified data or fails explicitly. Never invents.
+Tools are organized across 8 categories. Each tool is a [[Tautological Tool]] — returns verified data or fails explicitly. Never invents. The exact catalog is introspected from `MARVIN_TOOLS` at runtime.
 
 ---
 

@@ -1,0 +1,63 @@
+flowchart TD
+    subgraph AGENT["Agent - MCP Client"]
+        REQ["Tool Call Request"]
+    end
+
+    subgraph MW["RetrieveBeforeActMiddleware"]
+        CLASSIFY{"Tool tier?"}
+        CHECK{"retrieved flag?"}
+        SETFLAG["set_state retrieved=True"]
+        BLOCK["ToolError: call retrieve first"]
+    end
+
+    subgraph TIER1["Tier 1 - UNGATED"]
+        direction LR
+        subgraph FLAG_SET["Set Flag - S to A reduction"]
+            T1A["retrieve\n(Milvus)"]
+            T1B["get_memory\n(Milvus)"]
+            T1C["search_docs\n(filesystem)"]
+        end
+        subgraph NO_FLAG["No Flag - safe overviews"]
+            T1D["list_concepts\nlist_docs\nlist_diagrams"]
+            T1E["stats\nself_description\ninspect_schemas"]
+        end
+        subgraph ALWAYS["Always Allowed"]
+            T1F["log_decision\nlog_session"]
+            T1G["fetch_url\nrank_urls"]
+            T1H["audit_prompt\njudge_diagram\npropose_schema_change"]
+        end
+    end
+
+    subgraph TIER2["Tier 2 - NEO4J READ GATE - NEW"]
+        T2A["get_concept"]
+        T2B["traverse"]
+        T2C["why_exists"]
+    end
+
+    subgraph TIER3["Tier 3 - WRITE GATE"]
+        T3A["expand / link / auto_link\nensure_bidirectional"]
+        T3B["set_aliases / batch_set_aliases\nexecute_schema_change"]
+        T3C["save_doc / crawl_docs\nresearch_topic"]
+        T3D["generate_prompt / refine_prompt\ngenerate_diagram / save_diagram"]
+    end
+
+    subgraph REDUCTION["Thesis: Reducao de Espaco"]
+        S["S - full graph"]
+        A["A - Milvus subset"]
+        A1["A1 - Neo4j deepened"]
+        A2["A2 - Neo4j written"]
+        S -->|"retrieve"| A
+        A -->|"get_concept / traverse"| A1
+        A1 -->|"expand / link"| A2
+    end
+
+    REQ --> CLASSIFY
+    CLASSIFY -->|"Tier 1 + flag-setting"| FLAG_SET
+    FLAG_SET --> SETFLAG
+    CLASSIFY -->|"Tier 1 + no flag"| NO_FLAG
+    CLASSIFY -->|"Tier 1 + always"| ALWAYS
+    CLASSIFY -->|"Tier 2 or 3"| CHECK
+    CHECK -->|"True"| TIER2
+    CHECK -->|"True"| TIER3
+    CHECK -->|"False"| BLOCK
+    BLOCK -.->|"agent self-corrects"| FLAG_SET

@@ -122,6 +122,23 @@ def search_decisions(query: str, limit: int = 5) -> str:
     return "\n".join(lines)
 
 
+def search_plans(query: str, limit: int = 5) -> str:
+    """Search past plans by semantic similarity."""
+    fields = ["name", "title", "status", "summary", "timestamp"]
+    hits = _search_collection("plans", query, limit, fields)
+    if not hits:
+        return "No similar plans found."
+    lines = [f"Found {len(hits)} similar plan(s):\n"]
+    for h in hits:
+        lines.append(
+            f"- (score={h['score']:.3f}) [{h.get('status', '?')}] "
+            f"{h.get('name', '?')}: {h.get('title', '?')}\n"
+            f"  summary: {h.get('summary', '')}\n"
+            f"  time: {h.get('timestamp', '')}"
+        )
+    return "\n".join(lines)
+
+
 def search_sessions(query: str, limit: int = 5) -> str:
     """Search past sessions by semantic similarity."""
     fields = ["objective", "approach", "result", "lessons_learned", "tools_used",
@@ -225,6 +242,178 @@ def log_session(
     ])
     col.flush()
     return f"Logged session: {objective[:60]} ({record_id})"
+
+
+def save_plan(
+    name: str,
+    title: str,
+    status: str,
+    summary: str,
+    content: str,
+) -> str:
+    """Upsert a plan into the plans collection.
+
+    If a plan with the same `name` exists, it is replaced (delete + insert).
+    Status must be one of: draft, approved, in_progress, done, archived.
+    """
+    _ensure_connected()
+    col = Collection("plans")
+    col.load()
+
+    # Upsert semantics: delete existing row with same name, then insert fresh.
+    col.delete(expr=f'name == "{name}"')
+    col.flush()
+
+    now = datetime.now(timezone.utc).isoformat()
+    record_id = f"plan::{name}"
+
+    embed_text = f"{title}\n{summary}\n{content[:6000]}"
+    vector = _embed(embed_text)
+
+    col.insert([
+        [record_id], [name], [title], [status],
+        [summary[:1000]], [content[:50000]], [now], [vector],
+    ])
+    col.flush()
+    return f"Saved plan: {name} [{status}] ({record_id})"
+
+
+# ── Plan Refinement (vector walk) ───────────────────────────────────────────
+
+
+_RESSALVA_COLLECTIONS = {
+    "concepts":   ["name", "vault", "summary"],
+    "decisions":  ["objective", "chosen_option", "reasoning"],
+    "sessions":   ["objective", "lessons_learned"],
+    "doc_chunks": ["doc_name", "heading", "content"],
+    "plans":      ["name", "title", "status", "summary"],
+}
+
+
+def _format_ressalva(collection: str, hit: dict) -> str:
+    """One-line human-readable summary of a Milvus hit for a given collection."""
+    if collection == "concepts":
+        return f"[{hit.get('vault', '?')}] {hit.get('name', '?')} — {(hit.get('summary') or '')[:180]}"
+    if collection == "decisions":
+        return (
+            f"{(hit.get('objective') or '?')[:80]} → "
+            f"{(hit.get('chosen_option') or '')[:80]} "
+            f"({(hit.get('reasoning') or '')[:120]})"
+        )
+    if collection == "sessions":
+        return f"{(hit.get('objective') or '?')[:80]} — lessons: {(hit.get('lessons_learned') or '')[:180]}"
+    if collection == "doc_chunks":
+        heading = (hit.get('heading') or '?')[:40]
+        return f"{hit.get('doc_name', '?')}#{heading} — {(hit.get('content') or '')[:160]}"
+    if collection == "plans":
+        return (
+            f"[{hit.get('status', '?')}] {hit.get('name', '?')}: "
+            f"{(hit.get('title') or '?')[:60]} — {(hit.get('summary') or '')[:120]}"
+        )
+    return str(hit)
+
+
+def _search_by_vector(
+    collection_name: str,
+    vector: list[float],
+    limit: int,
+    output_fields: list[str],
+) -> list[dict]:
+    """Search a collection with an already-computed query vector (no re-embed)."""
+    _ensure_connected()
+    col = Collection(collection_name)
+    col.load()
+    results = col.search(
+        data=[vector],
+        anns_field="embedding",
+        param={"metric_type": "COSINE", "params": {"nprobe": 16}},
+        limit=limit,
+        output_fields=output_fields,
+    )
+    hits = []
+    for hit in results[0]:
+        entry = {"score": hit.score}
+        for field in output_fields:
+            entry[field] = hit.entity.get(field)
+        hits.append(entry)
+    return hits
+
+
+def refine_plan_vector_walk(
+    draft: str,
+    iterations: int = 1,
+    k_per_collection: int = 5,
+) -> dict:
+    """Contrast a plan draft against Milvus prior art.
+
+    Algorithm:
+      iter 1: embed(draft) → search 5 collections → collect top-k per collection
+      iter 2..N: embed(draft + accumulated ressalvas text) → search again
+
+    No Hadamard product. We stay in the real embedding manifold by re-embedding
+    concatenated text each iteration. With iterations=1 this degenerates to a
+    single-shot critique.
+
+    Returns:
+      {
+        "per_iteration": [ [{collection, score, ...fields}, ...], ... ],
+        "enhanced_draft": str,   # draft + accumulated prior-art annotations
+        "total_ressalvas": int,
+        "unique_sources": int,
+      }
+    """
+    iterations = max(1, min(iterations, 5))
+    k_per_collection = max(1, min(k_per_collection, 20))
+
+    accumulated_ressalvas_text = ""
+    per_iteration: list[list[dict]] = []
+    seen_keys: set[tuple] = set()
+
+    for i in range(iterations):
+        current_text = draft if i == 0 else f"{draft}\n\nPrior art already surfaced:\n{accumulated_ressalvas_text}"
+        current_vec = _embed(current_text[:8000])
+
+        iter_hits: list[dict] = []
+        iter_text_parts: list[str] = []
+
+        for col_name, fields in _RESSALVA_COLLECTIONS.items():
+            hits = _search_by_vector(col_name, current_vec, k_per_collection, fields)
+            for h in hits:
+                ressalva_line = _format_ressalva(col_name, h)
+                iter_text_parts.append(ressalva_line)
+                iter_hits.append({
+                    "collection": col_name,
+                    "score": round(h["score"], 4),
+                    "summary": ressalva_line,
+                    **{k: h.get(k) for k in fields},
+                })
+
+                # Track unique sources for dedup metric
+                key_field = h.get("name") or h.get("objective") or h.get("doc_name") or h.get("title") or ""
+                seen_keys.add((col_name, key_field))
+
+        per_iteration.append(iter_hits)
+        # Accumulate only this iteration's new text — keeps the context growing
+        # but avoids unbounded repetition.
+        accumulated_ressalvas_text = "\n".join(iter_text_parts)[:4000]
+
+    enhanced_draft = draft
+    if iterations > 1:
+        all_lines: list[str] = []
+        for idx, hits in enumerate(per_iteration, 1):
+            all_lines.append(f"\n### Iteration {idx} prior art")
+            for h in hits:
+                all_lines.append(f"- [{h['collection']} {h['score']:.3f}] {h['summary']}")
+        enhanced_draft = f"{draft}\n\n---\n\n## Prior art from Milvus\n{chr(10).join(all_lines)}"
+
+    total = sum(len(r) for r in per_iteration)
+    return {
+        "per_iteration": per_iteration,
+        "enhanced_draft": enhanced_draft,
+        "total_ressalvas": total,
+        "unique_sources": len(seen_keys),
+        "iterations": iterations,
+    }
 
 
 # ── Semantic Search (doc_chunks + concepts) ────────────────────────────────
@@ -438,7 +627,7 @@ def get_cached_self_description() -> str | None:
 # ── Schema ──────────────────────────────────────────────────────────────────
 
 
-ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts", "self_description"]
+ALL_COLLECTIONS = ["tool_calls", "decisions", "sessions", "doc_chunks", "concepts", "self_description", "plans"]
 
 EMBEDDING_DIM = 1536  # text-embedding-3-small
 
@@ -513,6 +702,19 @@ _COLLECTION_DEFS = {
         "fields": [
             FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=64),
             FieldSchema("content", DataType.VARCHAR, max_length=65535),
+            FieldSchema("timestamp", DataType.VARCHAR, max_length=64),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
+        ],
+    },
+    "plans": {
+        "description": "Planning memory — drafts, approved plans, and their refinement history",
+        "fields": [
+            FieldSchema("id", DataType.VARCHAR, is_primary=True, max_length=128),
+            FieldSchema("name", DataType.VARCHAR, max_length=100),
+            FieldSchema("title", DataType.VARCHAR, max_length=200),
+            FieldSchema("status", DataType.VARCHAR, max_length=32),
+            FieldSchema("summary", DataType.VARCHAR, max_length=1000),
+            FieldSchema("content", DataType.VARCHAR, max_length=50000),
             FieldSchema("timestamp", DataType.VARCHAR, max_length=64),
             FieldSchema("embedding", DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM),
         ],
