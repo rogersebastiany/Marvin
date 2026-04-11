@@ -11,3 +11,6 @@ infra/terraform.tfstate.backup
 *.tfstate
 *.tfstate.backup
 .retrieved
+
+# Generated audit artifacts (written by self_audit.py --save)
+docs/self-audit-report.md

@@ -139,14 +139,6 @@ implementations of the Metrics API & SDK, the status is as follows:
 To learn more about metrics in OpenTelemetry, see the
 [metrics specification](/docs/specs/otel/overview/#metric-signal).
 
-## Feedback
-
-Was this page helpful?
-
-Thank you. Your feedback is appreciated!
-
-Please let us know [how we can improve this page](https://github.com/open-telemetry/opentelemetry.io/issues/new?template=PAGE_FEEDBACK.yml&title=[Page+feedback]%3A+ADD+A+SUMMARY+OF+YOUR+FEEDBACK+HERE). Your feedback is appreciated!
-
   
 
 Last modified July 15, 2025: [fix typo (#7318) (34f672f4)](https://github.com/open-telemetry/opentelemetry.io/commit/34f672f4afbc083423d5c03a03f97c308591d255)
@@ -280,14 +272,6 @@ migrate to OpenTelemetry in the [Migration guide](../compatibility/migration/).
 * [Watch videos](https://www.youtube.com/@otel-official) from the [OTel for beginners](https://www.youtube.com/playlist?list=PLVYDBkQ1TdyyWjeWJSjXYUaJFVhplRtvN) or other [playlists](https://www.youtube.com/@otel-official/playlists).
 * Sign up for [training](/training/), including the **free course**
   [Getting started with OpenTelemetry](/training/#courses).
-
-## Feedback
-
-Was this page helpful?
-
-Thank you. Your feedback is appreciated!
-
-Please let us know [how we can improve this page](https://github.com/open-telemetry/opentelemetry.io/issues/new?template=PAGE_FEEDBACK.yml&title=[Page+feedback]%3A+ADD+A+SUMMARY+OF+YOUR+FEEDBACK+HERE). Your feedback is appreciated!
 
   
 
@@ -678,14 +662,6 @@ start long after the producer span has already ended.
 
 For more information, see the
 [traces specification](/docs/specs/otel/overview/#tracing-signal).
-
-## Feedback
-
-Was this page helpful?
-
-Thank you. Your feedback is appreciated!
-
-Please let us know [how we can improve this page](https://github.com/open-telemetry/opentelemetry.io/issues/new?template=PAGE_FEEDBACK.yml&title=[Page+feedback]%3A+ADD+A+SUMMARY+OF+YOUR+FEEDBACK+HERE). Your feedback is appreciated!
 
   
 

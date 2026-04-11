@@ -453,10 +453,6 @@ For more information about Grafana Alloy, refer to the [Grafana Alloy documentat
 
 **Grafana OnCall:** Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](/docs/oncall/latest/).
 
-## Was this page helpful?
-
-[Suggest an edit in GitHub](https://github.com/grafana/grafana/edit/main/docs/sources/introduction/_index.md)[Create a GitHub issue](https://github.com/grafana/grafana/issues/new?title=Documentation%20feedback:%20/docs/sources/introduction/_index.md)[Email docs@grafana.com](mailto:docs@grafana.com)[Help and support](/help/)[Community](/community/)
-
 ## Related resources from Grafana Labs
 
 Additional helpful documentation, links, and articles:
