@@ -33,6 +33,8 @@ RELATION_DESCRIPTIONS: dict[str, str] = {
 
 # Cypher fragment for matching any relationship type
 _ANY_REL = "|".join(RELATION_TYPES)
+# Cypher fragment for matching symmetric relationship types only
+_SYM_REL = "|".join(SYMMETRIC_TYPES)
 
 
 def _get_driver():
@@ -454,7 +456,6 @@ def ensure_bidirectional(name: str = "") -> str:
     Otherwise, process the entire graph.
     """
     driver = _get_driver()
-    sym_cypher = "|".join(SYMMETRIC_TYPES)
 
     with driver.session() as s:
         if name:
@@ -465,7 +466,7 @@ def ensure_bidirectional(name: str = "") -> str:
                 return f"Concept '{name}' not found."
 
             missing = list(s.run(
-                f"MATCH (a:Concept)-[r:{sym_cypher}]->(b:Concept) "
+                f"MATCH (a:Concept)-[r:{_SYM_REL}]->(b:Concept) "
                 "WHERE (a.name = $name OR b.name = $name) "
                 "  AND a <> b "
                 "WITH a, b, type(r) AS rel_type "
@@ -475,7 +476,7 @@ def ensure_bidirectional(name: str = "") -> str:
             ))
         else:
             missing = list(s.run(
-                f"MATCH (a:Concept)-[r:{sym_cypher}]->(b:Concept) "
+                f"MATCH (a:Concept)-[r:{_SYM_REL}]->(b:Concept) "
                 "WHERE a <> b "
                 "WITH a, b, type(r) AS rel_type "
                 "WHERE NOT EXISTS { MATCH (b)-[r2]->(a) WHERE type(r2) = rel_type } "

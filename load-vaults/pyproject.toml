@@ -11,3 +11,8 @@ dependencies = [
     "pymilvus>=2.6.12",
     "python-dotenv>=1.1.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

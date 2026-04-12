@@ -5,8 +5,10 @@ Not an MCP server. Used internally by mcp-marvin.
 """
 
 import os
+import re
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 import openai
 from dotenv import load_dotenv
@@ -261,7 +263,8 @@ def save_plan(
     col.load()
 
     # Upsert semantics: delete existing row with same name, then insert fresh.
-    col.delete(expr=f'name == "{name}"')
+    safe_name = name.replace("\\", "\\\\").replace('"', '\\"')
+    col.delete(expr=f'name == "{safe_name}"')
     col.flush()
 
     now = datetime.now(timezone.utc).isoformat()
@@ -436,7 +439,6 @@ def search_concepts_semantic(query: str, limit: int = 5) -> list[dict]:
 
 def _chunk_markdown(text: str, doc_name: str) -> list[dict]:
     """Split markdown by ## headers into chunks."""
-    import re
     chunks = []
     # Split on ## but keep the heading
     parts = re.split(r"(?=^## )", text, flags=re.MULTILINE)
@@ -472,7 +474,6 @@ def index_docs(docs_dir: str) -> str:
 
     Drops and recreates all entries. Call after docs change.
     """
-    from pathlib import Path
     _ensure_connected()
 
     docs_path = Path(docs_dir)
