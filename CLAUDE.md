@@ -1,17 +1,29 @@
 # CLAUDE.md
 
-## Foundational Rule — Retrieve Before Act
+## Foundational Rule — Use the System Before Acting
 
-Before writing, editing, or generating ANY code, config, or infrastructure:
+Two things to check before doing anything:
 
-1. `retrieve` first — Milvus semantic search across ontology, episodic memory, and docs
-2. Deep-dive if needed — `get_concept` or `traverse` for KG nodes, `get_doc` for full doc content
-3. Fetch if missing — if `retrieve` returns nothing, call `fetch_url`/`save_doc`/`research_topic` BEFORE proceeding
-4. Only then act — with verified context, not training weights
+**1. Retrieve first** — before writing, editing, or generating ANY code, config, or infrastructure:
+- `retrieve` → Milvus semantic search across ontology, episodic memory, and docs
+- Deep-dive if needed → `get_concept`, `traverse`, `get_doc`
+- Fetch if missing → `fetch_url`/`save_doc`/`research_topic` BEFORE proceeding
+- Only then act — with verified context, not training weights
 
-This applies to every technology: Python, FastMCP, Neo4j, Milvus, httpx, Terraform, AWS, Docker — no exceptions. Correct output from weights is luck, not construction.
+The MCP server enforces this via the Milvus Gate (`RetrieveBeforeActMiddleware`): ALL Neo4j access is blocked unless a Milvus tool was called first. Enforce it on yourself for host tool actions too.
 
-The MCP server enforces this architecturally via the Milvus Gate (`RetrieveBeforeActMiddleware`): ALL Neo4j access (reads AND writes) is blocked unless `retrieve`, `get_memory`, or `search_docs` was called first. You must also enforce it on yourself for host tool actions (file edits, bash commands, code generation).
+**2. Orchestrate first** — before running a multi-step workflow manually, check if it matches a chain:
+
+| Trigger words | Chain | Steps |
+|---------------|-------|-------|
+| sync, vault, audit | `sync_and_audit` | sync_vaults → audit_code → review → self_improve |
+| improve, refactor, tdd | `tdd_improve` | tdd → tests → green → improve → apply → green |
+| full improve, full cycle | `full_improvement` | full TDD + improve + verify + knowledge check |
+| research, docs | `research` | rank_urls → filter → research_topic |
+| prompt, generate prompt | `prompt_lifecycle` | generate → audit → refine |
+| enrich, knowledge gap | `code_to_knowledge` | improve_code → find gaps → retrieve → expand |
+
+Call `orchestrate` with the goal. Don't reinvent the sequence manually.
 
 ## Session Start
 
@@ -20,9 +32,17 @@ Call `stats` for a live system overview. Marvin's identity prompt is built dynam
 ## Workspace
 
 - **`mcp-server/`** — Marvin. Single unified MCP server (44 tools, 9 backends). FastMCP 3.x, Python 3.12, managed with `uv`.
-- **`obsidian-vault-tautologia-ontologica/`** — Obsidian vault (PT-BR). Thesis concepts. Loaded into Neo4j via Cognee.
+  - `backends/` — 9 backend modules (Python package with `__init__.py`)
+  - `tests/` — 314 tests (pytest)
+  - `scripts/` — utility scripts (update_tool_list, rebuild_docs, etc.)
+- **`vaults/`** — Obsidian vaults loaded into Neo4j via Cognee.
+  - `thesis-ptbr/` — Tautologia Ontologica (PT-BR)
+  - `thesis-en/` — Thesis (English)
+  - `implementation-ptbr/` — Implementation notes (PT-BR)
+  - `implementation-en/` — Implementation notes (English)
+- **`docs/`** — Fetched reference docs (67 markdown files)
+- **`diagrams/`** — Saved Mermaid diagrams
 - **`load-vaults/`** — Cognee-based KG extraction. `cognify_vaults.py` → Neo4j + LanceDB.
-- **`marvin_ops.py`** — Local CLI for sync/audit/improve. Logic also available as MCP tools via `ops_backend.py`.
 
 ### Build & Run
 
@@ -35,19 +55,19 @@ uv run fastmcp run marvin_server.py --reload  # dev (auto-reload)
 
 ### Architecture
 
-Single server (`marvin_server.py`) with 9 backend modules:
+Single server (`marvin_server.py`) with 9 backend modules in `backends/`:
 
 | Module | Backend |
 |--------|---------|
-| `ontology.py` | Neo4j — knowledge graph |
-| `memory.py` | Milvus + OpenAI — episodic memory (L2/L3 only, no L1 per HCC) |
-| `docs_backend.py` | Filesystem — local markdown docs |
-| `web_to_docs_backend.py` | httpx + BS4 — web → markdown → docs/ |
-| `prompt_engineer_backend.py` | Transformer-Driven Prompt Architect framework |
-| `system_design_backend.py` | Mermaid.js diagrams |
-| `code_improvement_backend.py` | AST chunking + Milvus vector walk (improve_code, tdd) |
-| `orchestrator_backend.py` | Goal → execution plan (6 tool chains) |
-| `ops_backend.py` | Vault sync, self-audit, self-improve (migrated from marvin_ops.py) |
+| `backends/ontology.py` | Neo4j — knowledge graph |
+| `backends/memory.py` | Milvus + OpenAI — episodic memory (L2/L3 only, no L1 per HCC) |
+| `backends/docs_backend.py` | Filesystem — local markdown docs |
+| `backends/web_to_docs_backend.py` | httpx + BS4 — web → markdown → docs/ |
+| `backends/prompt_engineer_backend.py` | Transformer-Driven Prompt Architect framework |
+| `backends/system_design_backend.py` | Mermaid.js diagrams |
+| `backends/code_improvement_backend.py` | AST chunking + Milvus vector walk (improve_code, tdd) |
+| `backends/orchestrator_backend.py` | Goal → execution plan (6 tool chains) |
+| `backends/ops_backend.py` | Vault sync, self-audit, self-improve (migrated from marvin_ops.py) |
 
 <!-- AUTO:TOOLS:START -->
 ## Marvin's Tools (44 total)

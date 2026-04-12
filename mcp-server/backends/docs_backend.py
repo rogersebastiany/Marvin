@@ -6,7 +6,7 @@ Not an MCP server. Used internally by mcp-marvin.
 
 from pathlib import Path
 
-DOCS_DIR = Path(__file__).parent / "docs"
+DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 
 
 def _safe_path(filename: str) -> Path | None:
@@ -24,7 +24,7 @@ def search_docs(query: str) -> str:
 
     # Primary: semantic search via Milvus
     try:
-        import memory
+        from . import memory
         hits = memory.search_doc_chunks(query, limit=5)
         if hits:
             parts = [f"Found {len(hits)} result(s) for '{query}':\n"]

@@ -18,13 +18,13 @@ from pathlib import Path
 
 class TestGetLancedbPath:
     def test_returns_none_when_path_missing(self):
-        from ops_backend import _get_lancedb_path
+        from backends.ops_backend import _get_lancedb_path
         with patch("os.getenv", return_value="/nonexistent/lancedb"):
             result = _get_lancedb_path()
             assert result is None
 
     def test_returns_path_when_exists(self, tmp_path):
-        from ops_backend import _get_lancedb_path
+        from backends.ops_backend import _get_lancedb_path
         lance_dir = tmp_path / "test.lancedb"
         lance_dir.mkdir()
         with patch("os.getenv", return_value=str(lance_dir)):
@@ -32,9 +32,9 @@ class TestGetLancedbPath:
             assert result == str(lance_dir)
 
     def test_relative_path_joined_to_repo_root(self, tmp_path):
-        from ops_backend import _get_lancedb_path
+        from backends.ops_backend import _get_lancedb_path
         with patch("os.getenv", return_value="data/cognee.lancedb"), \
-             patch("ops_backend.REPO_ROOT", tmp_path):
+             patch("backends.ops_backend.REPO_ROOT", tmp_path):
             (tmp_path / "data" / "cognee.lancedb").mkdir(parents=True)
             result = _get_lancedb_path()
             assert result == str(tmp_path / "data" / "cognee.lancedb")
@@ -45,7 +45,7 @@ class TestGetLancedbPath:
 
 class TestIsMcpToolDecorator:
     def _check(self, decorator_source):
-        from ops_backend import _is_mcp_tool_decorator
+        from backends.ops_backend import _is_mcp_tool_decorator
         tree = ast.parse(f"@{decorator_source}\ndef f(): pass")
         return _is_mcp_tool_decorator(tree.body[0].decorator_list[0])
 
@@ -59,7 +59,7 @@ class TestIsMcpToolDecorator:
         assert self._check("pytest.fixture()") is False
 
     def test_property_decorator(self):
-        from ops_backend import _is_mcp_tool_decorator
+        from backends.ops_backend import _is_mcp_tool_decorator
         tree = ast.parse("@property\ndef f(): pass")
         assert _is_mcp_tool_decorator(tree.body[0].decorator_list[0]) is False
 
@@ -69,7 +69,7 @@ class TestIsMcpToolDecorator:
 
 class TestExtractSetOrList:
     def _extract(self, source):
-        from ops_backend import _extract_set_or_list
+        from backends.ops_backend import _extract_set_or_list
         tree = ast.parse(f"x = {source}")
         return _extract_set_or_list(tree.body[0].value)
 
@@ -99,7 +99,7 @@ class TestExtractSetOrList:
 
 class TestComputeDiff:
     def _diff(self, code=None, kg=None):
-        from ops_backend import compute_diff
+        from backends.ops_backend import compute_diff
         if code is None:
             code = {
                 "tools": ["retrieve", "expand"],
@@ -212,7 +212,7 @@ class TestComputeDiff:
 
 class TestCountDrift:
     def test_zero_drift(self):
-        from ops_backend import _count_drift
+        from backends.ops_backend import _count_drift
         diff = {
             "tool_count_mismatch": None,
             "canonical_list_drift": None,
@@ -223,7 +223,7 @@ class TestCountDrift:
         assert _count_drift(diff) == 0
 
     def test_counts_tool_mismatch(self):
-        from ops_backend import _count_drift
+        from backends.ops_backend import _count_drift
         diff = {
             "tool_count_mismatch": {"kg_claims": 10, "code_has": 8},
             "canonical_list_drift": None,
@@ -233,7 +233,7 @@ class TestCountDrift:
         assert _count_drift(diff) == 1
 
     def test_counts_canonical_drift(self):
-        from ops_backend import _count_drift
+        from backends.ops_backend import _count_drift
         diff = {
             "tool_count_mismatch": None,
             "canonical_list_drift": {
@@ -246,7 +246,7 @@ class TestCountDrift:
         assert _count_drift(diff) == 3
 
     def test_counts_concept_gaps(self):
-        from ops_backend import _count_drift
+        from backends.ops_backend import _count_drift
         diff = {
             "tool_count_mismatch": None,
             "canonical_list_drift": None,
@@ -256,7 +256,7 @@ class TestCountDrift:
         assert _count_drift(diff) == 2
 
     def test_counts_relation_type_drift(self):
-        from ops_backend import _count_drift
+        from backends.ops_backend import _count_drift
         diff = {
             "tool_count_mismatch": None,
             "canonical_list_drift": None,
@@ -269,7 +269,7 @@ class TestCountDrift:
         assert _count_drift(diff) == 3
 
     def test_combined(self):
-        from ops_backend import _count_drift
+        from backends.ops_backend import _count_drift
         diff = {
             "tool_count_mismatch": {"kg_claims": 10, "code_has": 8},
             "canonical_list_drift": {
@@ -290,7 +290,7 @@ class TestCountDrift:
 
 class TestExtractCodeStructure:
     def test_returns_expected_keys(self):
-        from ops_backend import extract_code_structure
+        from backends.ops_backend import extract_code_structure
         result = extract_code_structure()
         assert "tools" in result
         assert "backends" in result
@@ -299,25 +299,25 @@ class TestExtractCodeStructure:
         assert "imports" in result
 
     def test_finds_tools_in_marvin_server(self):
-        from ops_backend import extract_code_structure
+        from backends.ops_backend import extract_code_structure
         result = extract_code_structure()
         assert len(result["tools"]) > 0
 
     def test_finds_backends(self):
-        from ops_backend import extract_code_structure
+        from backends.ops_backend import extract_code_structure
         result = extract_code_structure()
         assert "ontology" in result["backends"]
         assert "memory" in result["backends"]
         assert "ops_backend" in result["backends"]
 
     def test_finds_marvin_tools_constant(self):
-        from ops_backend import extract_code_structure
+        from backends.ops_backend import extract_code_structure
         result = extract_code_structure()
         assert "MARVIN_TOOLS" in result["constants"]
         assert len(result["constants"]["MARVIN_TOOLS"]) > 0
 
     def test_finds_imports(self):
-        from ops_backend import extract_code_structure
+        from backends.ops_backend import extract_code_structure
         result = extract_code_structure()
         assert "ops_backend" in result["imports"]
 
@@ -327,23 +327,23 @@ class TestExtractCodeStructure:
 
 class TestConstants:
     def test_source_files(self):
-        from ops_backend import SOURCE_FILES
+        from backends.ops_backend import SOURCE_FILES
         assert "marvin_server.py" in SOURCE_FILES
-        assert "ops_backend.py" in SOURCE_FILES
+        assert "backends/ops_backend.py" in SOURCE_FILES
         assert len(SOURCE_FILES) == 10
 
     def test_backend_concept_map(self):
-        from ops_backend import BACKEND_CONCEPT_MAP
+        from backends.ops_backend import BACKEND_CONCEPT_MAP
         assert "ontology" in BACKEND_CONCEPT_MAP
         assert "memory" in BACKEND_CONCEPT_MAP
         assert BACKEND_CONCEPT_MAP["ontology"] == ("Neo4j", "REQUIRES")
         assert BACKEND_CONCEPT_MAP["memory"] == ("Milvus", "REQUIRES")
 
     def test_repo_root_and_mcp_server(self):
-        from ops_backend import REPO_ROOT, MCP_SERVER
+        from backends.ops_backend import REPO_ROOT, MCP_SERVER
         assert REPO_ROOT.exists()
         assert MCP_SERVER.exists()
-        assert (MCP_SERVER / "ops_backend.py").exists()
+        assert (MCP_SERVER / "backends" / "ops_backend.py").exists()
 
 
 # ── sync ────────────────────────────────────────────────────────────────────
@@ -351,11 +351,11 @@ class TestConstants:
 
 class TestSync:
     def test_skip_cognify(self):
-        from ops_backend import sync
-        mock_memory = MagicMock()
-        with patch.dict("sys.modules", {"memory": mock_memory}), \
-             patch("ops_backend._sync_lance_concepts_to_milvus", return_value=10), \
-             patch("ops_backend._sync_lance_doc_chunks_to_milvus", return_value=20):
+        from backends.ops_backend import sync
+        from backends import memory
+        with patch.object(memory, "ensure_collections"), \
+             patch("backends.ops_backend._sync_lance_concepts_to_milvus", return_value=10), \
+             patch("backends.ops_backend._sync_lance_doc_chunks_to_milvus", return_value=20):
             result = sync(skip_cognify=True)
             assert result["cognify_mode"] == "skipped"
             assert result["concepts"] == 10
@@ -363,21 +363,22 @@ class TestSync:
             assert "elapsed_s" in result
 
     def test_empty_changed_files(self):
-        from ops_backend import sync
-        mock_memory = MagicMock()
-        with patch.dict("sys.modules", {"memory": mock_memory}), \
-             patch("ops_backend._sync_lance_concepts_to_milvus", return_value=5), \
-             patch("ops_backend._sync_lance_doc_chunks_to_milvus", return_value=3):
+        from backends.ops_backend import sync
+        from backends import memory
+        with patch.object(memory, "ensure_collections"), \
+             patch("backends.ops_backend._sync_lance_concepts_to_milvus", return_value=5), \
+             patch("backends.ops_backend._sync_lance_doc_chunks_to_milvus", return_value=3):
             result = sync(changed_files=[])
             assert result["cognify_mode"] == "skipped (no changed files)"
 
     def test_incremental_cognify(self):
-        from ops_backend import sync
-        mock_memory = MagicMock()
+        from backends.ops_backend import sync
+        from backends import memory
         mock_cognify = MagicMock()
-        with patch.dict("sys.modules", {"memory": mock_memory, "cognify_vaults": mock_cognify}), \
-             patch("ops_backend._sync_lance_concepts_to_milvus", return_value=5), \
-             patch("ops_backend._sync_lance_doc_chunks_to_milvus", return_value=3), \
+        with patch.object(memory, "ensure_collections"), \
+             patch.dict("sys.modules", {"cognify_vaults": mock_cognify}), \
+             patch("backends.ops_backend._sync_lance_concepts_to_milvus", return_value=5), \
+             patch("backends.ops_backend._sync_lance_doc_chunks_to_milvus", return_value=3), \
              patch("asyncio.run"):
             result = sync(changed_files=["a.md", "b.md"])
             assert "incremental (2 files)" in result["cognify_mode"]
@@ -388,7 +389,7 @@ class TestSync:
 
 class TestAudit:
     def test_returns_expected_structure(self):
-        from ops_backend import audit
+        from backends.ops_backend import audit
         mock_kg = {
             "marvin_concept": {"content": ""},
             "marvin_relations": [],
@@ -396,7 +397,7 @@ class TestAudit:
             "total_concepts": 100,
             "total_relations": 200,
         }
-        with patch("ops_backend.extract_kg_claims", return_value=mock_kg):
+        with patch("backends.ops_backend.extract_kg_claims", return_value=mock_kg):
             result = audit()
             assert "drift_points" in result
             assert "findings" in result
@@ -412,7 +413,7 @@ class TestAudit:
 
 class TestSelfImprove:
     def test_no_drift_returns_early(self):
-        from ops_backend import self_improve
+        from backends.ops_backend import self_improve
         mock_code = {
             "tools": ["retrieve", "expand"],
             "constants": {
@@ -448,18 +449,19 @@ class TestSelfImprove:
             "total_concepts": 100,
             "total_relations": 200,
         }
-        mock_ontology = MagicMock()
-        mock_memory = MagicMock()
-        with patch("ops_backend.extract_code_structure", return_value=mock_code), \
-             patch("ops_backend.extract_kg_claims", return_value=mock_kg), \
-             patch.dict("sys.modules", {"ontology": mock_ontology, "memory": mock_memory}):
+        from backends import ontology, memory
+        with patch("backends.ops_backend.extract_code_structure", return_value=mock_code), \
+             patch("backends.ops_backend.extract_kg_claims", return_value=mock_kg), \
+             patch.object(ontology, "expand"), \
+             patch.object(memory, "log_decision"):
             result = self_improve()
             assert result["drift_before"] == 0
             assert result["fixes"] == 0
             assert "No drift" in result["actions"]
 
     def test_fixes_concept_gaps(self):
-        from ops_backend import self_improve
+        from backends.ops_backend import self_improve
+        from backends import ontology, memory
         mock_kg = {
             "marvin_concept": {"content": ""},
             "marvin_relations": [],  # no relations → all gaps
@@ -467,12 +469,11 @@ class TestSelfImprove:
             "total_concepts": 100,
             "total_relations": 200,
         }
-        mock_ontology = MagicMock()
-        mock_memory = MagicMock()
-        with patch("ops_backend.extract_kg_claims", return_value=mock_kg), \
-             patch.dict("sys.modules", {"ontology": mock_ontology, "memory": mock_memory}), \
-             patch("ops_backend._sync_lance_concepts_to_milvus", return_value=0):
+        with patch("backends.ops_backend.extract_kg_claims", return_value=mock_kg), \
+             patch.object(ontology, "expand") as mock_expand, \
+             patch.object(memory, "log_decision"), \
+             patch("backends.ops_backend._sync_lance_concepts_to_milvus", return_value=0):
             result = self_improve()
             assert result["drift_before"] > 0
             assert result["fixes"] > 0
-            assert mock_ontology.expand.called
+            assert mock_expand.called

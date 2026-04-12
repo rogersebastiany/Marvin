@@ -32,7 +32,7 @@ def _make_node(props: dict):
 @pytest.fixture
 def mock_neo4j():
     """Mock Neo4j driver and session."""
-    with patch("ontology._get_driver") as mock_get:
+    with patch("backends.ontology._get_driver") as mock_get:
         mock_driver = MagicMock()
         mock_get.return_value = mock_driver
         mock_session = MagicMock()
@@ -50,11 +50,11 @@ def mock_neo4j():
 
 class TestConstants:
     def test_relation_types_count(self):
-        from ontology import RELATION_TYPES
+        from backends.ontology import RELATION_TYPES
         assert len(RELATION_TYPES) == 16
 
     def test_symmetric_types(self):
-        from ontology import SYMMETRIC_TYPES
+        from backends.ontology import SYMMETRIC_TYPES
         assert "RELATES_TO" in SYMMETRIC_TYPES
         assert "CONTRADICTS" in SYMMETRIC_TYPES
         assert "ANALOGOUS_TO" in SYMMETRIC_TYPES
@@ -63,13 +63,13 @@ class TestConstants:
         assert "REQUIRES" not in SYMMETRIC_TYPES
 
     def test_relation_descriptions_complete(self):
-        from ontology import RELATION_TYPES, RELATION_DESCRIPTIONS
+        from backends.ontology import RELATION_TYPES, RELATION_DESCRIPTIONS
         for rt in RELATION_TYPES:
             assert rt in RELATION_DESCRIPTIONS
             assert len(RELATION_DESCRIPTIONS[rt]) > 0
 
     def test_any_rel_fragment(self):
-        from ontology import _ANY_REL, RELATION_TYPES
+        from backends.ontology import _ANY_REL, RELATION_TYPES
         for rt in RELATION_TYPES:
             assert rt in _ANY_REL
 
@@ -79,9 +79,9 @@ class TestConstants:
 
 class TestGetDriver:
     def test_creates_driver_once(self):
-        import ontology
+        from backends import ontology
         ontology._driver = None
-        with patch("ontology.GraphDatabase.driver") as mock_gd:
+        with patch("backends.ontology.GraphDatabase.driver") as mock_gd:
             mock_gd.return_value = MagicMock()
             d1 = ontology._get_driver()
             d2 = ontology._get_driver()
@@ -95,14 +95,11 @@ class TestGetDriver:
 
 class TestQuery:
     def test_milvus_primary_path(self, mock_neo4j):
-        from ontology import query
-        with patch.dict("sys.modules", {"memory": MagicMock()}) as _, \
-             patch("memory.search_concepts_semantic") as _mock_search:
-            import memory as mock_mem_mod
-            mock_mem = mock_mem_mod
-            mock_mem.search_concepts_semantic.return_value = [
-                {"name": "TestConcept", "vault": "cognee", "summary": "A concept", "score": 0.85}
-            ]
+        from backends.ontology import query
+        from backends import memory
+        with patch.object(memory, "search_concepts_semantic", return_value=[
+            {"name": "TestConcept", "vault": "cognee", "summary": "A concept", "score": 0.85}
+        ]):
             result = query("test")
             assert "Found 1 concept(s)" in result
             assert "[cognee]" in result
@@ -110,12 +107,9 @@ class TestQuery:
             assert "score=0.850" in result
 
     def test_milvus_empty_falls_through_to_neo4j(self, mock_neo4j):
-        from ontology import query
-        with patch.dict("sys.modules", {"memory": MagicMock()}) as _, \
-             patch("memory.search_concepts_semantic") as _mock_search:
-            import memory as mock_mem_mod
-            mock_mem = mock_mem_mod
-            mock_mem.search_concepts_semantic.return_value = []
+        from backends.ontology import query
+        from backends import memory
+        with patch.object(memory, "search_concepts_semantic", return_value=[]):
             # Neo4j fallback returns results
             mock_neo4j["session"].run.return_value = [
                 _make_record({"name": "Fallback", "vault": "test", "summary": "sum", "ghost": False, "aliases": None})
@@ -125,35 +119,26 @@ class TestQuery:
             assert "Fallback" in result
 
     def test_milvus_exception_falls_to_neo4j(self, mock_neo4j):
-        from ontology import query
-        with patch.dict("sys.modules", {"memory": MagicMock()}) as _, \
-             patch("memory.search_concepts_semantic") as _mock_search:
-            import memory as mock_mem_mod
-            mock_mem = mock_mem_mod
-            mock_mem.search_concepts_semantic.side_effect = Exception("Milvus down")
+        from backends.ontology import query
+        from backends import memory
+        with patch.object(memory, "search_concepts_semantic", side_effect=Exception("Milvus down")):
             mock_neo4j["session"].run.return_value = []
             result = query("test")
             assert "No concepts found" in result
 
     def test_no_results_anywhere(self, mock_neo4j):
-        from ontology import query
-        with patch.dict("sys.modules", {"memory": MagicMock()}) as _, \
-             patch("memory.search_concepts_semantic") as _mock_search:
-            import memory as mock_mem_mod
-            mock_mem = mock_mem_mod
-            mock_mem.search_concepts_semantic.return_value = []
+        from backends.ontology import query
+        from backends import memory
+        with patch.object(memory, "search_concepts_semantic", return_value=[]):
             mock_neo4j["session"].run.return_value = []
             result = query("nonexistent")
             assert "No concepts found" in result
             assert "nonexistent" in result
 
     def test_ghost_and_aliases_in_fallback(self, mock_neo4j):
-        from ontology import query
-        with patch.dict("sys.modules", {"memory": MagicMock()}) as _, \
-             patch("memory.search_concepts_semantic") as _mock_search:
-            import memory as mock_mem_mod
-            mock_mem = mock_mem_mod
-            mock_mem.search_concepts_semantic.return_value = []
+        from backends.ontology import query
+        from backends import memory
+        with patch.object(memory, "search_concepts_semantic", return_value=[]):
             mock_neo4j["session"].run.return_value = [
                 _make_record({
                     "name": "Ghost", "vault": "test", "summary": "",
@@ -170,13 +155,13 @@ class TestQuery:
 
 class TestSetAliases:
     def test_concept_not_found(self, mock_neo4j):
-        from ontology import set_aliases
+        from backends.ontology import set_aliases
         mock_neo4j["session"].run.return_value.single.return_value = None
         result = set_aliases("Missing", ["alias1"])
         assert "not found" in result
 
     def test_success(self, mock_neo4j):
-        from ontology import set_aliases
+        from backends.ontology import set_aliases
         # First call (check existence) returns a node
         mock_neo4j["session"].run.return_value.single.return_value = {"c": {}}
         result = set_aliases("MyConc", ["eng1", "eng2"])
@@ -190,7 +175,7 @@ class TestSetAliases:
 
 class TestBatchSetAliases:
     def test_mixed_results(self, mock_neo4j):
-        from ontology import batch_set_aliases
+        from backends.ontology import batch_set_aliases
         # Alternate: found, not found
         mock_neo4j["session"].run.return_value.single.side_effect = [
             {"c": {}}, None
@@ -210,7 +195,7 @@ class TestBatchSetAliases:
 
 class TestGetConcept:
     def test_not_found_with_suggestions(self, mock_neo4j):
-        from ontology import get_concept
+        from backends.ontology import get_concept
         # First call: concept not found
         mock_neo4j["session"].run.return_value.single.return_value = None
         # Second call: suggestions
@@ -235,7 +220,7 @@ class TestGetConcept:
         assert "not found" in result
 
     def test_not_found_no_suggestions(self, mock_neo4j):
-        from ontology import get_concept
+        from backends.ontology import get_concept
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -249,7 +234,7 @@ class TestGetConcept:
         assert "not found" in result
 
     def test_found_with_content_and_links(self, mock_neo4j):
-        from ontology import get_concept
+        from backends.ontology import get_concept
         node = _make_node({
             "name": "TestConcept", "vault": "cognee", "ghost": False,
             "summary": "A test", "content": "Some content here"
@@ -282,13 +267,13 @@ class TestGetConcept:
 
 class TestTraverse:
     def test_not_found(self, mock_neo4j):
-        from ontology import traverse
+        from backends.ontology import traverse
         mock_neo4j["session"].run.return_value.single.return_value = None
         result = traverse("Missing")
         assert "not found" in result
 
     def test_hops_clamped(self, mock_neo4j):
-        from ontology import traverse
+        from backends.ontology import traverse
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -302,7 +287,7 @@ class TestTraverse:
         assert "no connections" in result
 
     def test_results_grouped_by_hop(self, mock_neo4j):
-        from ontology import traverse
+        from backends.ontology import traverse
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -328,13 +313,13 @@ class TestTraverse:
 
 class TestWhyExists:
     def test_not_found(self, mock_neo4j):
-        from ontology import why_exists
+        from backends.ontology import why_exists
         mock_neo4j["session"].run.return_value.single.return_value = None
         result = why_exists("Missing")
         assert "not found" in result
 
     def test_ghost_concept(self, mock_neo4j):
-        from ontology import why_exists
+        from backends.ontology import why_exists
         node = _make_node({
             "name": "Ghost", "vault": "ghost", "ghost": True,
             "summary": "", "content": ""
@@ -352,7 +337,7 @@ class TestWhyExists:
         assert "ghost node" in result
 
     def test_with_edges(self, mock_neo4j):
-        from ontology import why_exists
+        from backends.ontology import why_exists
         node = _make_node({
             "name": "A", "vault": "cognee", "ghost": False,
             "summary": "concept", "content": ""
@@ -381,26 +366,26 @@ class TestWhyExists:
 
 class TestExpand:
     def test_create_new_concept(self, mock_neo4j):
-        from ontology import expand
+        from backends.ontology import expand
         mock_neo4j["session"].run.return_value.single.return_value = None
         result = expand("NewConcept", summary="A new one")
         assert "Created concept 'NewConcept'" in result
         assert "vault: agent" in result
 
     def test_update_existing_concept(self, mock_neo4j):
-        from ontology import expand
+        from backends.ontology import expand
         mock_neo4j["session"].run.return_value.single.return_value = {"c": {}}
         result = expand("Existing", summary="Updated")
         assert "Updated concept 'Existing'" in result
 
     def test_existing_no_changes(self, mock_neo4j):
-        from ontology import expand
+        from backends.ontology import expand
         mock_neo4j["session"].run.return_value.single.return_value = {"c": {}}
         result = expand("Existing")
         assert "already exists" in result
 
     def test_create_with_relation(self, mock_neo4j):
-        from ontology import expand
+        from backends.ontology import expand
         # First .single() = None (concept doesn't exist)
         # Then .single() = None (target doesn't exist → ghost)
         mock_neo4j["session"].run.return_value.single.return_value = None
@@ -409,7 +394,7 @@ class TestExpand:
         assert "REQUIRES" in result
 
     def test_invalid_relation_type_defaults(self, mock_neo4j):
-        from ontology import expand
+        from backends.ontology import expand
         mock_neo4j["session"].run.return_value.single.return_value = None
         result = expand("A", relate_to="B", relation_type="INVALID")
         assert "RELATES_TO" in result
@@ -420,7 +405,7 @@ class TestExpand:
 
 class TestAutoLink:
     def test_concept_not_found(self, mock_neo4j):
-        from ontology import auto_link
+        from backends.ontology import auto_link
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -432,7 +417,7 @@ class TestAutoLink:
         assert "not found" in result
 
     def test_no_isolated_concepts(self, mock_neo4j):
-        from ontology import auto_link
+        from backends.ontology import auto_link
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -449,13 +434,13 @@ class TestAutoLink:
 
 class TestEnsureBidirectional:
     def test_concept_not_found(self, mock_neo4j):
-        from ontology import ensure_bidirectional
+        from backends.ontology import ensure_bidirectional
         mock_neo4j["session"].run.return_value.single.return_value = None
         result = ensure_bidirectional("Missing")
         assert "not found" in result
 
     def test_already_bidirectional(self, mock_neo4j):
-        from ontology import ensure_bidirectional
+        from backends.ontology import ensure_bidirectional
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -469,7 +454,7 @@ class TestEnsureBidirectional:
         assert "already bidirectional" in result
 
     def test_all_bidirectional_no_name(self, mock_neo4j):
-        from ontology import ensure_bidirectional
+        from backends.ontology import ensure_bidirectional
         mock_neo4j["session"].run.return_value = []
         result = ensure_bidirectional()
         assert "already bidirectional" in result
@@ -480,13 +465,13 @@ class TestEnsureBidirectional:
 
 class TestRunCypher:
     def test_no_results(self, mock_neo4j):
-        from ontology import run_cypher
+        from backends.ontology import run_cypher
         mock_neo4j["session"].run.return_value = []
         result = run_cypher("MATCH (n) RETURN n LIMIT 0")
         assert "(no results)" in result
 
     def test_with_results(self, mock_neo4j):
-        from ontology import run_cypher
+        from backends.ontology import run_cypher
         rec = _make_record({"name": "A", "count": 5})
         mock_neo4j["session"].run.return_value = [rec]
         result = run_cypher("MATCH (n) RETURN n.name AS name")
@@ -499,7 +484,7 @@ class TestRunCypher:
 
 class TestGetVaultConcepts:
     def test_returns_list(self, mock_neo4j):
-        from ontology import get_vault_concepts
+        from backends.ontology import get_vault_concepts
         mock_neo4j["session"].run.return_value = [
             _make_record({
                 "name": "A", "summary": "Sum A", "content": "Content A",
@@ -513,7 +498,7 @@ class TestGetVaultConcepts:
         assert len(result[0]["relations"]) == 1
 
     def test_filters_none_rels(self, mock_neo4j):
-        from ontology import get_vault_concepts
+        from backends.ontology import get_vault_concepts
         mock_neo4j["session"].run.return_value = [
             _make_record({"name": "A", "summary": "", "content": "", "rels": [None, None]})
         ]
@@ -526,13 +511,13 @@ class TestGetVaultConcepts:
 
 class TestListConcepts:
     def test_empty_graph(self, mock_neo4j):
-        from ontology import list_concepts
+        from backends.ontology import list_concepts
         mock_neo4j["session"].run.return_value = []
         result = list_concepts()
         assert "No concepts" in result
 
     def test_grouped_by_vault(self, mock_neo4j):
-        from ontology import list_concepts
+        from backends.ontology import list_concepts
         mock_neo4j["session"].run.return_value = [
             _make_record({"name": "A", "vault": "cognee"}),
             _make_record({"name": "B", "vault": "cognee"}),
@@ -549,7 +534,7 @@ class TestListConcepts:
 
 class TestGetStats:
     def test_returns_dict_structure(self, mock_neo4j):
-        from ontology import get_stats
+        from backends.ontology import get_stats
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1
@@ -580,7 +565,7 @@ class TestGetStats:
 
 class TestGetSchema:
     def test_returns_markdown(self, mock_neo4j):
-        from ontology import get_schema
+        from backends.ontology import get_schema
         call_count = [0]
         def run_side_effect(*args, **kwargs):
             call_count[0] += 1

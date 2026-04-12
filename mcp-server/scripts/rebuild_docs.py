@@ -14,9 +14,9 @@ import sys
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from web_to_docs_backend import _fetch_and_convert, _slugify
+from backends.web_to_docs_backend import _fetch_and_convert, _slugify
 
-DOCS_DIR = Path(__file__).parent / "docs"
+DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 
 # Map filename patterns to their canonical URL sources
 # Format: (filename_pattern, url_template)

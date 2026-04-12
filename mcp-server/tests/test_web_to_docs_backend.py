@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 class TestSlugify:
     def _slug(self, text):
-        from web_to_docs_backend import _slugify
+        from backends.web_to_docs_backend import _slugify
         return _slugify(text)
 
     def test_basic(self):
@@ -45,12 +45,12 @@ class TestSlugify:
 
 class TestSafeDocPath:
     def test_valid_path(self):
-        from web_to_docs_backend import _safe_doc_path
+        from backends.web_to_docs_backend import _safe_doc_path
         result = _safe_doc_path("test.md")
         assert result is not None
 
     def test_traversal_blocked(self):
-        from web_to_docs_backend import _safe_doc_path
+        from backends.web_to_docs_backend import _safe_doc_path
         result = _safe_doc_path("../../etc/passwd")
         assert result is None
 
@@ -60,7 +60,7 @@ class TestSafeDocPath:
 
 class TestIsNoiseElement:
     def _check(self, html):
-        from web_to_docs_backend import _is_noise_element
+        from backends.web_to_docs_backend import _is_noise_element
         soup = BeautifulSoup(html, "html.parser")
         return _is_noise_element(soup.find())
 
@@ -85,7 +85,7 @@ class TestIsNoiseElement:
 
 class TestFindContentContainer:
     def _find(self, html):
-        from web_to_docs_backend import _find_content_container
+        from backends.web_to_docs_backend import _find_content_container
         soup = BeautifulSoup(html, "html.parser")
         return _find_content_container(soup)
 
@@ -121,7 +121,7 @@ class TestFindContentContainer:
 
 class TestExtractMainContent:
     def _extract(self, html):
-        from web_to_docs_backend import _extract_main_content
+        from backends.web_to_docs_backend import _extract_main_content
         return _extract_main_content(html)
 
     def test_removes_script_tags(self):
@@ -145,7 +145,7 @@ class TestExtractMainContent:
 
 class TestCleanMarkdown:
     def _clean(self, md):
-        from web_to_docs_backend import _clean_markdown
+        from backends.web_to_docs_backend import _clean_markdown
         return _clean_markdown(md)
 
     def test_removes_skip_to_content(self):
@@ -182,7 +182,7 @@ class TestCleanMarkdown:
 
 class TestExtractLinks:
     def _links(self, html, base, prefix):
-        from web_to_docs_backend import _extract_links
+        from backends.web_to_docs_backend import _extract_links
         return _extract_links(html, base, prefix)
 
     def test_extracts_matching_links(self):
@@ -212,7 +212,7 @@ class TestExtractLinks:
 
 class TestExtractTitle:
     def _title(self, md):
-        from web_to_docs_backend import _extract_title
+        from backends.web_to_docs_backend import _extract_title
         return _extract_title(md)
 
     def test_extracts_h1(self):
@@ -230,7 +230,7 @@ class TestExtractTitle:
 
 class TestTier2Body:
     def _score(self, html, url="http://example.com/docs/guide"):
-        from web_to_docs_backend import _tier2_body
+        from backends.web_to_docs_backend import _tier2_body
         return _tier2_body(url, html)
 
     def test_good_doc_page(self):
@@ -270,8 +270,8 @@ class TestTier2Body:
 
 class TestConvertUrl:
     def test_fetches_and_converts(self):
-        from web_to_docs_backend import convert_url
-        with patch("web_to_docs_backend._fetch_and_convert", return_value="# Test\nContent"):
+        from backends.web_to_docs_backend import convert_url
+        with patch("backends.web_to_docs_backend._fetch_and_convert", return_value="# Test\nContent"):
             result = convert_url("http://example.com")
             assert "Test" in result
 
@@ -281,17 +281,17 @@ class TestConvertUrl:
 
 class TestSaveAsDoc:
     def test_adds_md_extension(self, tmp_path):
-        from web_to_docs_backend import save_as_doc
-        with patch("web_to_docs_backend.DOCS_DIR", tmp_path), \
-             patch("web_to_docs_backend._fetch_and_convert", return_value="# Test"):
+        from backends.web_to_docs_backend import save_as_doc
+        with patch("backends.web_to_docs_backend.DOCS_DIR", tmp_path), \
+             patch("backends.web_to_docs_backend._fetch_and_convert", return_value="# Test"):
             result = save_as_doc("http://example.com", "myfile")
             assert "myfile.md" in result
             assert (tmp_path / "myfile.md").exists()
 
     def test_invalid_filename(self):
-        from web_to_docs_backend import save_as_doc
-        with patch("web_to_docs_backend._fetch_and_convert", return_value="# Test"), \
-             patch("web_to_docs_backend._safe_doc_path", return_value=None):
+        from backends.web_to_docs_backend import save_as_doc
+        with patch("backends.web_to_docs_backend._fetch_and_convert", return_value="# Test"), \
+             patch("backends.web_to_docs_backend._safe_doc_path", return_value=None):
             result = save_as_doc("http://example.com", "../../evil")
             assert "Invalid" in result
 
@@ -301,21 +301,21 @@ class TestSaveAsDoc:
 
 class TestResearchTopic:
     def test_no_urls(self):
-        from web_to_docs_backend import research_topic
+        from backends.web_to_docs_backend import research_topic
         assert research_topic([], "Test") == "No URLs provided."
 
     def test_all_urls_fail(self):
-        from web_to_docs_backend import research_topic
-        with patch("web_to_docs_backend._fetch_many", return_value=[
+        from backends.web_to_docs_backend import research_topic
+        with patch("backends.web_to_docs_backend._fetch_many", return_value=[
             {"url": "http://fail.com", "error": "timeout"}
         ]):
             result = research_topic(["http://fail.com"], "Test")
             assert "All URLs failed" in result
 
     def test_successful_research(self, tmp_path):
-        from web_to_docs_backend import research_topic
-        with patch("web_to_docs_backend.DOCS_DIR", tmp_path), \
-             patch("web_to_docs_backend._fetch_many", return_value=[
+        from backends.web_to_docs_backend import research_topic
+        with patch("backends.web_to_docs_backend.DOCS_DIR", tmp_path), \
+             patch("backends.web_to_docs_backend._fetch_many", return_value=[
                  {"url": "http://a.com", "md": "# Page A\nContent A " * 30},
                  {"url": "http://b.com", "md": "# Page B\nContent B " * 30},
              ]):
@@ -331,20 +331,20 @@ class TestResearchTopic:
 
 class TestConstants:
     def test_max_workers(self):
-        from web_to_docs_backend import MAX_WORKERS
+        from backends.web_to_docs_backend import MAX_WORKERS
         assert MAX_WORKERS == 8
 
     def test_headers_has_user_agent(self):
-        from web_to_docs_backend import _HEADERS
+        from backends.web_to_docs_backend import _HEADERS
         assert "User-Agent" in _HEADERS
         assert "Marvin" in _HEADERS["User-Agent"]
 
     def test_noise_tags(self):
-        from web_to_docs_backend import _NOISE_TAGS
+        from backends.web_to_docs_backend import _NOISE_TAGS
         assert "nav" in _NOISE_TAGS
         assert "script" in _NOISE_TAGS
 
     def test_content_classes(self):
-        from web_to_docs_backend import _CONTENT_CLASSES
+        from backends.web_to_docs_backend import _CONTENT_CLASSES
         assert "doc-content" in _CONTENT_CLASSES
         assert "markdown-body" in _CONTENT_CLASSES

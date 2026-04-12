@@ -22,8 +22,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-REPO_ROOT = Path(__file__).parent.parent
-MCP_SERVER = Path(__file__).parent
+REPO_ROOT = Path(__file__).parent.parent.parent
+MCP_SERVER = Path(__file__).parent.parent
 
 load_dotenv(REPO_ROOT / ".env")
 
@@ -53,7 +53,7 @@ def _sync_lance_concepts_to_milvus() -> int:
     joins with Neo4j concept names. Zero OpenAI embedding API calls.
     """
     import lancedb as ldb
-    import memory
+    from . import memory
     from neo4j import GraphDatabase
     from pymilvus import Collection
 
@@ -131,7 +131,7 @@ def _sync_lance_doc_chunks_to_milvus() -> int:
     Zero OpenAI embedding API calls.
     """
     import lancedb as ldb
-    import memory
+    from . import memory
     from pymilvus import Collection
 
     lance_path = _get_lancedb_path()
@@ -192,7 +192,7 @@ def sync(skip_cognify: bool = False, changed_files: list[str] | None = None) -> 
 
     Returns: {"concepts": int, "doc_chunks": int, "elapsed_s": float, "cognify_mode": str}
     """
-    import memory
+    from . import memory
 
     t0 = time.time()
 
@@ -231,15 +231,15 @@ def sync(skip_cognify: bool = False, changed_files: list[str] | None = None) -> 
 
 SOURCE_FILES = [
     "marvin_server.py",
-    "ontology.py",
-    "memory.py",
-    "docs_backend.py",
-    "web_to_docs_backend.py",
-    "prompt_engineer_backend.py",
-    "system_design_backend.py",
-    "code_improvement_backend.py",
-    "orchestrator_backend.py",
-    "ops_backend.py",
+    "backends/ontology.py",
+    "backends/memory.py",
+    "backends/docs_backend.py",
+    "backends/web_to_docs_backend.py",
+    "backends/prompt_engineer_backend.py",
+    "backends/system_design_backend.py",
+    "backends/code_improvement_backend.py",
+    "backends/orchestrator_backend.py",
+    "backends/ops_backend.py",
 ]
 
 BACKEND_CONCEPT_MAP = {
@@ -293,7 +293,7 @@ def extract_code_structure() -> dict:
 
         source = filepath.read_text()
         tree = ast.parse(source, filename=filename)
-        module_name = filename.replace(".py", "")
+        module_name = Path(filename).stem
 
         public_funcs = []
         for node in ast.walk(tree):
@@ -531,8 +531,8 @@ def self_improve() -> dict:
 
     Returns: {"drift_before": int, "fixes": int, "actions": [...], "elapsed_s": float}
     """
-    import ontology
-    import memory
+    from . import ontology
+    from . import memory
 
     t0 = time.time()
     actions = []

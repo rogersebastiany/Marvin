@@ -212,9 +212,9 @@ All Neo4j reads and write tools are **blocked** unless a Milvus tier tool was ca
 
 ### Vault Sources
 
-- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — Mathematical and theoretical foundations (PT-BR + English translation in `vault-thesis-en/`)
-- **Implementation vault** (`vault/`) — Practical architecture concepts (PT-BR + English in `vault-implementation-en/`)
-- **Docs** — 67 fetched documentation files in `mcp-server/docs/`
+- **Thesis vault** (`vaults/thesis-ptbr/`) — Mathematical and theoretical foundations (PT-BR + English translation in `vaults/thesis-en/`)
+- **Implementation vault** (`vaults/implementation-ptbr/`) — Practical architecture concepts (PT-BR + English in `vaults/implementation-en/`)
+- **Docs** — 67 fetched documentation files in `docs/`
 
 ### Edge Types
 
@@ -246,30 +246,35 @@ Concept and doc_chunk vectors are synced from Cognee's LanceDB — zero OpenAI e
 Marvin/
 ├── mcp-server/                          ← Marvin (44 tools, 9 backends)
 │   ├── marvin_server.py                     ← THE server + tool registration
-│   ├── ontology.py                          ← Neo4j backend
-│   ├── memory.py                            ← Milvus backend
-│   ├── docs_backend.py                      ← Local docs search/browse
-│   ├── web_to_docs_backend.py               ← Web → markdown fetcher
-│   ├── prompt_engineer_backend.py           ← Prompt Architect framework
-│   ├── system_design_backend.py             ← Mermaid.js diagrams
-│   ├── code_improvement_backend.py          ← AST chunking + Milvus vector walk
-│   ├── orchestrator_backend.py              ← Goal → execution plan (6 chains)
-│   ├── ops_backend.py                       ← Sync, audit, self-improve
-│   ├── docs/                                ← 67 local markdown docs
-│   ├── diagrams/                            ← Saved Mermaid diagrams
+│   ├── backends/                            ← 9 backend modules (Python package)
+│   │   ├── __init__.py
+│   │   ├── ontology.py                      ← Neo4j backend
+│   │   ├── memory.py                        ← Milvus backend
+│   │   ├── docs_backend.py                  ← Local docs search/browse
+│   │   ├── web_to_docs_backend.py           ← Web → markdown fetcher
+│   │   ├── prompt_engineer_backend.py       ← Prompt Architect framework
+│   │   ├── system_design_backend.py         ← Mermaid.js diagrams
+│   │   ├── code_improvement_backend.py      ← AST chunking + Milvus vector walk
+│   │   ├── orchestrator_backend.py          ← Goal → execution plan (6 chains)
+│   │   └── ops_backend.py                   ← Sync, audit, self-improve
+│   ├── tests/                               ← 314 tests (pytest)
+│   ├── scripts/                             ← Utility scripts
 │   └── pyproject.toml
+│
+├── vaults/                              ← Obsidian vaults (Cognee input)
+│   ├── thesis-ptbr/                         ← Tautologia Ontologica (PT-BR)
+│   ├── thesis-en/                           ← Thesis (English)
+│   ├── implementation-ptbr/                 ← Implementation notes (PT-BR)
+│   └── implementation-en/                   ← Implementation notes (English)
+│
+├── docs/                                ← Fetched reference docs (67 markdown files)
+├── diagrams/                            ← Saved Mermaid diagrams
 │
 ├── load-vaults/                         ← Cognee KG extraction
 │   ├── cognify_vaults.py                    ← Vault → Cognee → Neo4j + LanceDB
 │   ├── cognee_models.py                     ← Custom Concept(DataPoint) graph_model
 │   └── pyproject.toml
 │
-├── obsidian-vault-tautologia-ontologica/  ← Thesis vault (PT-BR)
-├── vault-thesis-en/                       ← Thesis vault (English)
-├── vault/                                 ← Implementation vault (PT-BR)
-├── vault-implementation-en/               ← Implementation vault (English)
-│
-├── marvin_ops.py                        ← Local CLI: sync/audit/improve
 ├── docker-compose.yml                   ← Full local stack
 ├── CLAUDE.md                            ← Claude Code instructions
 └── .env.example

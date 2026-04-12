@@ -16,7 +16,7 @@ from pathlib import Path
 # Instead of fighting the import, we parse the source AST directly for constants
 # and test pure functions by extracting them.
 
-SERVER_PATH = Path(__file__).parent / "marvin_server.py"
+SERVER_PATH = Path(__file__).parent.parent / "marvin_server.py"
 SOURCE = SERVER_PATH.read_text()
 TREE = ast.parse(SOURCE, filename="marvin_server.py")
 
@@ -217,20 +217,19 @@ class TestLifespan:
 
 class TestSourceStructure:
     def test_imports_all_backends(self):
-        imports = []
+        """All 9 backends should be imported via 'from backends import X'."""
+        imported_names = []
         for node in ast.iter_child_nodes(TREE):
-            if isinstance(node, ast.Import):
+            if isinstance(node, ast.ImportFrom) and node.module == "backends":
                 for alias in node.names:
-                    imports.append(alias.name)
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                imports.append(node.module)
+                    imported_names.append(alias.name)
         expected_backends = [
             "ontology", "memory", "docs_backend", "web_to_docs_backend",
             "prompt_engineer_backend", "system_design_backend",
             "code_improvement_backend", "orchestrator_backend", "ops_backend",
         ]
         for backend in expected_backends:
-            assert backend in imports, f"Missing import: {backend}"
+            assert backend in imported_names, f"Missing import: {backend}"
 
     def test_all_tool_functions_have_docstrings(self):
         for node in ast.walk(TREE):

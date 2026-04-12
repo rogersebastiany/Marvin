@@ -25,15 +25,15 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
-import ontology
-import memory
-import docs_backend
-import web_to_docs_backend
-import prompt_engineer_backend
-import system_design_backend
-import code_improvement_backend
-import orchestrator_backend
-import ops_backend
+from backends import ontology
+from backends import memory
+from backends import docs_backend
+from backends import web_to_docs_backend
+from backends import prompt_engineer_backend
+from backends import system_design_backend
+from backends import code_improvement_backend
+from backends import orchestrator_backend
+from backends import ops_backend
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -15,7 +15,7 @@ from markdownify import markdownify
 
 MAX_WORKERS = 8
 
-DOCS_DIR = Path(__file__).parent / "docs"
+DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 
 
 def _safe_doc_path(filename: str) -> Path | None:

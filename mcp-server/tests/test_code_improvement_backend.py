@@ -15,7 +15,7 @@ import textwrap
 
 class TestUnparseAnnotation:
     def _unparse(self, node):
-        from code_improvement_backend import _unparse_annotation
+        from backends.code_improvement_backend import _unparse_annotation
         return _unparse_annotation(node)
 
     def test_none_returns_none(self):
@@ -39,7 +39,7 @@ class TestUnparseAnnotation:
 
 class TestExtractSignature:
     def _sig(self, func_source):
-        from code_improvement_backend import _extract_signature
+        from backends.code_improvement_backend import _extract_signature
         tree = ast.parse(textwrap.dedent(func_source))
         func = tree.body[0]
         return _extract_signature(func)
@@ -77,7 +77,7 @@ class TestExtractSignature:
 
 class TestExtractClassMethods:
     def test_extracts_methods(self):
-        from code_improvement_backend import _extract_class_methods
+        from backends.code_improvement_backend import _extract_class_methods
         source = textwrap.dedent("""\
         class Foo:
             def bar(self):
@@ -96,7 +96,7 @@ class TestExtractClassMethods:
         assert methods[1]["name"] == "baz"
 
     def test_no_methods(self):
-        from code_improvement_backend import _extract_class_methods
+        from backends.code_improvement_backend import _extract_class_methods
         source = "class Empty:\n    x = 1\n"
         tree = ast.parse(source)
         cls = tree.body[0]
@@ -110,7 +110,7 @@ class TestExtractClassMethods:
 
 class TestChunkCodeByAst:
     def _chunk(self, source, path="test.py"):
-        from code_improvement_backend import _chunk_code_by_ast
+        from backends.code_improvement_backend import _chunk_code_by_ast
         return _chunk_code_by_ast(source, path)
 
     def test_non_python_returns_whole_file(self):
@@ -176,7 +176,7 @@ class TestChunkCodeByAst:
 
 class TestExtractImports:
     def _imports(self, source):
-        from code_improvement_backend import _extract_imports
+        from backends.code_improvement_backend import _extract_imports
         return _extract_imports(source)
 
     def test_import_and_from(self):
@@ -197,26 +197,26 @@ class TestExtractImports:
 
 class TestImproveCode:
     def test_file_not_found(self):
-        from code_improvement_backend import improve_code
-        with patch("code_improvement_backend._embed_batch"):
+        from backends.code_improvement_backend import improve_code
+        with patch("backends.code_improvement_backend._embed_batch"):
             result = improve_code("/nonexistent/file.py")
             assert "error" in result
 
     def test_empty_file(self, tmp_path):
-        from code_improvement_backend import improve_code
+        from backends.code_improvement_backend import improve_code
         f = tmp_path / "empty.py"
         f.write_text("")
-        with patch("code_improvement_backend._embed_batch"):
+        with patch("backends.code_improvement_backend._embed_batch"):
             result = improve_code(str(f))
             assert "error" in result
 
     def test_returns_expected_structure(self, tmp_path):
-        from code_improvement_backend import improve_code
+        from backends.code_improvement_backend import improve_code
         f = tmp_path / "sample.py"
         f.write_text("def foo():\n    pass\n")
 
-        with patch("code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
-             patch("code_improvement_backend._search_by_vector", return_value=[]):
+        with patch("backends.code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
+             patch("backends.code_improvement_backend._search_by_vector", return_value=[]):
             result = improve_code(str(f))
             assert "file" in result
             assert "chunks" in result
@@ -226,15 +226,15 @@ class TestImproveCode:
             assert result["chunks"][0]["name"] == "foo"
 
     def test_filters_by_score_threshold(self, tmp_path):
-        from code_improvement_backend import improve_code
+        from backends.code_improvement_backend import improve_code
         f = tmp_path / "sample.py"
         f.write_text("def foo():\n    pass\n")
 
         low_hit = {"score": 0.1, "name": "low", "vault": "test", "summary": "low"}
         high_hit = {"score": 0.9, "name": "high", "vault": "test", "summary": "high"}
 
-        with patch("code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
-             patch("code_improvement_backend._search_by_vector", return_value=[low_hit, high_hit]):
+        with patch("backends.code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
+             patch("backends.code_improvement_backend._search_by_vector", return_value=[low_hit, high_hit]):
             result = improve_code(str(f), score_threshold=0.5)
             # Only high_hit should pass
             matches = result["chunks"][0]["matches"]
@@ -246,18 +246,18 @@ class TestImproveCode:
 
 class TestTdd:
     def test_file_not_found(self):
-        from code_improvement_backend import tdd
-        with patch("code_improvement_backend._embed_batch"):
+        from backends.code_improvement_backend import tdd
+        with patch("backends.code_improvement_backend._embed_batch"):
             result = tdd("/nonexistent/file.py")
             assert "error" in result
 
     def test_returns_expected_structure(self, tmp_path):
-        from code_improvement_backend import tdd
+        from backends.code_improvement_backend import tdd
         f = tmp_path / "sample.py"
         f.write_text("import os\n\ndef foo(x: int) -> str:\n    '''Do stuff.'''\n    pass\n")
 
-        with patch("code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
-             patch("code_improvement_backend._search_by_vector", return_value=[]):
+        with patch("backends.code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
+             patch("backends.code_improvement_backend._search_by_vector", return_value=[]):
             result = tdd(str(f))
             assert result["module_name"] == "sample"
             assert "import os" in result["imports"]
@@ -269,12 +269,12 @@ class TestTdd:
             assert "knowledge" in unit
 
     def test_k_per_collection_clamped(self, tmp_path):
-        from code_improvement_backend import tdd
+        from backends.code_improvement_backend import tdd
         f = tmp_path / "sample.py"
         f.write_text("def foo(): pass\n")
 
-        with patch("code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
-             patch("code_improvement_backend._search_by_vector", return_value=[]) as mock_search:
+        with patch("backends.code_improvement_backend._embed_batch", return_value=[[0.0] * 1536]), \
+             patch("backends.code_improvement_backend._search_by_vector", return_value=[]) as mock_search:
             tdd(str(f), k_per_collection=50)
             for call in mock_search.call_args_list:
                 assert call[0][2] <= 20  # limit arg

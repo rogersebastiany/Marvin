@@ -12,7 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautologia"))
@@ -20,7 +20,7 @@ NEO4J_AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautolo
 _driver = None
 
 # Load relation types from single source of truth
-_RELATION_TYPES_PATH = Path(__file__).parent / "relation_types.json"
+_RELATION_TYPES_PATH = Path(__file__).parent.parent / "relation_types.json"
 _RELATION_TYPES_DATA: dict = json.loads(_RELATION_TYPES_PATH.read_text())
 
 RELATION_TYPES: list[str] = list(_RELATION_TYPES_DATA.keys())
@@ -48,7 +48,7 @@ def query(text: str, limit: int = 10) -> str:
     """Semantic search over concepts via Milvus. Keyword fallback if Milvus is down."""
     # Primary: semantic search via Milvus
     try:
-        import memory
+        from . import memory
         hits = memory.search_concepts_semantic(text, limit=limit)
         if hits:
             lines = [f"Found {len(hits)} concept(s):\n"]

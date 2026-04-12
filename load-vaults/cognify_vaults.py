@@ -186,12 +186,12 @@ you find. The available fields and their meaning:
 
 # ── Vault paths ──────────────────────────────────────────────────
 VAULTS = {
-    "thesis": ROOT / "obsidian-vault-tautologia-ontologica" / "obsidian-vault",
-    "implementation": ROOT / "vault",
-    "thesis-en": ROOT / "vault-thesis-en",
-    "implementation-en": ROOT / "vault-implementation-en",
+    "thesis": ROOT / "vaults" / "thesis-ptbr" / "obsidian-vault",
+    "implementation": ROOT / "vaults" / "implementation-ptbr",
+    "thesis-en": ROOT / "vaults" / "thesis-en",
+    "implementation-en": ROOT / "vaults" / "implementation-en",
 }
-DOCS_DIR = ROOT / "mcp-server" / "docs"
+DOCS_DIR = ROOT / "docs"
 
 
 def collect_texts() -> list[tuple[str, str]]:

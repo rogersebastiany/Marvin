@@ -12,12 +12,14 @@ Usage:
 
 import argparse
 import re
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
 import marvin_server
 
-ROOT = Path(__file__).parent.parent
-MCP = Path(__file__).parent
+ROOT = Path(__file__).parent.parent.parent
+MCP = Path(__file__).parent.parent
 
 # ── Extract tool metadata ────────────────────────────────────────────────
 
@@ -103,7 +105,7 @@ def _get_backend_table(backends: list[tuple[str, str]]) -> str:
 
 def _get_chain_table() -> str:
     """Generate orchestrator chain table."""
-    from orchestrator_backend import CHAINS
+    from backends.orchestrator_backend import CHAINS
 
     lines = [
         "| Chain | Triggers | Steps | Description |",
@@ -124,17 +126,18 @@ def _get_chain_table() -> str:
 def _get_backends() -> list[tuple[str, str]]:
     """Discover backend modules from imports in marvin_server.py."""
     import ast
+    import importlib
 
     source = (MCP / "marvin_server.py").read_text()
     tree = ast.parse(source)
 
     backends = []
     for node in ast.iter_child_nodes(tree):
-        if isinstance(node, ast.Import):
+        if isinstance(node, ast.ImportFrom) and node.module == "backends":
             for alias in node.names:
-                mod_path = MCP / f"{alias.name}.py"
-                if mod_path.exists() and alias.name not in ("inspect", "threading"):
-                    mod = __import__(alias.name)
+                mod_path = MCP / "backends" / f"{alias.name}.py"
+                if mod_path.exists():
+                    mod = importlib.import_module(f"backends.{alias.name}")
                     doc = (mod.__doc__ or "").strip().split("\n")[0]
                     backends.append((alias.name, doc))
     return backends

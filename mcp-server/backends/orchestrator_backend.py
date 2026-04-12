@@ -8,7 +8,7 @@ LLM-agnostic: Claude Code, Cursor, Windsurf, brain.py — they all
 get the same plan, same gates, same step dependencies.
 """
 
-from memory import _embed, _search_by_vector, _RESSALVA_COLLECTIONS, _format_ressalva
+from .memory import _embed, _search_by_vector, _RESSALVA_COLLECTIONS, _format_ressalva
 
 
 # ── Tool Chain Definitions ───────────────────────────────────────────────

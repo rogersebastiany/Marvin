@@ -13,13 +13,13 @@ from unittest.mock import patch, MagicMock
 
 class TestChains:
     def test_all_chains_present(self):
-        from orchestrator_backend import CHAINS
+        from backends.orchestrator_backend import CHAINS
         expected = {"tdd_improve", "research", "prompt_lifecycle", "code_to_knowledge",
                     "full_improvement", "sync_and_audit"}
         assert set(CHAINS.keys()) == expected
 
     def test_all_chains_have_required_keys(self):
-        from orchestrator_backend import CHAINS
+        from backends.orchestrator_backend import CHAINS
         for name, chain in CHAINS.items():
             assert "description" in chain, f"{name} missing description"
             assert "triggers" in chain, f"{name} missing triggers"
@@ -28,13 +28,13 @@ class TestChains:
             assert len(chain["steps"]) > 0, f"{name} has no steps"
 
     def test_steps_have_ids(self):
-        from orchestrator_backend import CHAINS
+        from backends.orchestrator_backend import CHAINS
         for name, chain in CHAINS.items():
             ids = [s["id"] for s in chain["steps"]]
             assert ids == sorted(ids), f"{name} step IDs not sequential"
 
     def test_tdd_improve_chain_structure(self):
-        from orchestrator_backend import CHAINS
+        from backends.orchestrator_backend import CHAINS
         chain = CHAINS["tdd_improve"]
         assert chain["requires"] == ["file_path"]
         assert len(chain["steps"]) == 7
@@ -43,7 +43,7 @@ class TestChains:
         assert chain["steps"][-1]["action"] == "create_issue"
 
     def test_full_improvement_chain_structure(self):
-        from orchestrator_backend import CHAINS
+        from backends.orchestrator_backend import CHAINS
         chain = CHAINS["full_improvement"]
         assert len(chain["steps"]) == 9
         # Has two tdd calls (step 1 and step 7)
@@ -56,7 +56,7 @@ class TestChains:
 
 class TestMatchChains:
     def _match(self, prompt):
-        from orchestrator_backend import _match_chains
+        from backends.orchestrator_backend import _match_chains
         return _match_chains(prompt)
 
     def test_improve_triggers_tdd_improve(self):
@@ -98,7 +98,7 @@ class TestMatchChains:
 
 class TestExtractFilePath:
     def _extract(self, prompt):
-        from orchestrator_backend import _extract_file_path
+        from backends.orchestrator_backend import _extract_file_path
         return _extract_file_path(prompt)
 
     def test_absolute_path(self):
@@ -133,62 +133,62 @@ class TestExtractFilePath:
 class TestOrchestrate:
     @pytest.fixture(autouse=True)
     def mock_milvus(self):
-        with patch("orchestrator_backend._embed", return_value=[0.0] * 1536), \
-             patch("orchestrator_backend._search_by_vector", return_value=[]):
+        with patch("backends.orchestrator_backend._embed", return_value=[0.0] * 1536), \
+             patch("backends.orchestrator_backend._search_by_vector", return_value=[]):
             yield
 
     def test_no_matching_chain(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         result = orchestrate("xyzzy foobar nothing matches here")
         assert "error" in result
         assert "available_chains" in result
 
     def test_matching_chain_returns_plan(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         result = orchestrate("improve memory.py with test safety")
         assert "chain" in result
         assert "steps" in result
         assert result["chain"] == "tdd_improve"
 
     def test_extracts_file_path(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         result = orchestrate("improve /home/user/memory.py")
         assert result["parameters"].get("file_path") == "/home/user/memory.py"
 
     def test_reports_missing_parameters(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         result = orchestrate("do some research please")
         # research chain requires urls and topic, neither in prompt
         if result.get("chain") == "research":
             assert len(result["missing_parameters"]) > 0
 
     def test_includes_milvus_context(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         result = orchestrate("improve memory.py")
         assert "milvus_context" in result
 
     def test_includes_alternative_chains(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         result = orchestrate("improve and tdd test the code")
         assert "alternative_chains" in result
 
     def test_full_improvement_chain(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         # Use multiple full_improvement triggers to outscore tdd_improve
         result = orchestrate("full cycle complete improvement on memory.py")
         assert result["chain"] == "full_improvement"
         assert len(result["steps"]) == 9
 
     def test_milvus_context_with_hits(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         hit = {"score": 0.8, "name": "Concept", "vault": "test", "summary": "A concept"}
-        with patch("orchestrator_backend._search_by_vector", return_value=[hit]):
+        with patch("backends.orchestrator_backend._search_by_vector", return_value=[hit]):
             result = orchestrate("improve memory.py")
             assert len(result["milvus_context"]) > 0
 
     def test_milvus_context_filters_low_scores(self):
-        from orchestrator_backend import orchestrate
+        from backends.orchestrator_backend import orchestrate
         hit = {"score": 0.1, "name": "Low", "vault": "test", "summary": "Low"}
-        with patch("orchestrator_backend._search_by_vector", return_value=[hit]):
+        with patch("backends.orchestrator_backend._search_by_vector", return_value=[hit]):
             result = orchestrate("improve memory.py")
             assert len(result["milvus_context"]) == 0

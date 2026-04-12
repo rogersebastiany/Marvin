@@ -6,8 +6,8 @@ Not an MCP server. Used internally by mcp-marvin.
 
 from pathlib import Path
 
-DOCS_DIR = Path(__file__).parent / "docs"
-DIAGRAMS_DIR = Path(__file__).parent / "diagrams"
+DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
+DIAGRAMS_DIR = Path(__file__).parent.parent.parent / "diagrams"
 DIAGRAMS_DIR.mkdir(exist_ok=True)
 
 

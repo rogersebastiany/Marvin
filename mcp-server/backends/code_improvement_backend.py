@@ -12,7 +12,7 @@ Pure Milvus — no Neo4j. Portable across any Marvin environment.
 import ast
 from pathlib import Path
 
-from memory import (
+from .memory import (
     _embed_batch,
     _format_ressalva,
     _RESSALVA_COLLECTIONS,

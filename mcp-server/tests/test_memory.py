@@ -17,7 +17,7 @@ class TestChunkMarkdown:
     """_chunk_markdown is pure: markdown text → list of chunk dicts."""
 
     def _chunk(self, text, doc_name="testdoc"):
-        from memory import _chunk_markdown
+        from backends.memory import _chunk_markdown
         return _chunk_markdown(text, doc_name)
 
     def test_empty_text_returns_empty(self):
@@ -98,7 +98,7 @@ class TestFormatRessalva:
     """_format_ressalva is pure: (collection_name, hit_dict) → string."""
 
     def _fmt(self, collection, hit):
-        from memory import _format_ressalva
+        from backends.memory import _format_ressalva
         return _format_ressalva(collection, hit)
 
     def test_concepts_format(self):
@@ -157,11 +157,11 @@ class TestFormatRessalva:
 @pytest.fixture
 def mock_milvus():
     """Mock Milvus connections and Collection."""
-    with patch("memory.connections") as mock_conn, \
-         patch("memory.Collection") as mock_col_cls, \
-         patch("memory.utility") as mock_util:
+    with patch("backends.memory.connections") as mock_conn, \
+         patch("backends.memory.Collection") as mock_col_cls, \
+         patch("backends.memory.utility") as mock_util:
         # Reset global connection state
-        import memory
+        from backends import memory
         memory._connected = False
 
         mock_col = MagicMock()
@@ -179,7 +179,7 @@ def mock_milvus():
 @pytest.fixture
 def mock_openai():
     """Mock OpenAI embeddings client."""
-    with patch("memory._get_openai") as mock_get:
+    with patch("backends.memory._get_openai") as mock_get:
         mock_client = MagicMock()
         mock_get.return_value = mock_client
 
@@ -200,14 +200,14 @@ def mock_openai():
 
 class TestEnsureConnected:
     def test_connects_once(self, mock_milvus):
-        from memory import _ensure_connected
+        from backends.memory import _ensure_connected
         _ensure_connected()
         _ensure_connected()
         # Should only connect once
         mock_milvus["connections"].connect.assert_called_once()
 
     def test_uses_env_vars(self, mock_milvus):
-        from memory import _ensure_connected, MILVUS_HOST, MILVUS_PORT
+        from backends.memory import _ensure_connected, MILVUS_HOST, MILVUS_PORT
         _ensure_connected()
         mock_milvus["connections"].connect.assert_called_with(
             "default", host=MILVUS_HOST, port=MILVUS_PORT
@@ -216,14 +216,14 @@ class TestEnsureConnected:
 
 class TestEmbed:
     def test_embed_returns_vector(self, mock_openai):
-        from memory import _embed
+        from backends.memory import _embed
         result = _embed("test text")
         assert isinstance(result, list)
         assert len(result) == 1536
         mock_openai["client"].embeddings.create.assert_called_once()
 
     def test_embed_batch_batching(self, mock_openai):
-        from memory import _embed_batch
+        from backends.memory import _embed_batch
         # Create enough texts to trigger batching
         texts = [f"text {i}" for i in range(150)]
 
@@ -245,7 +245,7 @@ class TestEmbed:
         assert len(result) == 150
 
     def test_embed_batch_empty(self, mock_openai):
-        from memory import _embed_batch
+        from backends.memory import _embed_batch
         result = _embed_batch([])
         assert result == []
         mock_openai["client"].embeddings.create.assert_not_called()
@@ -253,7 +253,7 @@ class TestEmbed:
 
 class TestSearchCollection:
     def test_returns_formatted_hits(self, mock_milvus, mock_openai):
-        from memory import _search_collection
+        from backends.memory import _search_collection
 
         # Mock search results
         mock_hit = MagicMock()
@@ -267,14 +267,14 @@ class TestSearchCollection:
         assert hits[0]["score"] == 0.95
 
     def test_empty_results(self, mock_milvus, mock_openai):
-        from memory import _search_collection
+        from backends.memory import _search_collection
 
         mock_milvus["collection"].search.return_value = [[]]
         hits = _search_collection("tool_calls", "query", 5, ["tool_name"])
         assert hits == []
 
     def test_uses_cosine_metric(self, mock_milvus, mock_openai):
-        from memory import _search_collection
+        from backends.memory import _search_collection
 
         mock_milvus["collection"].search.return_value = [[]]
         _search_collection("tool_calls", "query", 5, ["tool_name"])
@@ -292,7 +292,7 @@ class TestSearchFunctions:
 
     def test_search_tool_calls_no_results(self, mock_milvus, mock_openai):
         self._setup_search(mock_milvus, mock_openai, [])
-        from memory import search_tool_calls
+        from backends.memory import search_tool_calls
         result = search_tool_calls("query")
         assert result == "No similar tool calls found."
 
@@ -308,7 +308,7 @@ class TestSearchFunctions:
             "success": True,
         }.get(f)
         self._setup_search(mock_milvus, mock_openai, [mock_hit])
-        from memory import search_tool_calls
+        from backends.memory import search_tool_calls
         result = search_tool_calls("query")
         assert "Found 1 similar tool call(s)" in result
         assert "[ok]" in result
@@ -316,17 +316,17 @@ class TestSearchFunctions:
 
     def test_search_decisions_no_results(self, mock_milvus, mock_openai):
         self._setup_search(mock_milvus, mock_openai, [])
-        from memory import search_decisions
+        from backends.memory import search_decisions
         assert search_decisions("query") == "No similar decisions found."
 
     def test_search_plans_no_results(self, mock_milvus, mock_openai):
         self._setup_search(mock_milvus, mock_openai, [])
-        from memory import search_plans
+        from backends.memory import search_plans
         assert search_plans("query") == "No similar plans found."
 
     def test_search_sessions_no_results(self, mock_milvus, mock_openai):
         self._setup_search(mock_milvus, mock_openai, [])
-        from memory import search_sessions
+        from backends.memory import search_sessions
         assert search_sessions("query") == "No similar sessions found."
 
     def test_search_tool_calls_fail_status(self, mock_milvus, mock_openai):
@@ -341,7 +341,7 @@ class TestSearchFunctions:
             "success": False,
         }.get(f)
         self._setup_search(mock_milvus, mock_openai, [mock_hit])
-        from memory import search_tool_calls
+        from backends.memory import search_tool_calls
         result = search_tool_calls("query")
         assert "[fail]" in result
 
@@ -350,28 +350,28 @@ class TestLogFunctions:
     """Test log_tool_call, log_decision, log_session."""
 
     def test_log_tool_call_returns_confirmation(self, mock_milvus, mock_openai):
-        from memory import log_tool_call
+        from backends.memory import log_tool_call
         result = log_tool_call("retrieve", '{"q":"test"}', "Found 5", True, "ctx", "sess1")
         assert "Logged tool call: retrieve" in result
         mock_milvus["collection"].insert.assert_called_once()
         mock_milvus["collection"].flush.assert_called_once()
 
     def test_log_decision_returns_confirmation(self, mock_milvus, mock_openai):
-        from memory import log_decision
+        from backends.memory import log_decision
         result = log_decision("Decide X", "A or B", "A", "Because reasons")
         assert "Logged decision:" in result
         assert "Decide X" in result
         mock_milvus["collection"].insert.assert_called_once()
 
     def test_log_decision_truncates_objective(self, mock_milvus, mock_openai):
-        from memory import log_decision
+        from backends.memory import log_decision
         long_obj = "X" * 200
         result = log_decision(long_obj, "opts", "chosen", "reasoning")
         # Confirmation truncates to 60 chars
         assert len(result) < 200
 
     def test_log_session_returns_confirmation(self, mock_milvus, mock_openai):
-        from memory import log_session
+        from backends.memory import log_session
         result = log_session("Obj", "Approach", "Result", "Lessons", "tools", 3, 10)
         assert "Logged session:" in result
         mock_milvus["collection"].insert.assert_called_once()
@@ -379,7 +379,7 @@ class TestLogFunctions:
 
 class TestSavePlan:
     def test_upsert_deletes_then_inserts(self, mock_milvus, mock_openai):
-        from memory import save_plan
+        from backends.memory import save_plan
         mock_milvus["collection"].num_entities = 0
         result = save_plan("my-plan", "My Plan", "draft", "Summary", "Full content")
         assert "Saved plan: my-plan [draft]" in result
@@ -389,17 +389,17 @@ class TestSavePlan:
         assert mock_milvus["collection"].flush.call_count == 2  # after delete + after insert
 
     def test_plan_id_format(self, mock_milvus, mock_openai):
-        from memory import save_plan
+        from backends.memory import save_plan
         result = save_plan("test-plan", "Title", "approved", "Sum", "Content")
         assert "(plan::test-plan)" in result
 
 
 class TestRefinePlanVectorWalk:
     def test_single_iteration(self, mock_milvus, mock_openai):
-        from memory import refine_plan_vector_walk
+        from backends.memory import refine_plan_vector_walk
 
         # Mock _search_by_vector to return empty for all collections
-        with patch("memory._search_by_vector", return_value=[]):
+        with patch("backends.memory._search_by_vector", return_value=[]):
             result = refine_plan_vector_walk("My draft plan", iterations=1)
             assert result["iterations"] == 1
             assert result["total_ressalvas"] == 0
@@ -408,8 +408,8 @@ class TestRefinePlanVectorWalk:
             assert "enhanced_draft" in result
 
     def test_iterations_clamped(self, mock_milvus, mock_openai):
-        from memory import refine_plan_vector_walk
-        with patch("memory._search_by_vector", return_value=[]):
+        from backends.memory import refine_plan_vector_walk
+        with patch("backends.memory._search_by_vector", return_value=[]):
             # iterations clamped to max 5
             result = refine_plan_vector_walk("draft", iterations=10)
             assert result["iterations"] == 5
@@ -419,10 +419,10 @@ class TestRefinePlanVectorWalk:
             assert result["iterations"] == 1
 
     def test_multiple_iterations_accumulate(self, mock_milvus, mock_openai):
-        from memory import refine_plan_vector_walk
+        from backends.memory import refine_plan_vector_walk
 
         fake_hit = {"name": "TestConcept", "vault": "cognee", "summary": "A concept", "score": 0.8}
-        with patch("memory._search_by_vector", return_value=[fake_hit]):
+        with patch("backends.memory._search_by_vector", return_value=[fake_hit]):
             result = refine_plan_vector_walk("My plan", iterations=2, k_per_collection=1)
             assert result["iterations"] == 2
             assert result["total_ressalvas"] > 0
@@ -431,8 +431,8 @@ class TestRefinePlanVectorWalk:
             assert "Prior art from Milvus" in result["enhanced_draft"]
 
     def test_k_per_collection_clamped(self, mock_milvus, mock_openai):
-        from memory import refine_plan_vector_walk
-        with patch("memory._search_by_vector", return_value=[]) as mock_search:
+        from backends.memory import refine_plan_vector_walk
+        with patch("backends.memory._search_by_vector", return_value=[]) as mock_search:
             refine_plan_vector_walk("draft", iterations=1, k_per_collection=50)
             # k clamped to 20
             for c in mock_search.call_args_list:
@@ -441,7 +441,7 @@ class TestRefinePlanVectorWalk:
 
 class TestSearchByVector:
     def test_returns_formatted_hits(self, mock_milvus, mock_openai):
-        from memory import _search_by_vector
+        from backends.memory import _search_by_vector
 
         mock_hit = MagicMock()
         mock_hit.score = 0.85
@@ -456,13 +456,13 @@ class TestSearchByVector:
 
 class TestSearchDocChunksAndConcepts:
     def test_search_doc_chunks_delegates(self, mock_milvus, mock_openai):
-        from memory import search_doc_chunks
+        from backends.memory import search_doc_chunks
         mock_milvus["collection"].search.return_value = [[]]
         result = search_doc_chunks("query", limit=3)
         assert result == []
 
     def test_search_concepts_semantic_delegates(self, mock_milvus, mock_openai):
-        from memory import search_concepts_semantic
+        from backends.memory import search_concepts_semantic
         mock_milvus["collection"].search.return_value = [[]]
         result = search_concepts_semantic("query", limit=3)
         assert result == []
@@ -470,17 +470,17 @@ class TestSearchDocChunksAndConcepts:
 
 class TestIndexDocs:
     def test_nonexistent_dir(self, mock_milvus, mock_openai):
-        from memory import index_docs
+        from backends.memory import index_docs
         result = index_docs("/nonexistent/path")
         assert "not found" in result.lower()
 
     def test_empty_dir(self, mock_milvus, mock_openai, tmp_path):
-        from memory import index_docs
+        from backends.memory import index_docs
         result = index_docs(str(tmp_path))
         assert "No chunks to index" in result
 
     def test_indexes_markdown_files(self, mock_milvus, mock_openai, tmp_path):
-        from memory import index_docs
+        from backends.memory import index_docs
 
         # Create a markdown file with enough content
         md_file = tmp_path / "test.md"
@@ -500,7 +500,7 @@ class TestIndexDocs:
         assert "Indexed 2 chunks from 1 docs" in result
 
     def test_skips_small_files(self, mock_milvus, mock_openai, tmp_path):
-        from memory import index_docs
+        from backends.memory import index_docs
         (tmp_path / "tiny.md").write_text("Small")
         result = index_docs(str(tmp_path))
         assert "No chunks to index" in result
@@ -508,12 +508,12 @@ class TestIndexDocs:
 
 class TestIndexConcepts:
     def test_empty_list(self, mock_milvus, mock_openai):
-        from memory import index_concepts
+        from backends.memory import index_concepts
         result = index_concepts([])
         assert "No concepts to index" in result
 
     def test_indexes_concepts(self, mock_milvus, mock_openai):
-        from memory import index_concepts
+        from backends.memory import index_concepts
 
         concepts = [
             {"name": "Concept1", "vault": "cognee", "summary": "First concept", "content": "Details"},
@@ -532,14 +532,14 @@ class TestIndexConcepts:
 
 class TestSelfDescription:
     def test_save_self_description(self, mock_milvus, mock_openai):
-        from memory import save_self_description
+        from backends.memory import save_self_description
         result = save_self_description("I am Marvin")
         assert "Self description cached" in result
         assert "11 chars" in result
         mock_milvus["collection"].insert.assert_called_once()
 
     def test_get_cached_hit(self, mock_milvus, mock_openai):
-        from memory import get_cached_self_description
+        from backends.memory import get_cached_self_description
         mock_milvus["utility"].has_collection.return_value = True
         mock_milvus["collection"].num_entities = 1
         mock_milvus["collection"].query.return_value = [
@@ -549,20 +549,20 @@ class TestSelfDescription:
         assert result == "Cached identity"
 
     def test_get_cached_miss_no_collection(self, mock_milvus, mock_openai):
-        from memory import get_cached_self_description
+        from backends.memory import get_cached_self_description
         mock_milvus["utility"].has_collection.return_value = False
         result = get_cached_self_description()
         assert result is None
 
     def test_get_cached_miss_empty_collection(self, mock_milvus, mock_openai):
-        from memory import get_cached_self_description
+        from backends.memory import get_cached_self_description
         mock_milvus["utility"].has_collection.return_value = True
         mock_milvus["collection"].num_entities = 0
         result = get_cached_self_description()
         assert result is None
 
     def test_get_cached_miss_no_results(self, mock_milvus, mock_openai):
-        from memory import get_cached_self_description
+        from backends.memory import get_cached_self_description
         mock_milvus["utility"].has_collection.return_value = True
         mock_milvus["collection"].num_entities = 1
         mock_milvus["collection"].query.return_value = []
@@ -572,13 +572,13 @@ class TestSelfDescription:
 
 class TestEnsureCollections:
     def test_creates_missing_collections(self, mock_milvus):
-        from memory import ensure_collections
+        from backends.memory import ensure_collections
         mock_milvus["utility"].has_collection.return_value = False
         created = ensure_collections()
         assert len(created) == 7  # ALL_COLLECTIONS has 7
 
     def test_skips_existing_collections(self, mock_milvus):
-        from memory import ensure_collections
+        from backends.memory import ensure_collections
         mock_milvus["utility"].has_collection.return_value = True
         created = ensure_collections()
         assert created == []
@@ -586,7 +586,7 @@ class TestEnsureCollections:
 
 class TestGetSchema:
     def test_returns_markdown(self, mock_milvus):
-        from memory import get_schema
+        from backends.memory import get_schema
 
         mock_milvus["utility"].has_collection.return_value = True
 
@@ -606,7 +606,7 @@ class TestGetSchema:
         assert "Entities: 42" in result
 
     def test_handles_missing_collection(self, mock_milvus):
-        from memory import get_schema
+        from backends.memory import get_schema
         mock_milvus["utility"].has_collection.return_value = False
         result = get_schema()
         assert "NOT FOUND" in result
@@ -616,7 +616,7 @@ class TestConstants:
     """Verify key constants haven't drifted."""
 
     def test_all_collections_list(self):
-        from memory import ALL_COLLECTIONS
+        from backends.memory import ALL_COLLECTIONS
         assert "tool_calls" in ALL_COLLECTIONS
         assert "decisions" in ALL_COLLECTIONS
         assert "sessions" in ALL_COLLECTIONS
@@ -627,11 +627,11 @@ class TestConstants:
         assert len(ALL_COLLECTIONS) == 7
 
     def test_embedding_dim(self):
-        from memory import EMBEDDING_DIM
+        from backends.memory import EMBEDDING_DIM
         assert EMBEDDING_DIM == 1536
 
     def test_ressalva_collections_keys(self):
-        from memory import _RESSALVA_COLLECTIONS
+        from backends.memory import _RESSALVA_COLLECTIONS
         assert set(_RESSALVA_COLLECTIONS.keys()) == {
             "concepts", "decisions", "sessions", "doc_chunks", "plans"
         }

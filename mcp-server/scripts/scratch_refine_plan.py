@@ -11,7 +11,7 @@ import math
 import textwrap
 from pymilvus import connections, Collection
 
-import memory  # local module — uses its _embed()
+from backends import memory  # uses its _embed()
 
 # ── The draft being refined: the spec for the tools themselves ─────────────
 DRAFT = """

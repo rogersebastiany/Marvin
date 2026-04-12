@@ -22,19 +22,19 @@ uv run fastmcp run marvin_server.py --reload  # dev mode (auto-reload on file ch
 
 ## Architecture
 
-Single server (`marvin_server.py`) wrapping 9 backend modules:
+Single server (`marvin_server.py`) wrapping 9 backend modules in `backends/`:
 
 | Module | Backend | What It Does |
 |--------|---------|-------------|
-| `ontology.py` | Neo4j | Knowledge graph — concepts, relations, traversal, auto-link, bidirectionality |
-| `memory.py` | Milvus + OpenAI | Episodic memory — decisions (L2), sessions (L3), plans, vector search |
-| `docs_backend.py` | Filesystem | Search/browse local markdown docs (`docs/`) |
-| `web_to_docs_backend.py` | httpx + BS4 | Fetch web → markdown → save to `docs/` |
-| `prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework |
-| `system_design_backend.py` | Filesystem | Mermaid.js diagram generation/review (`diagrams/`) |
-| `code_improvement_backend.py` | Milvus | AST chunking + vector walk (improve_code, tdd) |
-| `orchestrator_backend.py` | Milvus | Goal → execution plan, 6 tool chains |
-| `ops_backend.py` | Neo4j + Milvus + LanceDB | Vault sync, self-audit, self-improve |
+| `backends/ontology.py` | Neo4j | Knowledge graph — concepts, relations, traversal, auto-link, bidirectionality |
+| `backends/memory.py` | Milvus + OpenAI | Episodic memory — decisions (L2), sessions (L3), plans, vector search |
+| `backends/docs_backend.py` | Filesystem | Search/browse local markdown docs (`docs/`) |
+| `backends/web_to_docs_backend.py` | httpx + BS4 | Fetch web → markdown → save to `docs/` |
+| `backends/prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework |
+| `backends/system_design_backend.py` | Filesystem | Mermaid.js diagram generation/review (`diagrams/`) |
+| `backends/code_improvement_backend.py` | Milvus | AST chunking + vector walk (improve_code, tdd) |
+| `backends/orchestrator_backend.py` | Milvus | Goal → execution plan, 6 tool chains |
+| `backends/ops_backend.py` | Neo4j + Milvus + LanceDB | Vault sync, self-audit, self-improve |
 
 <!-- AUTO:TOOLS:START -->
 ## Marvin's Tools (44 total)
@@ -142,8 +142,9 @@ EMBEDDING_MODEL=text-embedding-3-small
 
 ## Data Directories
 
-- `docs/` — 210+ fetched markdown docs (Python, AWS, Kotlin, SE patterns, CI/CD, etc.)
-- `diagrams/` — Saved Mermaid.js `.mmd` files
+- `../docs/` — Fetched reference docs (67 markdown files, at project root)
+- `../diagrams/` — Saved Mermaid.js `.mmd` files (at project root)
+- `../vaults/` — Obsidian vaults (Cognee input, at project root)
 
 ## Key Design Decisions
 
