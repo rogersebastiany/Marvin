@@ -16,6 +16,7 @@ Capabilities:
 """
 
 import inspect
+import os
 import threading
 from contextlib import asynccontextmanager
 from typing import Annotated
@@ -245,7 +246,7 @@ MARVIN_TOOLS = [
     "expand", "link", "auto_link", "ensure_bidirectional",
     "propose_schema_change", "execute_schema_change",
     "search_docs", "list_docs", "get_doc",
-    "fetch_url", "save_doc", "rank_urls", "crawl_docs", "research_topic",
+    "fetch_url", "save_doc", "rank_urls", "crawl_docs", "research_topic", "extract_keywords", "classify_keywords",
     "generate_prompt", "refine_prompt", "audit_prompt",
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
     "inspect_schemas", "stats", "self_description",
@@ -281,7 +282,7 @@ mcp = FastMCP(
 # refine_plan is included because it actively contrasts a draft against
 # Milvus (one search per collection per iteration) — that's the S→A reduction
 # operating on a plan rather than a free-form query.
-MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan", "improve_code", "tdd", "orchestrate"})
+MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan", "improve_code", "tdd", "orchestrate", "classify_keywords"})
 
 # Tier 1b — Safe overviews: ungated, but do NOT set the flag.
 # Seeing a menu of names is not a semantic reduction.
@@ -301,7 +302,7 @@ WRITE_TOOLS = frozenset({
     "expand", "link", "auto_link", "ensure_bidirectional",
     "set_aliases", "batch_set_aliases",
     "execute_schema_change",
-    "save_doc", "crawl_docs", "research_topic",
+    "save_doc", "crawl_docs", "research_topic", "extract_keywords",
     "generate_prompt", "refine_prompt",
     "generate_diagram", "save_diagram",
     "save_plan",
@@ -352,7 +353,104 @@ class RetrieveBeforeActMiddleware(Middleware):
         return await call_next(context)
 
 
-mcp.add_middleware(RetrieveBeforeActMiddleware())
+if os.getenv("MARVIN_DISABLE_MILVUS_GATE") != "1":
+    mcp.add_middleware(RetrieveBeforeActMiddleware())
+
+
+# ── Orchestration Gate (P=0) ─────────────────────────────────────────────
+#
+# Enrichment tools (expand, link, auto_link, etc.) are BLOCKED unless
+# `orchestrate` was called first in the session. This ensures all graph
+# mutations follow a planned chain — no ad-hoc writes from LLM impulse.
+#
+# Three-tier classification:
+#   AUTONOMOUS — can be called anytime (retrieval, logging, overviews, orchestrate)
+#   PLAN_AWARE — require an active orchestration plan (enrichment + mutations)
+#   PROVENANCE — subset of PLAN_AWARE that also require source_doc (expand)
+#
+# Thesis grounding:
+#   - Determinismo Ontológico: orchestrated flows reduce LLM degrees of freedom
+#   - Anti-Alucinação: provenance enforcement ensures content comes from sources
+#   - Enforcement Arquitetural: middleware makes the rule unbreakable (P=0)
+
+ENRICHMENT_TOOLS = frozenset({
+    "expand", "link", "auto_link", "ensure_bidirectional",
+    "set_aliases", "batch_set_aliases",
+    "execute_schema_change",
+    "save_doc", "crawl_docs", "research_topic", "extract_keywords",
+    "generate_prompt", "refine_prompt",
+    "generate_diagram", "save_diagram",
+    "save_plan",
+    "sync_vaults", "self_improve",
+})
+
+# Tools that require source_doc provenance when called within a densify/research chain
+PROVENANCE_TOOLS = frozenset({"expand"})
+
+
+class OrchestrationGateMiddleware(Middleware):
+    """Orchestration Gate — enrichment tools require an active plan.
+
+    Hard gate (P=0). The server refuses to execute enrichment tools
+    unless `orchestrate` was called first in the session to establish
+    a plan. Prevents ad-hoc graph mutations driven by LLM impulse.
+
+    Additionally enforces provenance on `expand`: when called within
+    a densify or research chain, source_doc must be provided.
+    """
+
+    async def on_call_tool(self, context: MiddlewareContext, call_next):
+        tool_name = context.message.name
+        ctx = context.fastmcp_context
+
+        # orchestrate sets the plan flag + stores chain name
+        if tool_name == "orchestrate" and ctx:
+            await ctx.set_state("orchestrated", True)
+            # Chain name is extracted from the result after execution
+            result = await call_next(context)
+            # Parse the result to get chain name for provenance tracking
+            if isinstance(result, dict) and "chain" in result:
+                await ctx.set_state("active_chain", result["chain"])
+            elif isinstance(result, str):
+                import json as _json
+                try:
+                    parsed = _json.loads(result)
+                    if "chain" in parsed:
+                        await ctx.set_state("active_chain", parsed["chain"])
+                except (ValueError, TypeError):
+                    pass
+            return result
+
+        # Enrichment tools require orchestration
+        if tool_name in ENRICHMENT_TOOLS:
+            orchestrated = (await ctx.get_state("orchestrated")) if ctx else False
+            if not orchestrated:
+                raise ToolError(
+                    f"BLOCKED: '{tool_name}' requires an orchestration plan. "
+                    f"Call 'orchestrate' first to establish a chain. "
+                    f"All enrichment operations must follow a planned flow."
+                )
+
+        # Provenance enforcement on expand (can be disabled via env)
+        if tool_name in PROVENANCE_TOOLS and ctx and os.getenv("MARVIN_DISABLE_PROVENANCE") != "1":
+            active_chain = (await ctx.get_state("active_chain")) if ctx else None
+            if active_chain in ("densify", "research", "code_to_knowledge"):
+                # In these chains, expand MUST have source_doc
+                args = context.message.arguments or {}
+                source_doc = args.get("source_doc", "")
+                if not source_doc:
+                    raise ToolError(
+                        f"BLOCKED: '{tool_name}' in chain '{active_chain}' requires "
+                        f"'source_doc' for provenance tracking. Content must come "
+                        f"from a real document, not LLM generation. Pass source_doc "
+                        f"(filename in docs/) and optionally source_chunk_idx."
+                    )
+
+        return await call_next(context)
+
+
+if os.getenv("MARVIN_DISABLE_ORCHESTRATION_GATE") != "1":
+    mcp.add_middleware(OrchestrationGateMiddleware())
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -847,22 +945,35 @@ def expand(
     relate_to: Annotated[str, Field(max_length=200)] = "",
     reasoning: Annotated[str, Field(max_length=2000)] = "",
     relation_type: Annotated[str, Field(max_length=32)] = "RELATES_TO",
+    source_doc: Annotated[str, Field(max_length=200)] = "",
+    source_chunk_idx: Annotated[int, Field()] = -1,
 ) -> str:
     """Add a new concept or relation to the knowledge graph.
 
     Creates non-linear relations between any concepts.
 
+    When source_doc is provided, provenance is tracked on the node.
+    When source_chunk_idx is also provided, the backend extracts the actual
+    text from that doc chunk and uses it as content — LLM-provided content
+    is overridden. This ensures concept descriptions come from real sources,
+    not LLM generation.
+
     Args:
         concept_name: Concept to create or connect from
         summary: One-line summary
-        content: Full description
+        content: Full description (overridden if source_chunk_idx is set)
         relate_to: Target concept for an edge
         reasoning: Why this relation exists
         relation_type: Edge type — one of RELATES_TO, IMPLEMENTS, PROVES, REQUIRES,
             EXTENDS, CONTRADICTS, ENABLES, EXEMPLIFIES, COMPOSES,
             EVOLVES_FROM. Defaults to RELATES_TO.
+        source_doc: Filename in docs/ for provenance tracking (e.g., "milvus.md")
+        source_chunk_idx: Chunk index in source_doc — content extracted from doc, not LLM
     """
-    return ontology.expand(concept_name, summary, content, relate_to, reasoning, relation_type)
+    return ontology.expand(
+        concept_name, summary, content, relate_to, reasoning, relation_type,
+        source_doc, source_chunk_idx,
+    )
 
 
 @mcp.tool(
@@ -1109,6 +1220,74 @@ async def research_topic(
     if ctx:
         await ctx.info(f"Researching '{topic}' from {len(urls)} URLs...")
     return web_to_docs_backend.research_topic(urls, topic, save_as)
+
+
+@mcp.tool()
+async def extract_keywords(
+    doc_path: Annotated[str, Field(max_length=200, description="Filename in docs/ (e.g., 'milvus.md')")],
+    dry_run: Annotated[bool, Field(description="If True, estimate cost without calling LLM")] = False,
+    ctx: Context = None,
+) -> str:
+    """Extract keywords from a doc for knowledge graph densification.
+
+    Reads a doc file, chunks it, and uses gpt-4o-mini to extract keywords
+    representing underlying concepts, technologies, and abstractions.
+
+    These keywords are meant to become new concept nodes via expand/link,
+    creating natural bridges between documents that share underlying concepts.
+
+    Use dry_run=True first to estimate cost before committing.
+
+    Args:
+        doc_path: Filename in docs/ (e.g., "milvus.md")
+        dry_run: If True, only show chunks and estimated cost
+    """
+    if ctx:
+        mode = "dry run" if dry_run else "extracting"
+        await ctx.info(f"Keyword extraction ({mode}): {doc_path}")
+    result = web_to_docs_backend.extract_keywords(doc_path, dry_run=dry_run)
+    if "error" in result:
+        return result["error"]
+    import json
+    return json.dumps(result, indent=2)
+
+
+@mcp.tool()
+async def classify_keywords(
+    keywords_json: Annotated[str, Field(max_length=50000, description="JSON array of keyword objects from extract_keywords (each with 'keyword' key)")],
+    semantic_threshold: Annotated[float, Field(description="Milvus cosine score threshold for semantic match", ge=0.0, le=1.0)] = 0.45,
+    ctx: Context = None,
+) -> str:
+    """Classify extracted keywords against Milvus into 3 tiers.
+
+    Takes the keywords output from extract_keywords and checks each one against
+    the Milvus concepts collection:
+
+    (a) EXACT — concept with same name exists → skip, already known.
+    (b) SEMANTIC — score >= threshold but no exact name → enrich the matched
+        concept(s). These near-misses reveal which generalist concepts should
+        absorb the new knowledge.
+    (c) GAP — score < threshold → needs proper research via rank_urls + research_topic,
+        then expand + link into the ontology.
+
+    Args:
+        keywords_json: JSON string of keyword objects from extract_keywords
+        semantic_threshold: Cosine score threshold (default 0.45)
+    """
+    import json
+
+    try:
+        keywords = json.loads(keywords_json)
+    except json.JSONDecodeError:
+        return "Error: invalid JSON in keywords_json"
+
+    if ctx:
+        await ctx.info(f"Classifying {len(keywords)} keywords against Milvus (threshold={semantic_threshold})")
+
+    result = web_to_docs_backend.classify_keywords(
+        keywords, semantic_threshold=semantic_threshold,
+    )
+    return json.dumps(result, indent=2)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

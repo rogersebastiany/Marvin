@@ -4,6 +4,8 @@ Web-to-docs backend — Fetch websites and convert to local markdown.
 Not an MCP server. Used internally by mcp-marvin.
 """
 
+import json
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -12,6 +14,8 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 from markdownify import markdownify
+
+KEYWORD_MODEL = os.getenv("KEYWORD_MODEL", "gpt-4o-mini")
 
 MAX_WORKERS = 8
 
@@ -802,3 +806,224 @@ def research_topic(urls: list[str], topic: str, save_as: str = "") -> str:
         report_lines.append(comparison)
 
     return "\n".join(report_lines)
+
+
+# ── Keyword Extraction Pipeline ─────────────────────────────────────────
+
+_EXTRACT_PROMPT = """\
+You are a knowledge graph analyst. Given a chunk of documentation text, extract \
+keywords that represent **underlying concepts, technologies, patterns, or abstractions** \
+worth adding to a knowledge graph.
+
+Rules:
+1. Extract concepts that are GENERAL enough to appear in multiple documents \
+   (e.g., "ANN search", "columnar storage", "dependency injection" — NOT "line 42" or "this function")
+2. Each keyword should be a noun or noun phrase (1-4 words)
+3. Include both specific technologies AND their generalist categories \
+   (e.g., both "Neo4j" AND "Graph Database")
+4. Prefer canonical names (e.g., "Approximate Nearest Neighbor" not "ANN stuff")
+5. Return 5-15 keywords per chunk. Fewer for simple chunks, more for dense ones.
+6. Do NOT extract: variable names, code syntax, file paths, version numbers
+
+Return ONLY a JSON array of strings. No explanation, no markdown fencing.
+
+Example input: "Milvus uses IVF_FLAT and HNSW indexes for approximate nearest neighbor search..."
+Example output: ["Approximate Nearest Neighbor", "Vector Index", "IVF_FLAT", "HNSW", "Vector Database", "Similarity Search"]
+"""
+
+
+def _chunk_text(text: str, max_chars: int = 3000) -> list[str]:
+    """Split text into chunks at paragraph boundaries."""
+    paragraphs = re.split(r"\n\n+", text)
+    chunks = []
+    current = ""
+    for p in paragraphs:
+        if len(current) + len(p) > max_chars and current:
+            chunks.append(current.strip())
+            current = p
+        else:
+            current = current + "\n\n" + p if current else p
+    if current.strip():
+        chunks.append(current.strip())
+    return chunks
+
+
+def extract_keywords(doc_path: str, dry_run: bool = False) -> dict:
+    """Extract keywords from a doc file using LLM, suitable for graph densification.
+
+    Reads the doc, chunks it, sends each chunk to gpt-4o-mini for keyword extraction.
+    Returns deduplicated keywords with their source chunks.
+
+    Args:
+        doc_path: Filename in docs/ (e.g., "milvus.md")
+        dry_run: If True, only show chunks and estimated cost without calling LLM
+
+    Returns:
+        {
+            "doc": str,
+            "chunks": int,
+            "keywords": [{"keyword": str, "sources": [int]}],
+            "estimated_tokens": int,
+            "cost_usd": float,
+        }
+    """
+    path = _safe_doc_path(doc_path)
+    if not path or not path.exists():
+        return {"error": f"Doc not found: {doc_path}"}
+
+    text = path.read_text()
+    chunks = _chunk_text(text)
+
+    # Estimate tokens (~4 chars per token)
+    input_tokens = sum(len(c) // 4 for c in chunks) + len(_EXTRACT_PROMPT) // 4 * len(chunks)
+    output_tokens = len(chunks) * 100  # ~100 tokens per response
+    estimated_cost = (input_tokens * 0.15 + output_tokens * 0.60) / 1_000_000
+
+    if dry_run:
+        return {
+            "doc": doc_path,
+            "chunks": len(chunks),
+            "chunk_sizes": [len(c) for c in chunks],
+            "estimated_input_tokens": input_tokens,
+            "estimated_output_tokens": output_tokens,
+            "estimated_cost_usd": round(estimated_cost, 4),
+        }
+
+    # Call LLM for each chunk
+    from .memory import _get_openai
+
+    client = _get_openai()
+    all_keywords: dict[str, list[int]] = {}  # keyword → source chunk indices
+
+    for i, chunk in enumerate(chunks):
+        try:
+            response = client.chat.completions.create(
+                model=KEYWORD_MODEL,
+                messages=[
+                    {"role": "system", "content": _EXTRACT_PROMPT},
+                    {"role": "user", "content": chunk},
+                ],
+                temperature=0.2,
+                max_tokens=500,
+            )
+            raw = response.choices[0].message.content.strip()
+            # Parse JSON array — handle markdown fencing if model adds it
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+            keywords = json.loads(raw)
+            if isinstance(keywords, list):
+                for kw in keywords:
+                    if isinstance(kw, str) and len(kw) > 1:
+                        normalized = kw.strip().title()
+                        if normalized not in all_keywords:
+                            all_keywords[normalized] = []
+                        all_keywords[normalized].append(i)
+        except Exception as e:
+            all_keywords[f"__error_chunk_{i}__"] = [i]
+
+    # Sort by frequency (most chunks → most likely a bridging concept)
+    sorted_kw = sorted(all_keywords.items(), key=lambda x: len(x[1]), reverse=True)
+
+    return {
+        "doc": doc_path,
+        "chunks": len(chunks),
+        "keywords": [
+            {"keyword": kw, "sources": sources, "frequency": len(sources)}
+            for kw, sources in sorted_kw
+            if not kw.startswith("__error")
+        ],
+        "errors": [kw for kw in all_keywords if kw.startswith("__error")],
+        "estimated_cost_usd": round(estimated_cost, 4),
+    }
+
+
+# ── Keyword Classification (3-tier) ──────────────────────────────────────
+
+def classify_keywords(
+    keywords: list[dict],
+    exact_threshold: float = 1.0,
+    semantic_threshold: float = 0.45,
+) -> dict:
+    """Classify extracted keywords against Milvus into 3 tiers.
+
+    For each keyword, searches Milvus concepts collection:
+      (a) EXACT — concept with same name exists in the graph → skip
+      (b) SEMANTIC — score >= semantic_threshold but no exact name → enrich
+          the matched concept(s) with the new keyword as a link or expanded description
+      (c) GAP — score < semantic_threshold → needs proper research
+
+    Args:
+        keywords: List of {"keyword": str, ...} from extract_keywords()
+        exact_threshold: not used for name matching (exact = name equality)
+        semantic_threshold: Milvus cosine score threshold for semantic match
+
+    Returns:
+        {
+            "exact": [{"keyword": str, "matched_concept": str, "score": float}],
+            "semantic": [{"keyword": str, "matches": [{"concept": str, "score": float}]}],
+            "gaps": [{"keyword": str, "best_score": float, "best_match": str}],
+            "summary": {"exact": int, "semantic": int, "gaps": int, "total": int},
+        }
+    """
+    from .memory import _embed, _search_by_vector
+
+    exact = []
+    semantic = []
+    gaps = []
+
+    for entry in keywords:
+        kw = entry["keyword"]
+        kw_lower = kw.lower().strip()
+
+        # Search Milvus concepts collection
+        vec = _embed(kw)
+        hits = _search_by_vector("concepts", vec, 5, ["name", "vault", "summary"])
+
+        # Check for exact name match first
+        exact_hit = None
+        for h in hits:
+            name = (h.get("name") or "").strip()
+            if name.lower() == kw_lower:
+                exact_hit = h
+                break
+
+        if exact_hit:
+            exact.append({
+                "keyword": kw,
+                "matched_concept": exact_hit["name"],
+                "score": round(exact_hit["score"], 4),
+            })
+            continue
+
+        # Check semantic matches
+        semantic_hits = [
+            {"concept": h["name"], "score": round(h["score"], 4),
+             "summary": (h.get("summary") or "")[:120]}
+            for h in hits
+            if h["score"] >= semantic_threshold
+        ]
+
+        if semantic_hits:
+            semantic.append({
+                "keyword": kw,
+                "matches": semantic_hits,
+            })
+        else:
+            best = hits[0] if hits else None
+            gaps.append({
+                "keyword": kw,
+                "best_score": round(best["score"], 4) if best else 0,
+                "best_match": best["name"] if best else None,
+            })
+
+    return {
+        "exact": exact,
+        "semantic": semantic,
+        "gaps": gaps,
+        "summary": {
+            "exact": len(exact),
+            "semantic": len(semantic),
+            "gaps": len(gaps),
+            "total": len(keywords),
+        },
+    }

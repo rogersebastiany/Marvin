@@ -68,7 +68,7 @@ CHAINS = {
         ],
     },
     "research": {
-        "description": "Knowledge-enriched research: rank URLs, fetch the good ones, consolidate into a doc",
+        "description": "Knowledge-enriched research: rank URLs, fetch, consolidate, extract keywords, fill knowledge gaps, sync",
         "triggers": ["research", "docs", "documentation", "fetch", "learn about"],
         "requires": ["urls", "topic"],
         "steps": [
@@ -89,7 +89,58 @@ CHAINS = {
                 "id": 3,
                 "tool": "research_topic",
                 "args_template": {"urls": "{filtered_urls}", "topic": "{topic}"},
-                "description": "Fetch filtered URLs, merge into a single consolidated doc with bibliography",
+                "description": "Fetch filtered URLs, merge into a single consolidated doc with bibliography.",
+            },
+            {
+                "id": 4,
+                "tool": "extract_keywords",
+                "args_template": {"doc_path": "{saved_doc_filename}"},
+                "description": "Extract keyword candidates from the new doc — underlying concepts, technologies, abstractions.",
+            },
+            {
+                "id": 5,
+                "tool": "classify_keywords",
+                "args_template": {"keywords_json": "{step_4_keywords}", "semantic_threshold": 0.45},
+                "description": (
+                    "Three-tier classification against Milvus:\n"
+                    "  (a) EXACT MATCH (name exists in graph) → skip, concept already known.\n"
+                    "  (b) SEMANTIC MATCH (score >= 0.45, no exact name) → enrich: the matched concepts "
+                    "are CLOSE but incomplete. `link` the new keyword to the matched concept, or `expand` "
+                    "the matched concept's description to incorporate the finding. These near-misses reveal "
+                    "which generalist concepts should absorb the new knowledge.\n"
+                    "  (c) TRUE GAP (score < 0.45) → collect for step 6: this concept needs proper research."
+                ),
+            },
+            {
+                "id": 6,
+                "action": "enrich_semantic_matches",
+                "input_from": [4, 5],
+                "description": (
+                    "For each SEMANTIC MATCH from step 5b: `link` the keyword to the matched concept. "
+                    "Use `source_doc` (from step 3 saved doc) and `source_chunk_idx` (from step 4) "
+                    "for provenance. NEVER pass LLM-written content to expand — always use source_chunk_idx "
+                    "so the backend extracts real text from the doc."
+                ),
+            },
+            {
+                "id": 7,
+                "action": "research_gaps",
+                "input_from": 5,
+                "description": (
+                    "For each TRUE GAP keyword from step 5c:\n"
+                    "  1. `rank_urls` → find quality sources.\n"
+                    "  2. `research_topic` → fetch and consolidate into docs/.\n"
+                    "  3. `expand` with source_doc + source_chunk_idx — content extracted by backend.\n"
+                    "  4. `link` to related concepts with typed edges.\n"
+                    "  NEVER pass LLM-written content to expand. All concept descriptions must come "
+                    "from actual doc chunks via source_chunk_idx."
+                ),
+            },
+            {
+                "id": 8,
+                "tool": "sync_vaults",
+                "args_template": {"skip_cognify": False},
+                "description": "Cognify all new content and sync to Milvus. New concepts from gap research get proper Cognee edges.",
             },
         ],
     },
@@ -251,6 +302,63 @@ CHAINS = {
                 "args_template": {},
                 "description": "Auto-fix drift: update tool counts, add missing concept relations, re-sync, log to Milvus.",
                 "conditional": True,
+            },
+        ],
+    },
+    "densify": {
+        "description": "Knowledge graph densification: extract keywords from docs, classify against Milvus, enrich matches, research gaps, sync",
+        "triggers": ["densify", "densification", "keywords", "extract keywords", "knowledge gaps", "bridge", "connect docs"],
+        "requires": ["doc_path"],
+        "steps": [
+            {
+                "id": 1,
+                "tool": "extract_keywords",
+                "args_template": {"doc_path": "{doc_path}"},
+                "description": "Extract keyword candidates from the doc — underlying concepts, technologies, abstractions.",
+            },
+            {
+                "id": 2,
+                "tool": "classify_keywords",
+                "args_template": {"keywords_json": "{step_1_keywords}", "semantic_threshold": 0.45},
+                "description": (
+                    "Three-tier classification against Milvus:\n"
+                    "  (a) EXACT → skip.\n"
+                    "  (b) SEMANTIC (>= 0.45) → enrich matched concepts in step 3.\n"
+                    "  (c) GAP (< 0.45) → research in step 4."
+                ),
+            },
+            {
+                "id": 3,
+                "action": "enrich_semantic_matches",
+                "input_from": [1, 2],
+                "description": (
+                    "For each SEMANTIC MATCH: `link` the keyword to the matched concept. "
+                    "Use `source_doc` and `source_chunk_idx` from step 1 for provenance. "
+                    "If the keyword is a generalist hub, `expand` it with source_doc + source_chunk_idx "
+                    "so the content comes from the actual doc chunk, not LLM generation. "
+                    "NEVER pass LLM-written content to expand — always use source_chunk_idx."
+                ),
+            },
+            {
+                "id": 4,
+                "action": "research_gaps",
+                "input_from": 2,
+                "description": (
+                    "For each TRUE GAP: research properly through Marvin's tools.\n"
+                    "  1. `rank_urls` → find quality sources.\n"
+                    "  2. `research_topic` → fetch and consolidate into a doc in docs/.\n"
+                    "  3. `expand` with source_doc pointing to the new doc and source_chunk_idx "
+                    "to extract real content. NEVER pass LLM-written content.\n"
+                    "  4. `link` to related concepts with typed edges.\n"
+                    "  5. Create generalist hub nodes (e.g., 'Database', 'Vector Search') "
+                    "that connect all specific instances — always with source_doc provenance."
+                ),
+            },
+            {
+                "id": 5,
+                "tool": "sync_vaults",
+                "args_template": {"skip_cognify": False},
+                "description": "Cognify new content → Neo4j + LanceDB → Milvus. Cognee creates typed cross-doc edges.",
             },
         ],
     },

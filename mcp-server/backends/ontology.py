@@ -291,11 +291,43 @@ def expand(
     relate_to: str = "",
     reasoning: str = "",
     relation_type: str = "RELATES_TO",
+    source_doc: str = "",
+    source_chunk_idx: int = -1,
 ) -> str:
-    """Add a new concept or relation to the knowledge graph."""
+    """Add a new concept or relation to the knowledge graph.
+
+    When source_doc is provided, the concept gets provenance tracking:
+    the backend verifies the doc exists and records it on the node.
+    If source_chunk_idx is also provided, the backend extracts the actual
+    chunk text from the doc and uses it as content — overriding any
+    LLM-provided content. This is the architectural enforcement against
+    LLM-generated concept descriptions in the densify chain.
+    """
     driver = _get_driver()
     now = datetime.now(timezone.utc).isoformat()
     actions = []
+
+    # ── Provenance enforcement ──────────────────────────────────────────
+    if source_doc:
+        from .web_to_docs_backend import _safe_doc_path, _chunk_text
+
+        doc_path = _safe_doc_path(source_doc)
+        if not doc_path or not doc_path.exists():
+            return f"BLOCKED: source_doc '{source_doc}' does not exist in docs/. " \
+                   f"Expand requires a real source document."
+
+        # If chunk index provided, extract the actual text from the doc
+        if source_chunk_idx >= 0:
+            doc_text = doc_path.read_text()
+            chunks = _chunk_text(doc_text)
+            if source_chunk_idx < len(chunks):
+                content = chunks[source_chunk_idx]
+                actions.append(f"Content extracted from {source_doc} chunk {source_chunk_idx}")
+            else:
+                return (
+                    f"BLOCKED: source_chunk_idx {source_chunk_idx} out of range "
+                    f"(doc has {len(chunks)} chunks)"
+                )
 
     with driver.session() as s:
         existing = s.run(
@@ -312,6 +344,9 @@ def expand(
                 if content:
                     updates.append("c.content = $content")
                     params["content"] = content
+                if source_doc:
+                    updates.append("c.source_doc = $source_doc")
+                    params["source_doc"] = source_doc
                 updates.append("c.updated_at = $now")
                 s.run(
                     f"MATCH (c:Concept {{name: $name}}) SET {', '.join(updates)}",
@@ -321,14 +356,19 @@ def expand(
             else:
                 actions.append(f"Concept '{concept_name}' already exists")
         else:
-            s.run(
-                "CREATE (c:Concept {name: $name, vault: 'agent', summary: $summary, "
-                "  content: $content, ghost: false, created_at: $now, updated_at: $now})",
-                name=concept_name,
-                summary=summary,
-                content=content,
-                now=now,
-            )
+            props = {
+                "name": concept_name,
+                "summary": summary,
+                "content": content,
+                "vault": "agent",
+                "ghost": False,
+                "created_at": now,
+                "updated_at": now,
+            }
+            if source_doc:
+                props["source_doc"] = source_doc
+            prop_keys = ", ".join(f"{k}: ${k}" for k in props)
+            s.run(f"CREATE (c:Concept {{{prop_keys}}})", **props)
             actions.append(f"Created concept '{concept_name}' (vault: agent)")
 
         if relate_to:

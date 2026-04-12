@@ -115,7 +115,7 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 ---
 
 <!-- AUTO:TOOLS:START -->
-## Marvin's Tools (44 total)
+## Marvin's Tools (46 total)
 
 | Tool | Tier | Description |
 |------|------|-------------|
@@ -143,6 +143,8 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 | `rank_urls` | Always Allowed | Probe URLs and rank them by documentation quality BEFORE fetching. |
 | `crawl_docs` | Write (gated) | Crawl a documentation site and save pages as local docs. |
 | `research_topic` | Write (gated) | Fetch multiple URLs, merge into a single consolidated doc with bibliography. |
+| `extract_keywords` | Write (gated) | Extract keywords from a doc for knowledge graph densification. |
+| `classify_keywords` | Milvus (sets gate) | Classify extracted keywords against Milvus into 3 tiers. |
 | `generate_prompt` | Write (gated) | Generate a structured prompt using the Prompt Architect framework. |
 | `refine_prompt` | Write (gated) | Refine an existing prompt based on feedback. |
 | `audit_prompt` | Always Allowed | Audit a prompt against the Prompt Architect framework. |
@@ -168,10 +170,10 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 
 | Tier | Count | Tools |
 |------|-------|-------|
-| **Milvus (sets gate)** | 7 | `get_memory`, `improve_code`, `orchestrate`, `refine_plan`, `retrieve`, `search_docs`, `tdd` |
+| **Milvus (sets gate)** | 8 | `classify_keywords`, `get_memory`, `improve_code`, `orchestrate`, `refine_plan`, `retrieve`, `search_docs`, `tdd` |
 | **Overview (ungated)** | 8 | `get_diagram`, `get_doc`, `inspect_schemas`, `list_concepts`, `list_diagrams`, `list_docs`, `self_description`, `stats` |
 | **Neo4j Read (gated)** | 4 | `audit_code`, `get_concept`, `traverse`, `why_exists` |
-| **Write (gated)** | 17 | `auto_link`, `batch_set_aliases`, `crawl_docs`, `ensure_bidirectional`, `execute_schema_change`, `expand`, `generate_diagram`, `generate_prompt`, `link`, `refine_prompt`, `research_topic`, `save_diagram`, `save_doc`, `save_plan`, `self_improve`, `set_aliases`, `sync_vaults` |
+| **Write (gated)** | 18 | `auto_link`, `batch_set_aliases`, `crawl_docs`, `ensure_bidirectional`, `execute_schema_change`, `expand`, `extract_keywords`, `generate_diagram`, `generate_prompt`, `link`, `refine_prompt`, `research_topic`, `save_diagram`, `save_doc`, `save_plan`, `self_improve`, `set_aliases`, `sync_vaults` |
 | **Always Allowed** | 8 | `audit_prompt`, `fetch_url`, `get_user_score`, `judge_diagram`, `log_decision`, `log_session`, `propose_schema_change`, `rank_urls` |
 
 ### Backends (9 modules)
@@ -193,11 +195,12 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 | Chain | Triggers | Steps | Description |
 |-------|----------|-------|-------------|
 | `tdd_improve` | improve, refactor, tdd | 7 | TDD-guarded code improvement: lock behavior with tests, improve code, verify tests still pass |
-| `research` | research, docs, documentation | 3 | Knowledge-enriched research: rank URLs, fetch the good ones, consolidate into a doc |
+| `research` | research, docs, documentation | 8 | Knowledge-enriched research: rank URLs, fetch, consolidate, extract keywords, fill knowledge gaps, sync |
 | `prompt_lifecycle` | prompt, generate prompt, write prompt | 4 | Generate, audit, and refine a prompt using the Prompt Architect framework |
 | `code_to_knowledge` | enrich, knowledge gap, missing concept | 4 | Review code against KB, then enrich the ontology with missing concepts |
 | `full_improvement` | full improve, full cycle, complete improvement | 9 | Full file improvement cycle: TDD guard → improve → verify → check for new knowledge |
 | `sync_and_audit` | sync, vault, audit | 4 | Sync all vaults to Milvus, then audit code vs KG for drift |
+| `densify` | densify, densification, keywords | 5 | Knowledge graph densification: extract keywords from docs, classify against Milvus, enrich matches, research gaps, sync |
 
 ### Milvus Gate Middleware
 

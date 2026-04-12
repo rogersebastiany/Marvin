@@ -15,7 +15,7 @@ class TestChains:
     def test_all_chains_present(self):
         from backends.orchestrator_backend import CHAINS
         expected = {"tdd_improve", "research", "prompt_lifecycle", "code_to_knowledge",
-                    "full_improvement", "sync_and_audit"}
+                    "full_improvement", "sync_and_audit", "densify"}
         assert set(CHAINS.keys()) == expected
 
     def test_all_chains_have_required_keys(self):
