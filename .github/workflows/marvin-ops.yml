@@ -71,7 +71,7 @@ jobs:
             echo "command=${{ inputs.command }}" >> "$GITHUB_OUTPUT"
             echo "threshold=${{ inputs.threshold || '0' }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "command=audit" >> "$GITHUB_OUTPUT"
+            echo "command=sync-audit" >> "$GITHUB_OUTPUT"
             echo "threshold=0" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             echo "command=all" >> "$GITHUB_OUTPUT"
@@ -99,7 +99,7 @@ jobs:
           echo "Found $COUNT changed .md files"
 
       - name: Sync (incremental cognify + LanceDB → Milvus)
-        if: steps.cmd.outputs.command == 'sync' || steps.cmd.outputs.command == 'all'
+        if: contains(fromJSON('["sync","all","sync-audit"]'), steps.cmd.outputs.command)
         env:
           NEO4J_URI: bolt://localhost:7687
           NEO4J_USER: neo4j
@@ -118,7 +118,7 @@ jobs:
           fi
 
       - name: Audit
-        if: steps.cmd.outputs.command == 'audit' || steps.cmd.outputs.command == 'all'
+        if: contains(fromJSON('["audit","all","sync-audit"]'), steps.cmd.outputs.command)
         env:
           NEO4J_URI: bolt://localhost:7687
           NEO4J_USER: neo4j
