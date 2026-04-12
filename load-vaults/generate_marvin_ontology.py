@@ -240,7 +240,7 @@ SECTION_3 = """\
 
 3.4 Self-Audit (Zero LLM Tokens)
 
-  self_audit.py compares the code AST against the knowledge graph.
+  ops_backend.py compares the code AST against the knowledge graph.
   Pure set operations — no LLM inference needed.
   Detects drift between what the code IS and what the ontology
   CLAIMS it is.\

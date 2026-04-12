@@ -114,30 +114,95 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 
 ---
 
-## Marvin's Tools
+<!-- AUTO:TOOLS:START -->
+## Marvin's Tools (44 total)
 
-44 tools across 9 backends. The canonical list is `MARVIN_TOOLS` in `marvin_server.py` — never hardcoded elsewhere. Run `stats` for a live count, or:
+| Tool | Tier | Description |
+|------|------|-------------|
+| `retrieve` | Milvus (sets gate) | Unified retrieval across ontology, episodic memory, and docs. |
+| `get_concept` | Neo4j Read (gated) | Get a concept with full content and all relations from the ontology. |
+| `traverse` | Neo4j Read (gated) | Walk the knowledge graph from a concept, returning its neighborhood. |
+| `why_exists` | Neo4j Read (gated) | Explain why a concept exists in the ontology — edge reasoning. |
+| `list_concepts` | Overview (ungated) | List all concept names in the knowledge graph, grouped by vault. |
+| `get_memory` | Milvus (sets gate) | Deep-dive into episodic memory — HCC prefetching (L2/L3 → context). |
+| `set_aliases` | Write (gated) | Set English aliases for a concept. Enables cross-language search. |
+| `batch_set_aliases` | Write (gated) | Set aliases for multiple concepts at once. |
+| `log_decision` | Always Allowed | Record a decision to episodic memory (L2 Knowledge). Fire-and-forget — returns immediately. |
+| `log_session` | Always Allowed | Record a session summary to episodic memory (L3 Wisdom). |
+| `expand` | Write (gated) | Add a new concept or relation to the knowledge graph. |
+| `link` | Write (gated) | Create a direct relation between two existing concepts. |
+| `auto_link` | Write (gated) | Scan concept content for references to other concepts and auto-create links. |
+| `ensure_bidirectional` | Write (gated) | For every A→B edge, ensure B→A also exists. |
+| `propose_schema_change` | Always Allowed | Propose a schema change to Neo4j or Milvus. |
+| `execute_schema_change` | Write (gated) | Execute a previously proposed schema change. |
+| `search_docs` | Milvus (sets gate) | Search local documentation files for a keyword or phrase. |
+| `list_docs` | Overview (ungated) | List all available local documentation files. |
+| `get_doc` | Overview (ungated) | Read a local documentation file. |
+| `fetch_url` | Always Allowed | Fetch a webpage and return as markdown. |
+| `save_doc` | Write (gated) | Fetch a webpage and save as local documentation. |
+| `rank_urls` | Always Allowed | Probe URLs and rank them by documentation quality BEFORE fetching. |
+| `crawl_docs` | Write (gated) | Crawl a documentation site and save pages as local docs. |
+| `research_topic` | Write (gated) | Fetch multiple URLs, merge into a single consolidated doc with bibliography. |
+| `generate_prompt` | Write (gated) | Generate a structured prompt using the Prompt Architect framework. |
+| `refine_prompt` | Write (gated) | Refine an existing prompt based on feedback. |
+| `audit_prompt` | Always Allowed | Audit a prompt against the Prompt Architect framework. |
+| `generate_diagram` | Write (gated) | Generate a Mermaid.js system design diagram. |
+| `judge_diagram` | Always Allowed | Review a Mermaid.js diagram for correctness and quality. |
+| `save_diagram` | Write (gated) | Save a mermaid diagram to diagrams/. |
+| `list_diagrams` | Overview (ungated) | List all saved mermaid diagrams. |
+| `get_diagram` | Overview (ungated) | Read a saved mermaid diagram. |
+| `inspect_schemas` | Overview (ungated) | Show current schemas for Neo4j and Milvus. |
+| `stats` | Overview (ungated) | Quick overview of the entire knowledge system. |
+| `self_description` | Overview (ungated) | Rebuild Marvin's identity prompt from the knowledge graph and cache it. |
+| `get_user_score` | Always Allowed | Look up WhatsApp user politeness scores from the conversation database. |
+| `refine_plan` | Milvus (sets gate) | Contrast a plan draft against Milvus prior art — tautological refinement. |
+| `save_plan` | Write (gated) | Upsert a plan into the plans collection in Milvus. |
+| `improve_code` | Milvus (sets gate) | Contrast a code file against all Milvus knowledge — tautological code review. |
+| `tdd` | Milvus (sets gate) | Code + Milvus knowledge → structured context for test generation. |
+| `orchestrate` | Milvus (sets gate) | Goal → structured execution plan. LLM-agnostic orchestration. |
+| `sync_vaults` | Write (gated) | Cognify vaults → Neo4j + LanceDB → Milvus vector sync. |
+| `audit_code` | Neo4j Read (gated) | Self-audit: compare code AST against knowledge graph claims. |
+| `self_improve` | Write (gated) | Deterministic self-improvement: audit → fix drift → log to Milvus. |
 
-```bash
-cd mcp-server && uv run python -c "
-from marvin_server import MARVIN_TOOLS
-for t in MARVIN_TOOLS: print(t)
-"
-```
+### Tier Summary
 
-### Tool Categories
+| Tier | Count | Tools |
+|------|-------|-------|
+| **Milvus (sets gate)** | 7 | `get_memory`, `improve_code`, `orchestrate`, `refine_plan`, `retrieve`, `search_docs`, `tdd` |
+| **Overview (ungated)** | 8 | `get_diagram`, `get_doc`, `inspect_schemas`, `list_concepts`, `list_diagrams`, `list_docs`, `self_description`, `stats` |
+| **Neo4j Read (gated)** | 4 | `audit_code`, `get_concept`, `traverse`, `why_exists` |
+| **Write (gated)** | 17 | `auto_link`, `batch_set_aliases`, `crawl_docs`, `ensure_bidirectional`, `execute_schema_change`, `expand`, `generate_diagram`, `generate_prompt`, `link`, `refine_prompt`, `research_topic`, `save_diagram`, `save_doc`, `save_plan`, `self_improve`, `set_aliases`, `sync_vaults` |
+| **Always Allowed** | 8 | `audit_prompt`, `fetch_url`, `get_user_score`, `judge_diagram`, `log_decision`, `log_session`, `propose_schema_change`, `rank_urls` |
 
-| Category | Tools |
-|----------|-------|
-| **Milvus Retrieval** (sets gate) | `retrieve`, `get_memory`, `search_docs`, `refine_plan`, `improve_code`, `tdd`, `orchestrate` |
-| **Overviews** (ungated) | `list_concepts`, `list_docs`, `list_diagrams`, `get_doc`, `get_diagram`, `stats`, `self_description`, `inspect_schemas` |
-| **Neo4j Deep-dive** (gated) | `get_concept`, `traverse`, `why_exists`, `audit_code` |
-| **Write** (gated) | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases`, `execute_schema_change`, `save_doc`, `save_plan`, `crawl_docs`, `research_topic`, `generate_prompt`, `refine_prompt`, `generate_diagram`, `save_diagram`, `sync_vaults`, `self_improve` |
-| **Always Allowed** | `log_decision`, `log_session`, `propose_schema_change`, `fetch_url`, `rank_urls`, `audit_prompt`, `judge_diagram`, `get_user_score` |
+### Backends (9 modules)
+
+| Module | Description |
+|--------|-------------|
+| `ontology.py` | Ontology backend — Python library wrapping Neo4j. |
+| `memory.py` | Memory backend — Python library wrapping Milvus. |
+| `docs_backend.py` | Docs backend — Python library for searching/browsing local markdown docs. |
+| `web_to_docs_backend.py` | Web-to-docs backend — Fetch websites and convert to local markdown. |
+| `prompt_engineer_backend.py` | Prompt engineer backend — Transformer-Driven Prompt Architect. |
+| `system_design_backend.py` | System design backend — Mermaid.js diagram generation and review. |
+| `code_improvement_backend.py` | Code improvement backend — contrast code against Milvus knowledge. |
+| `orchestrator_backend.py` | Orchestrator backend — goal-driven tool chain planner. |
+| `ops_backend.py` | Ops backend — vault sync, self-audit, and self-improvement. |
+
+### Orchestrator Chains
+
+| Chain | Triggers | Steps | Description |
+|-------|----------|-------|-------------|
+| `tdd_improve` | improve, refactor, tdd | 7 | TDD-guarded code improvement: lock behavior with tests, improve code, verify tests still pass |
+| `research` | research, docs, documentation | 3 | Knowledge-enriched research: rank URLs, fetch the good ones, consolidate into a doc |
+| `prompt_lifecycle` | prompt, generate prompt, write prompt | 4 | Generate, audit, and refine a prompt using the Prompt Architect framework |
+| `code_to_knowledge` | enrich, knowledge gap, missing concept | 4 | Review code against KB, then enrich the ontology with missing concepts |
+| `full_improvement` | full improve, full cycle, complete improvement | 9 | Full file improvement cycle: TDD guard → improve → verify → check for new knowledge |
+| `sync_and_audit` | sync, vault, audit | 4 | Sync all vaults to Milvus, then audit code vs KG for drift |
 
 ### Milvus Gate Middleware
 
-All Neo4j reads and write tools are **blocked** unless a Milvus retrieval tool (`retrieve`, `get_memory`, `search_docs`, `refine_plan`, `improve_code`, `tdd`, `orchestrate`) was called first in the session. This is architectural enforcement (P=0), not prompt bias.
+All Neo4j reads and write tools are **blocked** unless a Milvus tier tool was called first in the session. Architectural enforcement (P=0), not prompt bias.
+<!-- AUTO:TOOLS:END -->
 
 ---
 
@@ -190,7 +255,6 @@ Marvin/
 │   ├── code_improvement_backend.py          ← AST chunking + Milvus vector walk
 │   ├── orchestrator_backend.py              ← Goal → execution plan (6 chains)
 │   ├── ops_backend.py                       ← Sync, audit, self-improve
-│   ├── self_audit.py                        ← Code AST vs KG comparison
 │   ├── docs/                                ← 67 local markdown docs
 │   ├── diagrams/                            ← Saved Mermaid diagrams
 │   └── pyproject.toml
