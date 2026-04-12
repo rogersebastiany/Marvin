@@ -251,7 +251,6 @@ MARVIN_TOOLS = [
     "generate_prompt", "refine_prompt", "audit_prompt",
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
     "inspect_schemas", "stats", "self_description",
-    "get_user_score",
     "refine_plan", "save_plan",
     "improve_code", "tdd", "orchestrate",
     "sync_vaults", "audit_code", "self_improve",
@@ -1492,70 +1491,6 @@ def self_description() -> str:
     result = memory.save_self_description(prompt)
     mcp.instructions = prompt
     return f"Identity rebuilt and cached.\n{result}\n\nPrompt length: {len(prompt)} chars"
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# WHATSAPP CHANNEL
-# ═══════════════════════════════════════════════════════════════════════════════
-
-_WHATSAPP_DB = os.getenv("WHATSAPP_DB_PATH", str(Path(__file__).parent.parent.parent / "marvin-whatsapp" / "marvin_memory.db"))
-
-_TONE_TIERS = [
-    (0.75, "warm"),
-    (0.50, "professional"),
-    (0.25, "dry"),
-    (0.00, "sarcastic"),
-]
-
-
-def _tone_tier(score: float) -> str:
-    for threshold, label in _TONE_TIERS:
-        if score >= threshold:
-            return label
-    return "sarcastic"
-
-
-@mcp.tool(
-    annotations={"readOnlyHint": True},
-    tags={"whatsapp"},
-)
-def get_user_score(phone: str = "") -> str:
-    """Look up WhatsApp user politeness scores from the conversation database.
-
-    Args:
-        phone: Phone number to look up (e.g. '5511999999999'). If omitted, returns all users.
-    """
-    import sqlite3
-
-    if not os.path.exists(_WHATSAPP_DB):
-        return "WhatsApp memory database not found. Is brain.py running?"
-
-    db = sqlite3.connect(f"file:{_WHATSAPP_DB}?mode=ro", uri=True)
-    db.row_factory = sqlite3.Row
-
-    if phone:
-        rows = db.execute(
-            "SELECT phone, name, politeness, msg_count FROM users WHERE phone = ?",
-            (phone,),
-        ).fetchall()
-    else:
-        rows = db.execute(
-            "SELECT phone, name, politeness, msg_count FROM users ORDER BY msg_count DESC",
-        ).fetchall()
-
-    db.close()
-
-    if not rows:
-        return f"No user found{' for phone ' + phone if phone else ''}."
-
-    lines = ["| Phone | Name | Politeness | Messages | Tone |",
-             "|-------|------|-----------|----------|------|"]
-    for r in rows:
-        tier = _tone_tier(r["politeness"])
-        name = r["name"] or "—"
-        lines.append(f"| {r['phone']} | {name} | {r['politeness']:.3f} | {r['msg_count']} | {tier} |")
-
-    return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

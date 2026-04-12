@@ -188,8 +188,6 @@ def report(session):
         "refine_plan", "save_plan",
         # Ops — deterministic sync/audit
         "sync_vaults", "audit_code",
-        # Scoring — deterministic lookup
-        "get_user_score",
     ]
     partial = [
         # Generation tools — constrained output but not fully closed

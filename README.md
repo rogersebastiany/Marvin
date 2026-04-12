@@ -115,7 +115,7 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 ---
 
 <!-- AUTO:TOOLS:START -->
-## Marvin's Tools (46 total)
+## Marvin's Tools (45 total)
 
 | Tool | Tier | Description |
 |------|------|-------------|
@@ -156,7 +156,6 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 | `inspect_schemas` | Overview (ungated) | Show current schemas for Neo4j and Milvus. |
 | `stats` | Overview (ungated) | Quick overview of the entire knowledge system. |
 | `self_description` | Overview (ungated) | Rebuild Marvin's identity prompt from the knowledge graph and cache it. |
-| `get_user_score` | Always Allowed | Look up WhatsApp user politeness scores from the conversation database. |
 | `refine_plan` | Milvus (sets gate) | Contrast a plan draft against Milvus prior art — tautological refinement. |
 | `save_plan` | Write (gated) | Upsert a plan into the plans collection in Milvus. |
 | `improve_code` | Milvus (sets gate) | Contrast a code file against all Milvus knowledge — tautological code review. |
@@ -174,7 +173,7 @@ L1 (tool traces) is transient context window memory — not persisted per HCC de
 | **Overview (ungated)** | 8 | `get_diagram`, `get_doc`, `inspect_schemas`, `list_concepts`, `list_diagrams`, `list_docs`, `self_description`, `stats` |
 | **Neo4j Read (gated)** | 4 | `audit_code`, `get_concept`, `traverse`, `why_exists` |
 | **Write (gated)** | 18 | `auto_link`, `batch_set_aliases`, `crawl_docs`, `ensure_bidirectional`, `execute_schema_change`, `expand`, `extract_keywords`, `generate_diagram`, `generate_prompt`, `link`, `refine_prompt`, `research_topic`, `save_diagram`, `save_doc`, `save_plan`, `self_improve`, `set_aliases`, `sync_vaults` |
-| **Always Allowed** | 8 | `audit_prompt`, `fetch_url`, `get_user_score`, `judge_diagram`, `log_decision`, `log_session`, `propose_schema_change`, `rank_urls` |
+| **Always Allowed** | 7 | `audit_prompt`, `fetch_url`, `judge_diagram`, `log_decision`, `log_session`, `propose_schema_change`, `rank_urls` |
 
 ### Backends (9 modules)
 

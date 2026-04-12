@@ -78,8 +78,8 @@ DECORATED_TOOLS = _extract_decorated_functions()
 
 
 class TestMarvinTools:
-    def test_has_46_tools(self):
-        assert len(MARVIN_TOOLS) == 46
+    def test_has_45_tools(self):
+        assert len(MARVIN_TOOLS) == 45
 
     def test_no_duplicates(self):
         assert len(MARVIN_TOOLS) == len(set(MARVIN_TOOLS))
@@ -133,8 +133,7 @@ class TestTierClassification:
         classified = MILVUS_TOOLS | OVERVIEW_TOOLS | NEO4J_READ_TOOLS | WRITE_TOOLS
         always_allowed = set(MARVIN_TOOLS) - classified
         expected_always = {"log_decision", "log_session", "propose_schema_change",
-                           "fetch_url", "rank_urls", "audit_prompt", "judge_diagram",
-                           "get_user_score"}
+                           "fetch_url", "rank_urls", "audit_prompt", "judge_diagram"}
         assert always_allowed == expected_always
 
     def test_no_tier_overlap(self):
