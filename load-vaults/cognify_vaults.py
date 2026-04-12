@@ -306,11 +306,10 @@ async def post_process_edges():
     driver.close()
 
 
-async def run():
-    import cognee
+def _configure_cognee():
+    """Set up cognee backends (Neo4j, LanceDB, LLM, embeddings)."""
     from cognee import config
 
-    # ── Configure backends ────────────────────────────────────────
     neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
     neo4j_user = os.getenv("NEO4J_USER", "neo4j")
     neo4j_pass = os.getenv("NEO4J_PASS", "tautologia")
@@ -322,17 +321,22 @@ async def run():
         "graph_database_password": neo4j_pass,
     })
 
-    # Cognee 0.5.8 dropped Milvus from core — use LanceDB for Cognee's
-    # own vector needs (chunking/embeddings). Our Milvus stays for Marvin.
-    # What matters is Neo4j: Cognee writes extracted entities+edges there.
+    # Redirect LanceDB to a stable project-level path (outside venv).
+    # marvin_ops reads these vectors during sync → Milvus.
+    lancedb_path = os.getenv("COGNEE_LANCEDB_PATH", "data/cognee.lancedb")
+    if not os.path.isabs(lancedb_path):
+        lancedb_path = str(ROOT / lancedb_path)
+    config.set_vector_db_config({"vector_db_url": lancedb_path})
 
     config.set_llm_config({
         "llm_provider": "openai",
         "llm_model": "gpt-4o-mini",
         "llm_api_key": os.getenv("OPENAI_API_KEY"),
         # Rate limiting — Tier 1: 200k TPM, 500 RPM
+        # 2 RPM × 40k tokens/req = 80k TPM → 60% headroom, sustainable.
+        # =1/=1 batch forces strict serialization.
         "llm_rate_limit_enabled": True,
-        "llm_rate_limit_requests": 10,   # 10 req/min — ~60k TPM, safe under 200k
+        "llm_rate_limit_requests": 2,
         "llm_rate_limit_interval": 60,
     })
 
@@ -342,6 +346,51 @@ async def run():
         "embedding_dimensions": 1536,
         "embedding_api_key": os.getenv("OPENAI_API_KEY"),
     })
+
+
+# ── Path → label mapping (inverted from VAULTS) ──────────────
+# Used by collect_changed_texts to derive labels from file paths.
+_PATH_TO_VAULT: list[tuple[Path, str]] = [
+    (v, name) for name, v in VAULTS.items()
+]
+_PATH_TO_VAULT.append((DOCS_DIR, "docs"))
+
+
+def collect_changed_texts(file_paths: list[str]) -> list[tuple[str, str]]:
+    """Read only the given files and return [(label, content), ...].
+
+    Paths are relative to the repo root. Maps each path to a vault label
+    using the same naming as collect_texts().
+    """
+    texts = []
+    for rel_path in file_paths:
+        full_path = ROOT / rel_path
+        if not full_path.exists() or not full_path.suffix == ".md":
+            print(f"  SKIP {rel_path}: not found or not .md")
+            continue
+        content = full_path.read_text(encoding="utf-8")
+        if len(content) < 100:
+            print(f"  SKIP {rel_path}: too short ({len(content)} chars)")
+            continue
+
+        # Derive label from path
+        label = rel_path
+        for vault_path, vault_name in _PATH_TO_VAULT:
+            try:
+                relative = full_path.relative_to(vault_path)
+                label = f"{vault_name}/{relative.stem}"
+                break
+            except ValueError:
+                continue
+
+        texts.append((label, content))
+    return texts
+
+
+async def run():
+    import cognee
+
+    _configure_cognee()
 
     # ── Collect content ───────────────────────────────────────────
     texts = collect_texts()
@@ -368,12 +417,19 @@ async def run():
     print(f"  Graph model: Concept(DataPoint) — entity-centric")
     print(f"  Target types: {', '.join(RELATION_TYPES.keys())}")
 
+    # Serialize fully: both knobs = 1.
+    # cognee's `llm_rate_limit_requests` throttles request COUNT/min but
+    # does NOT prevent concurrent in-flight requests within a batch.
+    # chunks_per_batch=5 fires 5 parallel LLM calls per doc. data_per_batch=5
+    # fires 5 docs in parallel. 5×5 = 25 concurrent ~40k-token requests on
+    # launch = instant 200k TPM ceiling burn = 429 storm, 0 forward progress.
+    # =1/=1 forces strict serialization so the 2 RPM ceiling actually applies.
     await cognee.cognify(
         datasets=["tautologia"],
         graph_model=Concept,
         custom_prompt=custom_prompt,
-        chunks_per_batch=5,
-        data_per_batch=5,
+        chunks_per_batch=1,
+        data_per_batch=1,
     )
     print("  cognify complete!")
 
@@ -391,6 +447,40 @@ async def run():
     print(f"  Got {len(results)} results for 'Tautologia Ontológica'")
     for r in results[:3]:
         print(f"    {r}")
+
+
+async def run_incremental(changed_paths: list[str]):
+    """Cognify only the given changed files. Same pipeline as run() but selective."""
+    import cognee
+
+    _configure_cognee()
+
+    texts = collect_changed_texts(changed_paths)
+    if not texts:
+        print("No changed files to cognify.")
+        return
+
+    print(f"\nCollected {len(texts)} changed documents")
+    for label, content in texts:
+        print(f"  {label} ({len(content)} chars)")
+
+    print("\n── Adding changed documents to Cognee ──")
+    content_list = [content for _, content in texts]
+    await cognee.add(content_list, dataset_name="tautologia")
+    print(f"  Added {len(content_list)} documents to dataset 'tautologia'")
+
+    custom_prompt = build_custom_prompt()
+    print("\n── Running incremental cognify ──")
+    await cognee.cognify(
+        datasets=["tautologia"],
+        graph_model=Concept,
+        custom_prompt=custom_prompt,
+        chunks_per_batch=1,
+        data_per_batch=1,
+    )
+    print("  cognify complete!")
+
+    await post_process_edges()
 
 
 if __name__ == "__main__":

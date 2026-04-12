@@ -431,7 +431,7 @@ def search_concepts_semantic(query: str, limit: int = 5) -> list[dict]:
     return _search_collection("concepts", query, limit, fields)
 
 
-# ── Indexing (called by load_vaults and rebuild scripts) ────────────────────
+# ── Indexing (called by marvin_ops cmd_sync) ────────────────────────────────
 
 
 def _chunk_markdown(text: str, doc_name: str) -> list[dict]:

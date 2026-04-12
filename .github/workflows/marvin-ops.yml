@@ -13,6 +13,10 @@ on:
       - 'marvin_ops.py'
   pull_request:
     paths:
+      - 'vault/**'
+      - 'vault-thesis-en/**'
+      - 'vault-implementation-en/**'
+      - 'obsidian-vault-tautologia-ontologica/**'
       - 'mcp-server/**'
       - 'load-vaults/**'
       - 'marvin_ops.py'
@@ -77,15 +81,41 @@ jobs:
             echo "threshold=0" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Sync vaults
+      - name: Detect changed markdown files
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD -- '*.md' || true)
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            FILES=$(git diff --name-only --diff-filter=ACMR ${{ github.event.before }}...${{ github.sha }} -- '*.md' || true)
+          else
+            FILES=""
+          fi
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          COUNT=$(echo "$FILES" | grep -c . || true)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Found $COUNT changed .md files"
+
+      - name: Sync (incremental cognify + LanceDB → Milvus)
+        if: steps.cmd.outputs.command == 'sync' || steps.cmd.outputs.command == 'all'
         env:
           NEO4J_URI: bolt://localhost:7687
           NEO4J_USER: neo4j
           NEO4J_PASS: tautologia
           MILVUS_HOST: localhost
           MILVUS_PORT: '19530'
+          COGNEE_LANCEDB_PATH: data/cognee.lancedb
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: cd mcp-server && uv run python ../marvin_ops.py sync --format json
+        run: |
+          if [ "${{ steps.changed.outputs.count }}" != "0" ]; then
+            cd mcp-server && uv run python ../marvin_ops.py sync \
+              --changed-files ${{ steps.changed.outputs.files }} --format json
+          else
+            cd mcp-server && uv run python ../marvin_ops.py sync \
+              --skip-cognify --format json
+          fi
 
       - name: Audit
         if: steps.cmd.outputs.command == 'audit' || steps.cmd.outputs.command == 'all'
