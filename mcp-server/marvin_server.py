@@ -19,6 +19,7 @@ import inspect
 import os
 import threading
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
 from fastmcp import FastMCP, Context
@@ -1497,7 +1498,7 @@ def self_description() -> str:
 # WHATSAPP CHANNEL
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_WHATSAPP_DB = "/home/rgr/lab/marvin-whatsapp/marvin_memory.db"
+_WHATSAPP_DB = os.getenv("WHATSAPP_DB_PATH", str(Path(__file__).parent.parent.parent / "marvin-whatsapp" / "marvin_memory.db"))
 
 _TONE_TIERS = [
     (0.75, "warm"),

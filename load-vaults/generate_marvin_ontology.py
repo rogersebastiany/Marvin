@@ -7,6 +7,7 @@ Uses matplotlib PdfPages (same infra as generate_pdf_report.py).
 
 import textwrap
 from datetime import datetime
+from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
@@ -570,7 +571,7 @@ This is what the thesis looks like when it examines itself.\
 
 
 def main():
-    pdf_path = "/home/rgr/lab/oh yeah/marvin-self-ontology.pdf"
+    pdf_path = str(Path(__file__).parent.parent / "marvin-self-ontology.pdf")
 
     with PdfPages(pdf_path) as pdf:
         # 1. Title page
