@@ -4,6 +4,11 @@ Neo4j Observability PDF Report Generator.
 Generates matplotlib visualizations from the knowledge graph and compiles
 everything into a single PDF with the full determinism report.
 
+Aligned with Cognee Era 2 schema:
+  - 16 typed edge types (not just RELATES_TO)
+  - Concept.description (not .content), TextSummary nodes (not .summary)
+  - No vault property — uses edge type distribution and cross-document bridging
+
 Usage:
     uv run python generate_pdf_report.py
 """
@@ -21,6 +26,8 @@ import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from neo4j import GraphDatabase
 
+from determinism_report import report as run_determinism_report, _status
+
 URI = "bolt://localhost:7687"
 AUTH = ("neo4j", "tautologia")
 
@@ -29,15 +36,23 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Style ---
 COLORS = {
-    "thesis": "#4C72B0",
-    "implementation": "#DD8452",
-    "both": "#55A868",
+    "primary": "#4C72B0",
+    "secondary": "#DD8452",
+    "tertiary": "#55A868",
+    "quaternary": "#C44E52",
     "tautological": "#55A868",
     "high": "#4C72B0",
     "moderate": "#DDC852",
     "low": "#DD8452",
     "critical": "#C44E52",
 }
+
+# Color palette for edge types
+EDGE_COLORS = [
+    "#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3",
+    "#937860", "#DA8BC3", "#8C8C8C", "#CCB974", "#64B5CD",
+    "#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860",
+]
 
 plt.rcParams.update({
     "figure.facecolor": "#1a1a2e",
@@ -64,204 +79,115 @@ def fetch_all_data(driver):
     with driver.session() as s:
         # Basic stats
         data["total"] = s.run("MATCH (c:Concept) RETURN count(c) AS n").single()["n"]
-        data["edges"] = s.run("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS n").single()["n"]
-        data["ghosts"] = s.run("MATCH (c:Concept {ghost: true}) RETURN count(c) AS n").single()["n"]
-        data["isolated"] = s.run(
-            "MATCH (c:Concept) WHERE NOT (c)-[:RELATES_TO]-() RETURN count(c) AS n"
+        data["all_edges"] = s.run("MATCH ()-[r]->() RETURN count(r) AS n").single()["n"]
+
+        # Semantic edges (Concept→Concept, non-COMPOSES)
+        data["semantic_edges"] = s.run(
+            "MATCH (a:Concept)-[r]->(b:Concept) "
+            "WHERE type(r) <> 'COMPOSES' "
+            "RETURN count(r) AS n"
         ).single()["n"]
 
-        # Vault distribution
-        vaults = s.run(
-            "MATCH (c:Concept) RETURN c.vault AS vault, count(*) AS n ORDER BY n DESC"
-        )
-        data["vaults"] = {r["vault"]: r["n"] for r in vaults}
+        data["isolated"] = s.run(
+            "MATCH (c:Concept) WHERE NOT (c)-[]-() "
+            "RETURN count(c) AS n"
+        ).single()["n"]
 
-        # Degree distribution
+        # Edge type breakdown
+        edge_types = s.run(
+            "MATCH ()-[r]->() RETURN type(r) AS t, count(r) AS c ORDER BY c DESC"
+        )
+        data["edge_breakdown"] = {r["t"]: r["c"] for r in edge_types}
+
+        # Semantic edge type breakdown (Concept→Concept only)
+        sem_types = s.run(
+            "MATCH (a:Concept)-[r]->(b:Concept) "
+            "RETURN type(r) AS t, count(r) AS c ORDER BY c DESC"
+        )
+        data["semantic_breakdown"] = {r["t"]: r["c"] for r in sem_types}
+
+        # Node label distribution
+        label_dist = s.run(
+            "MATCH (n) "
+            "WITH CASE "
+            "  WHEN 'Concept' IN labels(n) THEN 'Concept' "
+            "  WHEN 'TextSummary' IN labels(n) THEN 'TextSummary' "
+            "  WHEN 'DocumentChunk' IN labels(n) THEN 'DocumentChunk' "
+            "  WHEN 'TextDocument' IN labels(n) THEN 'TextDocument' "
+            "  ELSE 'Other' "
+            "END AS label "
+            "RETURN label, count(*) AS n ORDER BY n DESC"
+        )
+        data["label_dist"] = {r["label"]: r["n"] for r in label_dist}
+
+        # Degree distribution (all edges, Concept nodes only)
         degrees = s.run(
             "MATCH (c:Concept)-[r]-() WITH c, count(r) AS deg RETURN deg ORDER BY deg"
         )
         data["degrees"] = [r["deg"] for r in degrees]
 
-        # Top concepts by connections
+        # Semantic degree distribution (Concept↔Concept, non-COMPOSES)
+        sem_degrees = s.run(
+            "MATCH (c:Concept)-[r]-(other:Concept) "
+            "WHERE type(r) <> 'COMPOSES' "
+            "WITH c, count(r) AS deg RETURN deg ORDER BY deg"
+        )
+        data["semantic_degrees"] = [r["deg"] for r in sem_degrees]
+
+        # Top concepts by semantic connections
         top = s.run(
-            "MATCH (c:Concept)-[r]-() "
-            "RETURN c.name AS name, c.vault AS vault, count(r) AS connections "
-            "ORDER BY connections DESC LIMIT 20"
+            "MATCH (c:Concept)-[r]-(other:Concept) "
+            "WHERE type(r) <> 'COMPOSES' "
+            "WITH c, count(r) AS connections, "
+            "  count(DISTINCT type(r)) AS edge_types "
+            "ORDER BY connections DESC LIMIT 20 "
+            "RETURN c.name AS name, connections, edge_types"
         )
         data["top"] = [dict(r) for r in top]
 
-        # Orphans (least connected)
+        # Orphans — least connected by semantic edges
         orphans = s.run(
-            "MATCH (c:Concept)-[r]-() "
-            "WITH c, count(r) AS connections ORDER BY connections ASC LIMIT 15 "
-            "RETURN c.name AS name, c.vault AS vault, connections"
+            "MATCH (c:Concept)-[r]-(other:Concept) "
+            "WHERE type(r) <> 'COMPOSES' "
+            "WITH c, count(r) AS connections "
+            "ORDER BY connections ASC LIMIT 20 "
+            "RETURN c.name AS name, connections"
         )
         data["orphans"] = [dict(r) for r in orphans]
 
-        # Bridges
-        bridges = s.run(
-            "MATCH (c:Concept)-[:RELATES_TO]-(t:Concept {vault: 'thesis'}) "
-            "WITH c, count(DISTINCT t) AS thesis_links "
-            "MATCH (c)-[:RELATES_TO]-(i:Concept {vault: 'implementation'}) "
-            "WITH c, thesis_links, count(DISTINCT i) AS impl_links "
-            "RETURN c.name AS name, c.vault AS vault, "
-            "  thesis_links, impl_links, thesis_links + impl_links AS total "
-            "ORDER BY total DESC LIMIT 15"
+        # Cross-document concepts (appear in 2+ TextDocuments)
+        cross_doc = s.run(
+            "MATCH (c:Concept)-[:COMPOSES]-(:DocumentChunk)-[:COMPOSES]-(td:TextDocument) "
+            "WITH c, count(DISTINCT td) AS doc_count "
+            "WHERE doc_count >= 2 "
+            "ORDER BY doc_count DESC LIMIT 15 "
+            "RETURN c.name AS name, doc_count"
         )
-        data["bridges"] = [dict(r) for r in bridges]
+        data["cross_doc"] = [dict(r) for r in cross_doc]
 
-        # Determinism metrics
-        with_content = s.run(
-            "MATCH (c:Concept) WHERE c.content IS NOT NULL AND size(c.content) > 10 "
-            "RETURN count(c) AS n"
-        ).single()["n"]
-        with_summary = s.run(
-            "MATCH (c:Concept) WHERE c.summary IS NOT NULL AND size(c.summary) > 5 "
-            "RETURN count(c) AS n"
-        ).single()["n"]
-
-        total = data["total"]
-        ghosts = data["ghosts"]
-        ghost_coverage = (total - ghosts) / total * 100 if total else 0
-        content_coverage = with_content / total * 100 if total else 0
-        summary_coverage = with_summary / total * 100 if total else 0
-
-        # Connectivity score
+        # Degree stats
         degree_stats = s.run(
             "MATCH (c:Concept)-[r]-() "
             "WITH c, count(r) AS deg "
             "RETURN min(deg) AS min_deg, max(deg) AS max_deg, "
             "  avg(deg) AS avg_deg, count(c) AS connected_nodes"
         ).single()
-        min_deg = degree_stats["min_deg"] or 0
-        avg_deg = degree_stats["avg_deg"] or 0
-        max_deg = degree_stats["max_deg"] or 0
-        connected = degree_stats["connected_nodes"] or 0
-        connectivity_score = 0
-        if total > 0:
-            connected_pct = connected / total * 100
-            min_deg_score = min(min_deg / 3, 1.0) * 100
-            connectivity_score = (connected_pct + min_deg_score) / 2
-
-        # Bidirectionality
-        reciprocal = s.run(
-            "MATCH (a:Concept)-[r1:RELATES_TO]->(b:Concept) "
-            "WHERE (b)-[:RELATES_TO]->(a) "
-            "RETURN count(r1) AS n"
-        ).single()["n"]
-        edges_count = data["edges"]
-        bidirectional_pct = reciprocal / edges_count * 100 if edges_count else 0
-
-        # Vault bridging
-        bridge_concepts = s.run(
-            "MATCH (c:Concept)-[:RELATES_TO]-(t:Concept) "
-            "WHERE t.vault IN ['thesis', 'both'] "
-            "WITH c, count(DISTINCT t) AS thesis_neighbors WHERE thesis_neighbors > 0 "
-            "MATCH (c)-[:RELATES_TO]-(i:Concept) "
-            "WHERE i.vault IN ['implementation', 'both'] "
-            "WITH c, count(DISTINCT i) AS impl_neighbors WHERE impl_neighbors > 0 "
-            "RETURN count(c) AS n"
-        ).single()["n"]
-        vault_bridging = bridge_concepts / total * 100 if total else 0
-
-        # Tool tautology
-        tool_concepts = s.run(
-            "MATCH (c:Concept) WHERE c.name IN "
-            "['docs-server','web-to-docs','prompt-engineer','system-design',"
-            "'mcp-ontology-server','mcp-memory-server'] RETURN count(c) AS total"
-        ).single()["total"]
-        tautological_tools = s.run(
-            "MATCH (c:Concept) WHERE c.name IN "
-            "['docs-server','web-to-docs','mcp-ontology-server','mcp-memory-server'] "
-            "RETURN count(c) AS n"
-        ).single()["n"]
-        partial_tools = s.run(
-            "MATCH (c:Concept) WHERE c.name IN ['prompt-engineer','system-design'] "
-            "RETURN count(c) AS n"
-        ).single()["n"]
-        tool_tautology = 0
-        if tool_concepts > 0:
-            tool_tautology = (tautological_tools + partial_tools * 0.5) / tool_concepts * 100
-
-        data["metrics"] = {
-            "ghost_coverage": ghost_coverage,
-            "content_coverage": content_coverage,
-            "summary_coverage": summary_coverage,
-            "connectivity": connectivity_score,
-            "bidirectionality": bidirectional_pct,
-            "vault_bridging": vault_bridging,
-            "tool_tautology": tool_tautology,
-        }
-        weights = {
-            "ghost_coverage": 0.20,
-            "content_coverage": 0.15,
-            "summary_coverage": 0.05,
-            "connectivity": 0.20,
-            "bidirectionality": 0.10,
-            "vault_bridging": 0.15,
-            "tool_tautology": 0.15,
-        }
-        data["weights"] = weights
-        data["composite"] = sum(data["metrics"][k] * weights[k] for k in weights)
         data["degree_stats"] = {
-            "min": min_deg, "avg": avg_deg, "max": max_deg,
+            "min": degree_stats["min_deg"] or 0,
+            "avg": degree_stats["avg_deg"] or 0,
+            "max": degree_stats["max_deg"] or 0,
         }
-        data["density"] = edges_count / (total * (total - 1)) * 100 if total > 1 else 0
 
-        # Per-concept degree for vault coloring
-        per_concept = s.run(
-            "MATCH (c:Concept)-[r]-() "
-            "RETURN c.name AS name, c.vault AS vault, count(r) AS deg "
-            "ORDER BY deg DESC"
-        )
-        data["per_concept_degree"] = [dict(r) for r in per_concept]
+        total = data["total"]
+        data["density"] = data["all_edges"] / (total * (total - 1)) * 100 if total > 1 else 0
 
-        # Ghost list
-        ghost_list = s.run(
-            "MATCH (c:Concept {ghost: true}) RETURN c.name AS name"
-        )
-        data["ghost_list"] = [r["name"] for r in ghost_list]
-
-        # Weakly connected
-        weak = s.run(
-            "MATCH (c:Concept)-[r]-() WITH c, count(r) AS deg WHERE deg < 3 "
-            "RETURN c.name AS name, deg ORDER BY deg"
-        )
-        data["weak"] = [dict(r) for r in weak]
-
-        # Content-less
-        no_content = s.run(
-            "MATCH (c:Concept) WHERE c.content IS NULL OR size(c.content) <= 10 "
-            "RETURN c.name AS name ORDER BY name"
-        )
-        data["no_content"] = [r["name"] for r in no_content]
-
-        # Unbridged
-        unbridged = s.run(
-            "MATCH (c:Concept) "
-            "WHERE NOT EXISTS { "
-            "  MATCH (c)-[:RELATES_TO]-(t:Concept) WHERE t.vault IN ['thesis','both'] "
-            "} OR NOT EXISTS { "
-            "  MATCH (c)-[:RELATES_TO]-(i:Concept) WHERE i.vault IN ['implementation','both'] "
-            "} "
-            "RETURN c.name AS name, c.vault AS vault ORDER BY vault, name"
-        )
-        data["unbridged"] = [dict(r) for r in unbridged]
+        # Run determinism metrics
+        metrics, weights, composite = run_determinism_report(s)
+        data["metrics"] = metrics
+        data["weights"] = weights
+        data["composite"] = composite
 
     return data
-
-
-def status_label(score):
-    if score >= 95:
-        return "TAUTOLOGICAL"
-    elif score >= 80:
-        return "HIGH"
-    elif score >= 60:
-        return "MODERATE"
-    elif score >= 40:
-        return "LOW"
-    else:
-        return "CRITICAL"
 
 
 def status_color(score):
@@ -285,12 +211,12 @@ def chart_determinism_radar(data):
     """Radar chart of the 7 determinism metrics."""
     metrics = data["metrics"]
     labels = [
-        "Ghost\nCoverage", "Content\nCoverage", "Summary\nCoverage",
-        "Connectivity", "Bidirection-\nality", "Vault\nBridging", "Tool\nTautology",
+        "Grounding", "Content\nCoverage", "Summary\nCoverage",
+        "Connectivity", "Bidirection-\nality", "Edge\nDiversity", "Tool\nTautology",
     ]
     values = [metrics[k] for k in [
-        "ghost_coverage", "content_coverage", "summary_coverage",
-        "connectivity", "bidirectionality", "vault_bridging", "tool_tautology",
+        "grounding", "content_coverage", "summary_coverage",
+        "connectivity", "bidirectionality", "edge_diversity", "tool_tautology",
     ]]
 
     N = len(labels)
@@ -302,7 +228,6 @@ def chart_determinism_radar(data):
     fig.patch.set_facecolor("#1a1a2e")
     ax.set_facecolor("#16213e")
 
-    # Draw reference circles
     for pct in [25, 50, 75, 100]:
         circle = np.full(len(angles), pct)
         ax.plot(angles, circle, color="#3a3a5a", linewidth=0.5, linestyle="--")
@@ -323,13 +248,34 @@ def chart_determinism_radar(data):
     return fig
 
 
-def chart_vault_distribution(data):
-    """Pie chart of vault distribution."""
+def chart_edge_type_distribution(data):
+    """Horizontal bar chart of edge type counts."""
+    fig, ax = plt.subplots(figsize=(9, 6))
+    breakdown = data["edge_breakdown"]
+    types = list(reversed(list(breakdown.keys())))
+    counts = list(reversed(list(breakdown.values())))
+    colors = [EDGE_COLORS[i % len(EDGE_COLORS)] for i in range(len(types))]
+    colors.reverse()
+
+    bars = ax.barh(types, counts, color=colors, edgecolor="#2a2a4a")
+    for bar, count in zip(bars, counts):
+        ax.text(bar.get_width() + max(counts) * 0.01, bar.get_y() + bar.get_height() / 2,
+                str(count), va="center", ha="left", size=8, weight="bold")
+
+    ax.set_xlabel("Count")
+    ax.set_title(f"Edge Type Distribution ({sum(breakdown.values())} total edges)", size=14, weight="bold")
+    ax.grid(True, axis="x", alpha=0.3)
+    plt.tight_layout()
+    return fig
+
+
+def chart_node_label_distribution(data):
+    """Pie chart of node label distribution."""
     fig, ax = plt.subplots(figsize=(6, 5))
-    vaults = data["vaults"]
-    labels = list(vaults.keys())
-    sizes = list(vaults.values())
-    colors = [COLORS.get(v, "#888888") for v in labels]
+    label_dist = data["label_dist"]
+    labels = list(label_dist.keys())
+    sizes = list(label_dist.values())
+    colors = [COLORS["primary"], COLORS["secondary"], COLORS["tertiary"], COLORS["quaternary"], "#888"][:len(labels)]
 
     wedges, texts, autotexts = ax.pie(
         sizes, labels=labels, colors=colors, autopct="%1.0f%%",
@@ -337,88 +283,126 @@ def chart_vault_distribution(data):
     )
     for t in autotexts:
         t.set_weight("bold")
-    ax.set_title("Vault Distribution", size=14, weight="bold")
+    ax.set_title(f"Node Label Distribution ({sum(sizes)} total)", size=14, weight="bold")
     plt.tight_layout()
     return fig
 
 
 def chart_degree_distribution(data):
-    """Histogram of degree distribution."""
-    fig, ax = plt.subplots(figsize=(8, 5))
+    """Histogram of semantic degree distribution."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+    # Left: All edges
     degrees = data["degrees"]
-    bins = range(0, max(degrees) + 5, 5)
-    ax.hist(degrees, bins=bins, color="#4C72B0", edgecolor="#2a2a4a", alpha=0.85)
-    ax.axvline(np.mean(degrees), color="#DD8452", linestyle="--", linewidth=2, label=f"Mean: {np.mean(degrees):.1f}")
-    ax.axvline(np.median(degrees), color="#55A868", linestyle="--", linewidth=2, label=f"Median: {np.median(degrees):.0f}")
-    ax.set_xlabel("Degree (connections)")
-    ax.set_ylabel("Number of concepts")
-    ax.set_title("Degree Distribution", size=14, weight="bold")
-    ax.legend(facecolor="#16213e", edgecolor="#3a3a5a")
-    ax.grid(True, alpha=0.3)
+    if degrees:
+        bins = range(0, max(degrees) + 5, 5)
+        ax1.hist(degrees, bins=bins, color="#4C72B0", edgecolor="#2a2a4a", alpha=0.85)
+        ax1.axvline(np.mean(degrees), color="#DD8452", linestyle="--", linewidth=2,
+                     label=f"Mean: {np.mean(degrees):.1f}")
+        ax1.axvline(np.median(degrees), color="#55A868", linestyle="--", linewidth=2,
+                     label=f"Median: {np.median(degrees):.0f}")
+    ax1.set_xlabel("Degree (all edges)")
+    ax1.set_ylabel("Concepts")
+    ax1.set_title("All Edges", size=12, weight="bold")
+    ax1.legend(facecolor="#16213e", edgecolor="#3a3a5a", fontsize=8)
+    ax1.grid(True, alpha=0.3)
+
+    # Right: Semantic edges only
+    sem_degrees = data["semantic_degrees"]
+    if sem_degrees:
+        bins = range(0, max(sem_degrees) + 3, 2)
+        ax2.hist(sem_degrees, bins=bins, color="#55A868", edgecolor="#2a2a4a", alpha=0.85)
+        ax2.axvline(np.mean(sem_degrees), color="#DD8452", linestyle="--", linewidth=2,
+                     label=f"Mean: {np.mean(sem_degrees):.1f}")
+        ax2.axvline(np.median(sem_degrees), color="#4C72B0", linestyle="--", linewidth=2,
+                     label=f"Median: {np.median(sem_degrees):.0f}")
+    ax2.set_xlabel("Degree (semantic only)")
+    ax2.set_ylabel("Concepts")
+    ax2.set_title("Semantic Edges (Concept↔Concept)", size=12, weight="bold")
+    ax2.legend(facecolor="#16213e", edgecolor="#3a3a5a", fontsize=8)
+    ax2.grid(True, alpha=0.3)
+
+    fig.suptitle("Degree Distribution", size=14, weight="bold")
     plt.tight_layout()
     return fig
 
 
 def chart_top_concepts(data):
-    """Horizontal bar chart of top 20 concepts by connections."""
+    """Horizontal bar chart of top 20 concepts by semantic connections."""
     fig, ax = plt.subplots(figsize=(10, 7))
     top = data["top"]
     names = [t["name"] for t in reversed(top)]
     connections = [t["connections"] for t in reversed(top)]
-    vault_colors = [COLORS.get(t["vault"], "#888") for t in reversed(top)]
+    edge_types = [t["edge_types"] for t in reversed(top)]
 
-    bars = ax.barh(names, connections, color=vault_colors, edgecolor="#2a2a4a")
-    ax.set_xlabel("Connections")
-    ax.set_title("Top 20 Most Connected Concepts", size=14, weight="bold")
+    # Color by edge type diversity: more types = greener
+    max_types = max(edge_types) if edge_types else 1
+    colors = [plt.cm.RdYlGn(et / max_types * 0.8 + 0.2) for et in edge_types]
+
+    bars = ax.barh(names, connections, color=colors, edgecolor="#2a2a4a")
+
+    # Annotate with edge type count
+    for bar, et in zip(bars, edge_types):
+        ax.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height() / 2,
+                f"{et} types", va="center", ha="left", size=7, alpha=0.7)
+
+    ax.set_xlabel("Semantic Connections")
+    ax.set_title("Top 20 Most Connected Concepts (semantic edges)", size=14, weight="bold")
     ax.grid(True, axis="x", alpha=0.3)
 
-    # Legend
-    from matplotlib.patches import Patch
-    legend_elements = [
-        Patch(facecolor=COLORS["thesis"], label="thesis"),
-        Patch(facecolor=COLORS["implementation"], label="implementation"),
-        Patch(facecolor=COLORS["both"], label="both"),
-    ]
-    ax.legend(handles=legend_elements, loc="lower right", facecolor="#16213e", edgecolor="#3a3a5a")
+    # Colorbar legend
+    sm = plt.cm.ScalarMappable(cmap=plt.cm.RdYlGn, norm=plt.Normalize(1, max_types))
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax, pad=0.02, aspect=30)
+    cbar.set_label("Edge Type Diversity", size=9)
+
     plt.tight_layout()
     return fig
 
 
 def chart_orphans(data):
-    """Bar chart of least connected concepts."""
+    """Bar chart of least connected concepts (semantic edges)."""
     fig, ax = plt.subplots(figsize=(9, 5))
     orphans = data["orphans"]
+    if not orphans:
+        ax.text(0.5, 0.5, "No orphans found", ha="center", va="center", size=14)
+        return fig
+
     names = [o["name"] for o in orphans]
     conns = [o["connections"] for o in orphans]
-    vault_colors = [COLORS.get(o["vault"], "#888") for o in orphans]
 
-    ax.bar(range(len(names)), conns, color=vault_colors, edgecolor="#2a2a4a")
+    ax.bar(range(len(names)), conns, color="#C44E52", edgecolor="#2a2a4a", alpha=0.85)
     ax.set_xticks(range(len(names)))
-    ax.set_xticklabels(names, rotation=45, ha="right", size=8)
-    ax.set_ylabel("Connections")
-    ax.set_title("Least Connected Concepts (Orphans)", size=14, weight="bold")
+    ax.set_xticklabels(names, rotation=45, ha="right", size=7)
+    ax.set_ylabel("Semantic Connections")
+    ax.set_title("Least Connected Concepts (semantic edges only)", size=14, weight="bold")
     ax.grid(True, axis="y", alpha=0.3)
     plt.tight_layout()
     return fig
 
 
-def chart_bridges(data):
-    """Stacked bar chart showing thesis vs implementation links for bridge concepts."""
+def chart_cross_document(data):
+    """Bar chart of concepts that appear across multiple source documents."""
     fig, ax = plt.subplots(figsize=(10, 6))
-    bridges = data["bridges"]
-    names = [b["name"] for b in bridges]
-    thesis = [b["thesis_links"] for b in bridges]
-    impl = [b["impl_links"] for b in bridges]
-    x = range(len(names))
+    cross = data["cross_doc"]
+    if not cross:
+        ax.text(0.5, 0.5, "No cross-document concepts found", ha="center", va="center", size=14)
+        ax.set_title("Cross-Document Bridging Concepts", size=14, weight="bold")
+        plt.tight_layout()
+        return fig
 
-    ax.bar(x, thesis, color=COLORS["thesis"], label="Thesis links", edgecolor="#2a2a4a")
-    ax.bar(x, impl, bottom=thesis, color=COLORS["implementation"], label="Implementation links", edgecolor="#2a2a4a")
-    ax.set_xticks(x)
-    ax.set_xticklabels(names, rotation=45, ha="right", size=8)
-    ax.set_ylabel("Cross-vault links")
-    ax.set_title("Top Bridge Concepts (Theory ↔ Implementation)", size=14, weight="bold")
-    ax.legend(facecolor="#16213e", edgecolor="#3a3a5a")
-    ax.grid(True, axis="y", alpha=0.3)
+    names = [c["name"] for c in cross]
+    docs = [c["doc_count"] for c in cross]
+
+    bars = ax.barh(list(reversed(names)), list(reversed(docs)),
+                   color="#55A868", edgecolor="#2a2a4a", alpha=0.85)
+    for bar, d in zip(bars, reversed(docs)):
+        ax.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height() / 2,
+                f"{d} docs", va="center", ha="left", size=8, weight="bold")
+
+    ax.set_xlabel("Source Documents")
+    ax.set_title("Cross-Document Bridging Concepts", size=14, weight="bold")
+    ax.grid(True, axis="x", alpha=0.3)
     plt.tight_layout()
     return fig
 
@@ -429,12 +413,12 @@ def chart_metrics_bar(data):
     metrics = data["metrics"]
     weights = data["weights"]
     labels_map = {
-        "ghost_coverage": "Ghost Coverage",
+        "grounding": "Grounding",
         "content_coverage": "Content Coverage",
         "summary_coverage": "Summary Coverage",
         "connectivity": "Connectivity",
         "bidirectionality": "Bidirectionality",
-        "vault_bridging": "Vault Bridging",
+        "edge_diversity": "Edge Diversity",
         "tool_tautology": "Tool Tautology",
     }
     keys = list(labels_map.keys())
@@ -442,10 +426,9 @@ def chart_metrics_bar(data):
     values = [metrics[k] for k in keys]
     colors = [status_color(v) for v in values]
 
-    y = range(len(labels))
-    bars = ax.barh(list(reversed(labels)), list(reversed(values)), color=list(reversed(colors)), edgecolor="#2a2a4a")
+    bars = ax.barh(list(reversed(labels)), list(reversed(values)),
+                   color=list(reversed(colors)), edgecolor="#2a2a4a")
 
-    # Value labels
     for bar, val in zip(bars, reversed(values)):
         ax.text(bar.get_width() + 1, bar.get_y() + bar.get_height() / 2,
                 f"{val:.1f}%", va="center", ha="left", size=9, weight="bold")
@@ -466,19 +449,17 @@ def chart_composite_gauge(data):
     fig, ax = plt.subplots(figsize=(7, 4))
     score = data["composite"]
 
-    # Background bar
     ax.barh(0, 100, height=0.6, color="#2a2a4a", edgecolor="#3a3a5a")
-    # Score bar
     ax.barh(0, score, height=0.6, color=status_color(score), edgecolor="#2a2a4a")
 
-    # Threshold markers
     for threshold, label in [(40, "LOW"), (60, "MOD"), (80, "HIGH"), (95, "TAUT")]:
         ax.axvline(threshold, color="#e0e0e0", linewidth=1, linestyle=":", alpha=0.4)
         ax.text(threshold, 0.45, label, ha="center", va="bottom", size=7, alpha=0.6)
 
-    ax.text(score / 2, 0, f"{score:.1f}%", ha="center", va="center", size=20, weight="bold", color="#e0e0e0")
-    ax.text(50, -0.55, f"Status: {status_label(score)}", ha="center", va="center", size=12, weight="bold",
-            color=status_color(score))
+    ax.text(score / 2, 0, f"{score:.1f}%", ha="center", va="center", size=20,
+            weight="bold", color="#e0e0e0")
+    ax.text(50, -0.55, f"Status: {_status(score)}", ha="center", va="center",
+            size=12, weight="bold", color=status_color(score))
 
     ax.set_xlim(0, 100)
     ax.set_ylim(-0.8, 0.8)
@@ -490,108 +471,6 @@ def chart_composite_gauge(data):
 
 
 # ============================================================
-# TEXT REPORT PAGE
-# ============================================================
-
-def text_report_page(data):
-    """Full text determinism report as a figure."""
-    fig = plt.figure(figsize=(11, 14))
-    fig.patch.set_facecolor("#1a1a2e")
-
-    metrics = data["metrics"]
-    weights = data["weights"]
-    total = data["total"]
-    edges = data["edges"]
-    ghosts = data["ghosts"]
-    ds = data["degree_stats"]
-    density = data["density"]
-    composite = data["composite"]
-
-    lines = []
-    lines.append("=" * 70)
-    lines.append("  ONTOLOGICAL DETERMINISM REPORT")
-    lines.append("  Tautologia Ontológica — Knowledge Graph Assessment")
-    lines.append(f"  Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    lines.append("=" * 70)
-    lines.append("")
-    lines.append(f"  Graph: {total} concepts, {edges} edges, {ghosts} ghosts")
-    lines.append(f"  Density: {density:.2f}% of max possible edges")
-    lines.append(f"  Degree: min={ds['min']}, avg={ds['avg']:.1f}, max={ds['max']}")
-    lines.append(f"  Isolated: {data['isolated']}")
-    lines.append("")
-    lines.append("-" * 70)
-    lines.append(f"  {'Metric':<38} {'Score':>8}  {'Status':<15} {'Weight'}")
-    lines.append("-" * 70)
-
-    labels = {
-        "ghost_coverage": "Ghost Coverage (defined/referenced)",
-        "content_coverage": "Content Coverage (has substance)",
-        "summary_coverage": "Summary Coverage (has summary)",
-        "connectivity": "Connectivity (no orphans, min 3)",
-        "bidirectionality": "Bidirectionality (A→B and B→A)",
-        "vault_bridging": "Vault Bridging (theory↔impl)",
-        "tool_tautology": "Tool Tautology (tautological tools)",
-    }
-
-    for key in weights:
-        score = metrics[key]
-        status = status_label(score)
-        w = weights[key]
-        lines.append(f"  {labels[key]:<38} {score:>7.1f}%  {status:<15} w={w}")
-
-    lines.append("-" * 70)
-    lines.append(f"  {'COMPOSITE DETERMINISM SCORE':<38} {composite:>7.1f}%  {status_label(composite)}")
-    lines.append("=" * 70)
-    lines.append("")
-    lines.append("GAPS TO 100%:")
-    lines.append("")
-
-    if ghosts > 0:
-        lines.append(f"  ⚠ {ghosts} ghost nodes (referenced but undefined)")
-        for name in data["ghost_list"]:
-            lines.append(f"      - {name}")
-
-    if data["no_content"]:
-        lines.append(f"  ⚠ {len(data['no_content'])} concepts without content: {', '.join(data['no_content'][:10])}")
-
-    if data["weak"]:
-        lines.append(f"  ⚠ {len(data['weak'])} weakly connected concepts (< 3 edges):")
-        for w in data["weak"]:
-            lines.append(f"      - {w['name']} ({w['deg']} edges)")
-
-    bidir = metrics["bidirectionality"]
-    if bidir < 80:
-        lines.append(f"  ⚠ Only {bidir:.0f}% of edges are bidirectional")
-        lines.append("      One-directional links = unvalidated from one side")
-
-    if data["unbridged"]:
-        lines.append(f"  ⚠ {len(data['unbridged'])} concepts not bridging both vaults:")
-        for u in data["unbridged"][:15]:
-            lines.append(f"      - [{u['vault']}] {u['name']}")
-        if len(data["unbridged"]) > 15:
-            lines.append(f"      ... and {len(data['unbridged']) - 15} more")
-
-    tt = metrics["tool_tautology"]
-    if tt < 100:
-        lines.append(f"  ⚠ Tool tautology at {tt:.0f}%")
-        lines.append("      prompt-engineer and system-design are partially tautological")
-        lines.append("      (generation tools — output is constrained but not closed)")
-
-    lines.append("")
-    if composite >= 95:
-        lines.append("  ✓ Graph is approaching ontological completeness.")
-    elif composite >= 80:
-        lines.append("  → Graph is well-structured. Address gaps above to approach 100%.")
-    else:
-        lines.append("  → Significant gaps remain. Focus on content and connectivity.")
-
-    text = "\n".join(lines)
-    fig.text(0.05, 0.97, text, transform=fig.transFigure, fontsize=8.5,
-             verticalalignment="top", fontfamily="monospace", color="#e0e0e0")
-    return fig
-
-
-# ============================================================
 # MAIN
 # ============================================================
 
@@ -599,23 +478,24 @@ def main():
     print("Connecting to Neo4j...")
     driver = get_driver()
 
-    print("Fetching graph data...")
+    print("Fetching graph data and running determinism report...")
     data = fetch_all_data(driver)
     driver.close()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     pdf_path = os.path.join(OUTPUT_DIR, f"neo4j_observability_{timestamp}.pdf")
 
-    print("Generating charts...")
+    print("\nGenerating charts...")
     charts = [
         ("Composite Gauge", chart_composite_gauge),
         ("Determinism Radar", chart_determinism_radar),
         ("Metrics Breakdown", chart_metrics_bar),
-        ("Vault Distribution", chart_vault_distribution),
+        ("Edge Type Distribution", chart_edge_type_distribution),
+        ("Node Label Distribution", chart_node_label_distribution),
         ("Degree Distribution", chart_degree_distribution),
         ("Top Concepts", chart_top_concepts),
         ("Orphans", chart_orphans),
-        ("Bridges", chart_bridges),
+        ("Cross-Document Bridges", chart_cross_document),
     ]
 
     with PdfPages(pdf_path) as pdf:
@@ -624,30 +504,30 @@ def main():
         fig.patch.set_facecolor("#1a1a2e")
         fig.text(0.5, 0.6, "Neo4j Observability Report", ha="center", va="center",
                  size=28, weight="bold", color="#e0e0e0")
-        fig.text(0.5, 0.5, "Tautologia Ontológica — Knowledge Graph", ha="center", va="center",
+        fig.text(0.5, 0.5, "Tautologia Ontologica — Knowledge Graph", ha="center", va="center",
                  size=16, color="#8888aa")
         fig.text(0.5, 0.40, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ha="center",
                  va="center", size=12, color="#6666aa")
-        fig.text(0.5, 0.32, f"{data['total']} concepts  |  {data['edges']} edges  |  "
-                 f"Composite Score: {data['composite']:.1f}%  ({status_label(data['composite'])})",
-                 ha="center", va="center", size=13, weight="bold",
+
+        total = data["total"]
+        all_edges = data["all_edges"]
+        sem_edges = data["semantic_edges"]
+        edge_types = len(data["edge_breakdown"])
+        fig.text(0.5, 0.32,
+                 f"{total} concepts  |  {all_edges} edges ({sem_edges} semantic, {edge_types} types)  |  "
+                 f"Score: {data['composite']:.1f}%  ({_status(data['composite'])})",
+                 ha="center", va="center", size=12, weight="bold",
                  color=status_color(data["composite"]))
         pdf.savefig(fig)
         plt.close(fig)
-        print("  [1/10] Title page")
+        print("  [1/{0}] Title page".format(len(charts) + 1))
 
         # Chart pages
         for i, (name, chart_fn) in enumerate(charts, 2):
             fig = chart_fn(data)
             pdf.savefig(fig)
             plt.close(fig)
-            print(f"  [{i}/{len(charts)+2}] {name}")
-
-        # Full text report
-        fig = text_report_page(data)
-        pdf.savefig(fig)
-        plt.close(fig)
-        print(f"  [{len(charts)+2}/{len(charts)+2}] Full Determinism Report")
+            print(f"  [{i}/{len(charts)+1}] {name}")
 
     print(f"\nPDF saved to: {pdf_path}")
     return pdf_path
