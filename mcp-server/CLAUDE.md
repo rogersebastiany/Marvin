@@ -22,33 +22,33 @@ uv run fastmcp run marvin_server.py --reload  # dev mode (auto-reload on file ch
 
 ## Architecture
 
-Single server (`marvin_server.py`) wrapping 6 backend modules:
+Single server (`marvin_server.py`) wrapping 9 backend modules:
 
 | Module | Backend | What It Does |
 |--------|---------|-------------|
 | `ontology.py` | Neo4j | Knowledge graph — concepts, relations, traversal, auto-link, bidirectionality |
-| `memory.py` | Milvus + OpenAI | Episodic memory — tool calls (L1), decisions (L2), sessions (L3) |
+| `memory.py` | Milvus + OpenAI | Episodic memory — decisions (L2), sessions (L3), plans, vector search |
 | `docs_backend.py` | Filesystem | Search/browse local markdown docs (`docs/`) |
 | `web_to_docs_backend.py` | httpx + BS4 | Fetch web → markdown → save to `docs/` |
 | `prompt_engineer_backend.py` | — | Transformer-Driven Prompt Architect framework |
 | `system_design_backend.py` | Filesystem | Mermaid.js diagram generation/review (`diagrams/`) |
+| `code_improvement_backend.py` | Milvus | AST chunking + vector walk (improve_code, tdd) |
+| `orchestrator_backend.py` | Milvus | Goal → execution plan, 6 tool chains |
+| `ops_backend.py` | Neo4j + Milvus + LanceDB | Vault sync, self-audit, self-improve |
 
-## 35 Tools (8 categories)
+## 44 Tools (5 tiers)
 
-| Category | Tools | Tautological? |
-|----------|-------|--------------|
-| Milvus Retrieval (sets gate) | `retrieve`, `get_memory`, `search_docs` | Yes |
-| Neo4j Deep-dive (gated) | `get_concept`, `traverse`, `why_exists` | Yes |
-| Overviews (ungated) | `list_concepts`, `list_docs`, `list_diagrams`, `get_doc`, `get_diagram` | Yes |
-| Logging | `log_decision` (async fire-and-forget), `log_session` | Yes |
-| Enrichment (gated) | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases` | Yes |
-| Evolution (gated) | `propose_schema_change`, `execute_schema_change` | Yes (human gate) |
-| Documentation (gated writes) | `fetch_url`, `save_doc`, `rank_urls`, `crawl_docs`, `research_topic` | Yes |
-| Prompt Engineering (gated) | `generate_prompt`, `refine_prompt`, `audit_prompt` | Partial |
-| Diagrams (gated writes) | `generate_diagram`, `judge_diagram`, `save_diagram` | Partial |
-| Introspection (ungated) | `inspect_schemas`, `stats`, `self_description` | Yes |
+The canonical list is `MARVIN_TOOLS` in `marvin_server.py`. Tool count is always `len(MARVIN_TOOLS)` at runtime.
 
-**Milvus Gate:** `RetrieveBeforeActMiddleware` blocks Neo4j reads and all writes unless `retrieve`, `get_memory`, or `search_docs` was called first. Architectural enforcement (P=0).
+| Tier | Gate Behavior | Tools |
+|------|--------------|-------|
+| **Milvus** (sets gate) | S→A reduction | `retrieve`, `get_memory`, `search_docs`, `refine_plan`, `improve_code`, `tdd`, `orchestrate` |
+| **Overview** (ungated) | No flag set | `list_concepts`, `list_docs`, `list_diagrams`, `get_doc`, `get_diagram`, `stats`, `self_description`, `inspect_schemas` |
+| **Neo4j Read** (gated) | Needs 1a first | `get_concept`, `traverse`, `why_exists`, `audit_code` |
+| **Write** (gated) | Needs 1a first | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases`, `execute_schema_change`, `save_doc`, `save_plan`, `crawl_docs`, `research_topic`, `generate_prompt`, `refine_prompt`, `generate_diagram`, `save_diagram`, `sync_vaults`, `self_improve` |
+| **Always Allowed** | No restrictions | `log_decision`, `log_session`, `propose_schema_change`, `fetch_url`, `rank_urls`, `audit_prompt`, `judge_diagram`, `get_user_score` |
+
+**Milvus Gate:** `RetrieveBeforeActMiddleware` blocks Neo4j reads and all writes unless a Milvus tier tool was called first. Architectural enforcement (P=0).
 
 ## Configuration
 

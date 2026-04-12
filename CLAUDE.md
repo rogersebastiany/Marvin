@@ -19,10 +19,10 @@ Call `stats` for a live system overview. Marvin's identity prompt is built dynam
 
 ## Workspace
 
-- **`mcp-server/`** — Marvin. Single unified MCP server (35 tools). FastMCP 3.x, Python 3.12, managed with `uv`.
-- **`obsidian-vault-tautologia-ontologica/`** — Obsidian vault (PT-BR). 42 thesis concepts. Loaded into Neo4j as `thesis` vault.
-- **`load-vaults/`** — Vault loader scripts. Parses Obsidian markdown → Neo4j + Milvus.
-- **`marvin_ops.py`** — CI orchestrator. Sync, audit, improve. Zero LLM tokens.
+- **`mcp-server/`** — Marvin. Single unified MCP server (44 tools, 9 backends). FastMCP 3.x, Python 3.12, managed with `uv`.
+- **`obsidian-vault-tautologia-ontologica/`** — Obsidian vault (PT-BR). Thesis concepts. Loaded into Neo4j via Cognee.
+- **`load-vaults/`** — Cognee-based KG extraction. `cognify_vaults.py` → Neo4j + LanceDB.
+- **`marvin_ops.py`** — Local CLI for sync/audit/improve. Logic also available as MCP tools via `ops_backend.py`.
 
 ### Build & Run
 
@@ -35,7 +35,7 @@ uv run fastmcp run marvin_server.py --reload  # dev (auto-reload)
 
 ### Architecture
 
-Single server (`marvin_server.py`) with 6 backend modules:
+Single server (`marvin_server.py`) with 9 backend modules:
 
 | Module | Backend |
 |--------|---------|
@@ -45,8 +45,11 @@ Single server (`marvin_server.py`) with 6 backend modules:
 | `web_to_docs_backend.py` | httpx + BS4 — web → markdown → docs/ |
 | `prompt_engineer_backend.py` | Transformer-Driven Prompt Architect framework |
 | `system_design_backend.py` | Mermaid.js diagrams |
+| `code_improvement_backend.py` | AST chunking + Milvus vector walk (improve_code, tdd) |
+| `orchestrator_backend.py` | Goal → execution plan (6 tool chains) |
+| `ops_backend.py` | Vault sync, self-audit, self-improve (migrated from marvin_ops.py) |
 
-**Middleware (Milvus Gate):** `RetrieveBeforeActMiddleware` blocks ALL Neo4j reads (`get_concept`, `traverse`, `why_exists`) and write tools unless `retrieve`, `get_memory`, or `search_docs` was called first. Returns `ToolError` for self-correction. `list_concepts` is ungated (overview only, does not set the gate flag).
+**Middleware (Milvus Gate):** `RetrieveBeforeActMiddleware` blocks Neo4j reads and write tools unless a Milvus retrieval tool was called first. 5-tier classification: Milvus (7 tools, set gate), Overview (8, ungated), Neo4j Read (4, gated), Write (17, gated), Always Allowed (8).
 
 ### Knowledge Graph — Edge Types
 
@@ -75,13 +78,15 @@ Symmetric: A→B auto-creates B→A same type. Directional: A→B creates B→A 
 - Bidirectional edges enforced: every A→B has B→A
 - `log_decision` is async fire-and-forget (daemon thread)
 
-### CI Pipeline (marvin-ops)
+### Orchestrator Chains
 
-| Trigger | Pipeline |
-|---------|----------|
-| PR | sync + audit |
-| Push to main | sync + audit + improve |
-| Weekly schedule | sync + audit + improve |
-| workflow_dispatch | user picks |
+The `orchestrate` tool plans tool execution sequences any MCP client can follow:
 
-Self-audit compares code AST against KG claims. Zero LLM tokens — pure set operations.
+| Chain | Flow |
+|-------|------|
+| `tdd_improve` | tdd → write tests → green → improve_code → apply → green → issue |
+| `full_improvement` | tdd → tests → green → improve → apply → green → tdd again → delta → issue |
+| `research` | rank_urls → filter 60+ → research_topic |
+| `prompt_lifecycle` | generate_prompt → audit_prompt → if <7 → refine_prompt |
+| `code_to_knowledge` | improve_code → find gaps → retrieve → expand |
+| `sync_and_audit` | sync_vaults → audit_code → review → self_improve |

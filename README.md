@@ -53,19 +53,23 @@ Marvin implements the hard version. The agent's `mcp.json` contains exactly one 
 ## Architecture
 
 ```
-Agent (Claude Code / any MCP client)
+Agent (Claude Code / Cursor / any MCP client)
   │
-  └── mcp-marvin (sole MCP server — 32 tools)
+  └── mcp-marvin (sole MCP server — 44 tools, 9 backends)
         ├── Neo4j (knowledge graph — ontology)
-        │     374 concepts, 6204 relations, 10 semantic edge types
-        │     Thesis + Implementation + Agent + Docs vaults
+        │     619 concepts, 2032 typed edges, 16 semantic edge types
+        │     Extracted by Cognee with custom Concept(DataPoint) graph_model
         │
         ├── Milvus (vector DB — episodic memory)
-        │     tool_calls   (L1 Experience)
+        │     concepts      (619 — synced from Cognee LanceDB)
+        │     doc_chunks    (synced from Cognee LanceDB)
         │     decisions     (L2 Knowledge)
         │     sessions      (L3 Wisdom)
+        │     plans         (execution plans)
+        │     self_description (cached identity prompt)
         │
-        ├── docs/ (local markdown documentation)
+        ├── LanceDB (Cognee's internal vector store — source for Milvus sync)
+        ├── docs/ (67 local markdown docs)
         └── diagrams/ (Mermaid.js system designs)
 ```
 
@@ -75,9 +79,8 @@ The agent never talks to Neo4j, Milvus, or any backend directly. Everything goes
 
 ```
 Agent receives task
-  → Marvin.retrieve() — queries Neo4j + Milvus + docs
+  → Marvin.retrieve() — queries Milvus (concepts + docs + memory)
   → Agent acts (using Marvin's tools)
-  → Marvin.log_tool_call() — records action to Milvus (L1)
   → Marvin.log_decision() — records decision to Milvus (L2)
   → Agent discovers new concept relationship
   → Marvin.expand() / Marvin.link() — enriches Neo4j
@@ -87,171 +90,88 @@ Agent receives task
 
 The loop is monotonic — knowledge only accumulates, never degrades. Each cycle makes the ontology more complete, which makes the agent more deterministic.
 
-### HCC Parallel (Hierarchical Cognitive Caching)
+### Orchestrated Tool Chains
 
-Our three Milvus collections map directly to the HCC architecture from the Ultra-Long-Horizon paper:
+The `orchestrate` tool plans multi-step workflows any MCP client can follow:
 
-| Milvus Collection | HCC Layer | Granularity | What It Stores |
-|---|---|---|---|
-| `tool_calls` | L1 Evolving Experience | Fine | Every tool invocation with params, result, context |
-| `decisions` | L2 Refined Knowledge | Medium | High-level decisions with reasoning and outcome |
-| `sessions` | L3 Prior Wisdom | Coarse | Session summaries and lessons learned |
+| Chain | Flow |
+|-------|------|
+| `tdd_improve` | tdd → write tests → green → improve_code → apply → green → issue |
+| `full_improvement` | tdd → tests → improve → verify → tdd again → delta report |
+| `research` | rank_urls → filter 60+ → research_topic |
+| `prompt_lifecycle` | generate_prompt → audit_prompt → if <7 → refine_prompt |
+| `code_to_knowledge` | improve_code → find gaps → retrieve → expand |
+| `sync_and_audit` | sync_vaults → audit_code → review → self_improve |
 
-The ablation study in the paper validates this design: without L1, performance drops to 22.7%; without L3, it drops to 54.5%. All three layers are necessary.
+### HCC (Hierarchical Cognitive Caching)
+
+| Milvus Collection | HCC Layer | What It Stores |
+|---|---|---|
+| `decisions` | L2 Refined Knowledge | Decisions with reasoning and outcome |
+| `sessions` | L3 Prior Wisdom | Session summaries and lessons learned |
+
+L1 (tool traces) is transient context window memory — not persisted per HCC design. Persisting L1 causes context to grow to 200k+ tokens and saturate.
 
 ---
 
-## Marvin's Tools (32 total)
+## Marvin's Tools
 
-### Retrieval (4 tools)
-| Tool | What It Does |
-|---|---|
-| `retrieve` | Unified search across Neo4j + Milvus + docs. One call gets everything. |
-| `get_concept` | Full concept with content and all relations from the ontology |
-| `traverse` | Walk N hops from a concept, return neighborhood graph |
-| `why_exists` | Explain why a concept exists — all edge reasoning |
+44 tools across 9 backends. The canonical list is `MARVIN_TOOLS` in `marvin_server.py` — never hardcoded elsewhere. Run `stats` for a live count, or:
 
-### Logging — Episodic Memory (3 tools)
-| Tool | What It Does |
-|---|---|
-| `log_tool_call` | Record a tool invocation (L1 Experience) |
-| `log_decision` | Record a decision with reasoning (L2 Knowledge) |
-| `log_session` | Record a session summary (L3 Wisdom) |
+```bash
+cd mcp-server && uv run python -c "
+from marvin_server import MARVIN_TOOLS
+for t in MARVIN_TOOLS: print(t)
+"
+```
 
-### Enrichment (6 tools)
-| Tool | What It Does |
-|---|---|
-| `expand` | Add a new concept or relation (with `relation_type` param for semantic edges) |
-| `link` | Create a typed relation between two concepts (IMPLEMENTS, PROVES, COMPOSES, etc.) |
-| `auto_link` | Scan concept content for references to other concepts, auto-create edges |
-| `ensure_bidirectional` | For symmetric edges (RELATES_TO, TRANSLATES_TO, CONTRADICTS), ensure B→A exists |
-| `set_aliases` | Set English aliases for a concept (cross-language search) |
-| `batch_set_aliases` | Set aliases for multiple concepts at once |
+### Tool Categories
 
-### Evolution — Human-in-the-Loop (2 tools)
-| Tool | What It Does |
-|---|---|
-| `propose_schema_change` | Propose a schema change (returns proposal for human review) |
-| `execute_schema_change` | Apply a schema change (requires `confirmed=True` — human gate) |
+| Category | Tools |
+|----------|-------|
+| **Milvus Retrieval** (sets gate) | `retrieve`, `get_memory`, `search_docs`, `refine_plan`, `improve_code`, `tdd`, `orchestrate` |
+| **Overviews** (ungated) | `list_concepts`, `list_docs`, `list_diagrams`, `get_doc`, `get_diagram`, `stats`, `self_description`, `inspect_schemas` |
+| **Neo4j Deep-dive** (gated) | `get_concept`, `traverse`, `why_exists`, `audit_code` |
+| **Write** (gated) | `expand`, `link`, `auto_link`, `ensure_bidirectional`, `set_aliases`, `batch_set_aliases`, `execute_schema_change`, `save_doc`, `save_plan`, `crawl_docs`, `research_topic`, `generate_prompt`, `refine_prompt`, `generate_diagram`, `save_diagram`, `sync_vaults`, `self_improve` |
+| **Always Allowed** | `log_decision`, `log_session`, `propose_schema_change`, `fetch_url`, `rank_urls`, `audit_prompt`, `judge_diagram`, `get_user_score` |
 
-### Documentation (7 tools)
-| Tool | What It Does |
-|---|---|
-| `search_docs` | Search local markdown docs by keyword |
-| `list_docs` | List all available doc files |
-| `get_doc` | Read a full documentation file |
-| `fetch_url` | Fetch a webpage and return as markdown |
-| `save_doc` | Fetch a webpage and save as local doc |
-| `crawl_docs` | Crawl a doc site, saving pages locally |
-| `research_topic` | Multi-URL fetch → consolidated doc with bibliography and diff vs existing |
+### Milvus Gate Middleware
 
-### Prompt Engineering (3 tools)
-| Tool | What It Does |
-|---|---|
-| `generate_prompt` | Generate a structured prompt (Transformer-Driven Prompt Architect framework) |
-| `refine_prompt` | Improve an existing prompt based on feedback |
-| `audit_prompt` | Evaluate a prompt against the 6 mandatory sections |
-
-### System Design — Diagrams (5 tools)
-| Tool | What It Does |
-|---|---|
-| `generate_diagram` | Generate a Mermaid.js diagram from description |
-| `judge_diagram` | Review a diagram for correctness and quality (4-dimension scoring) |
-| `save_diagram` | Save a diagram to `diagrams/` |
-| `list_diagrams` | List saved diagrams |
-| `get_diagram` | Read a saved diagram |
-
-### Introspection (2 tools)
-| Tool | What It Does |
-|---|---|
-| `inspect_schemas` | Show current Neo4j + Milvus schemas |
-| `stats` | Full system overview (concepts, relations, memory entries, docs, diagrams) |
+All Neo4j reads and write tools are **blocked** unless a Milvus retrieval tool (`retrieve`, `get_memory`, `search_docs`, `refine_plan`, `improve_code`, `tdd`, `orchestrate`) was called first in the session. This is architectural enforcement (P=0), not prompt bias.
 
 ---
 
 ## Neo4j Knowledge Graph
 
-### Schema
-
-```
-(:Concept {
-  name: string (unique),
-  vault: "thesis" | "implementation" | "both" | "agent",
-  summary: string,
-  content: string,
-  ghost: boolean,
-  created_at: datetime,
-  updated_at: datetime
-})
-
--[:RELATES_TO | :IMPLEMENTS | :PROVES | :REQUIRES | :TRANSLATES_TO |
-  :EXTENDS | :CONTRADICTS | :ENABLES | :EXEMPLIFIES | :COMPOSES |
-  :EVOLVES_FROM {
-  weight: float,
-  reasoning: string,
-  discovered_by: "vault_import" | "agent" | "auto_link" | "bidirectional"
-}]->
-
-Symmetric types (A→B implies B→A): RELATES_TO, TRANSLATES_TO, CONTRADICTS
-Directional types (A→B only): IMPLEMENTS, PROVES, REQUIRES, EXTENDS, ENABLES, EXEMPLIFIES, COMPOSES, EVOLVES_FROM
-```
+619 concepts, 2032 typed edges. Extracted by **Cognee** with a custom `Concept(DataPoint)` graph_model — LLM-driven extraction from Obsidian vaults into Neo4j, with vectors stored in LanceDB and synced to Milvus.
 
 ### Vault Sources
 
-- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — 45 concepts covering the mathematical and theoretical foundations: Ontological Tautology, Determinism, Linear Algebra, Set Theory, Sample Space, Convergence, DFAH, LLM Output Drift, HCC, etc. Available in Portuguese (original) and English (`vault-thesis-en/`).
+- **Thesis vault** (`obsidian-vault-tautologia-ontologica/`) — Mathematical and theoretical foundations (PT-BR + English translation in `vault-thesis-en/`)
+- **Implementation vault** (`vault/`) — Practical architecture concepts (PT-BR + English in `vault-implementation-en/`)
+- **Docs** — 67 fetched documentation files in `mcp-server/docs/`
 
-- **Implementation vault** (`vault/`) — 38 concepts covering the practical architecture: Agente na POC, Cadeia de Servers, FastMCP, Neo4j, Milvus, mcp-ontology-server, mcp-memory-server, Loop de Auto-Melhoria, Enforcement Arquitetural, etc. Available in Portuguese (original) and English (`vault-implementation-en/`).
+### Edge Types
 
-- **Both vaults** — 3 concepts that bridge theory and implementation: Acumulação Cognitiva, Tool Tautológica, Enforcement Arquitetural.
-
-- **Docs vault** — 222 fetched documentation files covering Python, AWS, Kotlin, Neo4j, Milvus, Docker, MCP, Mermaid.js, SE patterns, CI/CD, OWASP, OpenTelemetry, and more.
-
-- **Agent vault** — 20+ concepts discovered by Marvin's self-improvement loop, including Python, AWS Infrastructure, Kotlin, and cross-domain bridge concepts. Auto-classified as `agent` — distinguishable from human-authored knowledge.
-
-### Determinism Report
-
-The `load-vaults/determinism_report.py` script measures how close the graph is to ontological completeness:
-
-| Metric | Score | Status | Weight |
-|---|---|---|---|
-| Ghost Coverage (defined/referenced) | 100.0% | TAUTOLOGICAL | 0.20 |
-| Content Coverage (has substance) | 100.0% | TAUTOLOGICAL | 0.15 |
-| Summary Coverage (has summary) | 98.7% | TAUTOLOGICAL | 0.05 |
-| Connectivity (no orphans, min 3 edges) | 83.3% | HIGH | 0.20 |
-| Bidirectionality (A→B and B→A) | 100.0% | TAUTOLOGICAL | 0.10 |
-| Vault Bridging (theory↔implementation) | 40.9% | LOW | 0.15 |
-| Tool Tautology (32 tools classified) | 89.7% | HIGH | 0.15 |
-| **Composite Determinism Score** | **86.2%** | **HIGH** | |
-
-*Last run: 2026-04-09 — 374 concepts, 6204 edges, 0 ghosts, 10 edge types*
-
-Run `cd load-vaults && uv run python determinism_report.py` for current metrics.
+16 semantic edge types (see `relation_types.json`). Key types: COMPOSES (1287), RELATES_TO (316), REQUIRES (102), IMPLEMENTS (90), EXTENDS (42), ENABLES (41). Run `stats` for current counts.
 
 ---
 
-## Milvus Episodic Memory
+## Milvus Vector Memory
 
-Three collections with OpenAI embeddings (`text-embedding-3-small`, 1536 dimensions), COSINE similarity, IVF_FLAT index:
+7 collections, OpenAI `text-embedding-3-small` (1536 dim), COSINE similarity:
 
-### tool_calls (L1 Experience)
-```
-id, tool_name, parameters, result_summary, context,
-session_id, timestamp, success, embedding[1536]
-```
+| Collection | Source | What It Stores |
+|---|---|---|
+| `concepts` | Cognee LanceDB sync | 619 concept vectors + names + summaries |
+| `doc_chunks` | Cognee LanceDB sync | Document chunk vectors from vault extraction |
+| `decisions` | Agent (L2 Knowledge) | Decisions with reasoning and outcome |
+| `sessions` | Agent (L3 Wisdom) | Session summaries and lessons learned |
+| `plans` | Agent | Execution plans (retrievable via `refine_plan`) |
+| `self_description` | Auto-generated | Cached identity prompt |
+| `tool_calls` | — | Reserved (L1 not persisted per HCC) |
 
-### decisions (L2 Knowledge)
-```
-id, objective, options_considered, chosen_option, reasoning,
-outcome, session_id, timestamp, embedding[1536]
-```
-
-### sessions (L3 Wisdom)
-```
-id, objective, approach, result, lessons_learned, tools_used,
-decision_count, tool_call_count, timestamp, embedding[1536]
-```
-
-Memory is append-only — the agent accumulates experience monotonically. Search is by semantic similarity (cosine distance in embedding space), not keyword matching.
+Concept and doc_chunk vectors are synced from Cognee's LanceDB — zero OpenAI embedding cost for the transfer.
 
 ---
 
@@ -259,52 +179,36 @@ Memory is append-only — the agent accumulates experience monotonically. Search
 
 ```
 Marvin/
-├── mcp-server/                  ← Marvin + all backends
-│   ├── marvin_server.py             ← THE server (32 tools, 8 categories)
-│   ├── ontology.py                  ← Neo4j backend
-│   ├── memory.py                    ← Milvus backend
-│   ├── docs_backend.py              ← Local docs search/browse
-│   ├── web_to_docs_backend.py       ← Web → markdown fetcher
-│   ├── prompt_engineer_backend.py   ← Prompt Architect framework
-│   ├── system_design_backend.py     ← Mermaid.js diagrams
-│   ├── docs/                        ← Local documentation (222 files)
-│   ├── diagrams/                    ← Saved Mermaid diagrams (3 files)
-│   ├── .cursor/mcp.json             ← MCP config (only mcp-marvin)
-│   ├── pyproject.toml               ← Python deps (uv)
-│   ├── Dockerfile
-│   └── Makefile
-│
-├── obsidian-vault-tautologia-ontologica/  ← Thesis vault (45 concepts, Portuguese)
-│   └── obsidian-vault/
-│       ├── Tautologia Ontológica.md
-│       ├── Determinismo.md
-│       ├── ... (45 interconnected notes)
-│       └── poc docs/
-│
-├── vault-thesis-en/                 ← Thesis vault (English translation)
-│   └── ... (45 translated notes)
-│
-├── vault/                           ← Implementation vault (38 concepts, Portuguese)
-│   ├── Agente na POC.md
-│   ├── Neo4j.md
-│   ├── ... (38 interconnected notes)
-│
-├── vault-implementation-en/         ← Implementation vault (English translation)
-│   └── ... (38 translated notes)
-│
-├── load-vaults/                     ← Disposable ETL scripts
-│   ├── cognify_vaults.py            ← Cognee-based KG extractor (Vault → Neo4j :Concept)
-│   ├── cognee_models.py             ← Custom Concept(DataPoint) graph_model
-│   ├── smoke_concept_model.py       ← Cognee Path A regression smoke test
-│   ├── query_graph.py               ← Interactive Neo4j explorer
-│   ├── determinism_report.py        ← Ontological determinism metrics
-│   ├── setup_milvus.py              ← Milvus collection creator
+├── mcp-server/                          ← Marvin (44 tools, 9 backends)
+│   ├── marvin_server.py                     ← THE server + tool registration
+│   ├── ontology.py                          ← Neo4j backend
+│   ├── memory.py                            ← Milvus backend
+│   ├── docs_backend.py                      ← Local docs search/browse
+│   ├── web_to_docs_backend.py               ← Web → markdown fetcher
+│   ├── prompt_engineer_backend.py           ← Prompt Architect framework
+│   ├── system_design_backend.py             ← Mermaid.js diagrams
+│   ├── code_improvement_backend.py          ← AST chunking + Milvus vector walk
+│   ├── orchestrator_backend.py              ← Goal → execution plan (6 chains)
+│   ├── ops_backend.py                       ← Sync, audit, self-improve
+│   ├── self_audit.py                        ← Code AST vs KG comparison
+│   ├── docs/                                ← 67 local markdown docs
+│   ├── diagrams/                            ← Saved Mermaid diagrams
 │   └── pyproject.toml
 │
-├── docker-compose.yml               ← Full local stack
-├── CLAUDE.md                        ← Claude Code instructions
-├── .gitignore
-└── Untitled-2026-03-20-2209.excalidraw  ← Architecture whiteboard
+├── load-vaults/                         ← Cognee KG extraction
+│   ├── cognify_vaults.py                    ← Vault → Cognee → Neo4j + LanceDB
+│   ├── cognee_models.py                     ← Custom Concept(DataPoint) graph_model
+│   └── pyproject.toml
+│
+├── obsidian-vault-tautologia-ontologica/  ← Thesis vault (PT-BR)
+├── vault-thesis-en/                       ← Thesis vault (English)
+├── vault/                                 ← Implementation vault (PT-BR)
+├── vault-implementation-en/               ← Implementation vault (English)
+│
+├── marvin_ops.py                        ← Local CLI: sync/audit/improve
+├── docker-compose.yml                   ← Full local stack
+├── CLAUDE.md                            ← Claude Code instructions
+└── .env.example
 ```
 
 ---
@@ -349,7 +253,7 @@ docker compose up -d
 docker compose ps
 ```
 
-### 2. Load vaults into Neo4j (cognee KG extraction)
+### 2. Load vaults into Neo4j (Cognee KG extraction)
 
 ```bash
 cd load-vaults
@@ -357,41 +261,26 @@ uv sync
 uv run python cognify_vaults.py    # ~7-9h on a fresh wipe (Tier 1 OpenAI)
 ```
 
-### 3. Set up Milvus collections
+### 3. Run Marvin
 
 ```bash
-uv run python setup_milvus.py
-```
-
-### 4. Run Marvin
-
-```bash
-cd ../mcp-server
+cd mcp-server
 uv sync
-# Set your OpenAI key
-echo "OPENAI_API_KEY=sk-..." > ../.env
-# Start Marvin
+cp .env.example ../.env  # edit with your OpenAI key
 uv run python marvin_server.py
 ```
 
-### 5. Explore
+Milvus collections are created automatically on first run.
+
+### 4. Sync vectors (LanceDB → Milvus)
 
 ```bash
-# Query the graph
-cd ../load-vaults
-uv run python query_graph.py stats
-uv run python query_graph.py top 10
-uv run python query_graph.py concept "Tautologia Ontológica"
-uv run python query_graph.py path "Determinismo" "Milvus"
-
-# Determinism report
-uv run python determinism_report.py
-
-# Milvus status
-uv run python setup_milvus.py --status
+cd mcp-server && uv run python ../marvin_ops.py sync --skip-cognify
 ```
 
-### 6. Wire into Claude Code
+Or use the MCP tool: `sync_vaults(skip_cognify=True)`
+
+### 5. Wire into Claude Code
 
 Add to your Claude Code MCP config:
 
