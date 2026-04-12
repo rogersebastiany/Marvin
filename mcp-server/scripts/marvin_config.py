@@ -52,6 +52,11 @@ TOGGLES = {
         "layer": "Hook",
         "default": "1",  # enabled
     },
+    "MARVIN_HOOK_EDIT_GATE": {
+        "description": "Edit/Write gate — blocks core file edits without orchestration plan (P=0)",
+        "layer": "Hook",
+        "default": "1",  # enabled
+    },
 }
 
 

@@ -18,18 +18,25 @@ fi
 MILVUS_GATE="ENABLED"
 ORCH_GATE="ENABLED"
 PROVENANCE="ENABLED"
+EDIT_GATE="ENABLED"
 
 if [ -f "$ENV_FILE" ]; then
     [ "$(grep -s "^MARVIN_DISABLE_MILVUS_GATE=" "$ENV_FILE" | cut -d= -f2)" = "1" ] && MILVUS_GATE="DISABLED"
     [ "$(grep -s "^MARVIN_DISABLE_ORCHESTRATION_GATE=" "$ENV_FILE" | cut -d= -f2)" = "1" ] && ORCH_GATE="DISABLED"
     [ "$(grep -s "^MARVIN_DISABLE_PROVENANCE=" "$ENV_FILE" | cut -d= -f2)" = "1" ] && PROVENANCE="DISABLED"
+    [ "$(grep -s "^MARVIN_HOOK_EDIT_GATE=" "$ENV_FILE" | cut -d= -f2)" = "0" ] && EDIT_GATE="DISABLED"
 fi
+
+# Clean stale orchestration state from previous session
+STATE_FILE="$(dirname "$0")/../state/orchestrated_session"
+rm -f "$STATE_FILE" 2>/dev/null || true
 
 cat <<EOF
 [Marvin Enforcement Status]
   Milvus Gate:        $MILVUS_GATE (retrieve before Neo4j access)
   Orchestration Gate: $ORCH_GATE (orchestrate before enrichment)
   Provenance:         $PROVENANCE (source_doc on expand in densify/research)
+  Edit Gate:          $EDIT_GATE (orchestrate before editing core files)
 
-Remember: call orchestrate before any enrichment. Use source_doc + source_chunk_idx on expand.
+Core files (backends/*, marvin_server.py) are locked until orchestrate is called.
 EOF

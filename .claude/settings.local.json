@@ -1,0 +1,128 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__mcp-marvin__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre_mcp_tool.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/edit_gate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__mcp-marvin__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post_mcp_tool.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session_start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(docker compose:*)",
+      "Bash(docker-compose --version)",
+      "Bash(uv add:*)",
+      "Bash(timeout 5 uv run python -c \"from ontology_server import mcp; print\\('ontology-server: OK'\\)\")",
+      "Bash(timeout 5 uv run python -c \"from memory_server import mcp; print\\('memory-server: OK'\\)\")",
+      "Bash(timeout 10 uv run python -c ':*)",
+      "Bash(timeout 10 uv run python -c \"from marvin_server import mcp; print\\('mcp-marvin: OK'\\)\")",
+      "Bash(timeout 10 uv run python marvin_server.py)",
+      "Bash(timeout 15 uv run python marvin_server.py)",
+      "Bash(uv --version)",
+      "mcp__mcp-marvin__stats",
+      "mcp__mcp-marvin__retrieve",
+      "mcp__mcp-marvin__inspect_schemas",
+      "mcp__mcp-marvin__list_docs",
+      "mcp__mcp-marvin__get_concept",
+      "mcp__mcp-marvin__get_doc",
+      "mcp__mcp-marvin__get_diagram",
+      "mcp__mcp-marvin__why_exists",
+      "mcp__mcp-marvin__traverse",
+      "mcp__mcp-marvin__search_docs",
+      "mcp__mcp-marvin__log_tool_call",
+      "mcp__mcp-marvin__log_decision",
+      "mcp__mcp-marvin__expand",
+      "mcp__mcp-marvin__link",
+      "mcp__mcp-marvin__log_session",
+      "mcp__mcp-marvin__generate_prompt",
+      "mcp__mcp-marvin__generate_diagram",
+      "mcp__mcp-marvin__save_diagram",
+      "mcp__mcp-marvin__judge_diagram",
+      "mcp__mcp-marvin__audit_prompt",
+      "mcp__mcp-marvin__refine_prompt",
+      "Bash(python3 -c \"import sys,json; s=json.load\\(sys.stdin\\); print\\(f'Resources: {len\\(s.get\\(\\\\\"resources\\\\\",[]\\)\\)}'\\); [print\\(f'  - {r[\\\\\"type\\\\\"]}.{r[\\\\\"name\\\\\"]}'\\) for r in s.get\\('resources',[]\\)]\")",
+      "Bash(/home/rgr/.local/bin/uv run:*)",
+      "mcp__mcp-marvin__save_doc",
+      "Bash(ls -la .terraform*)",
+      "Bash(ls -la *.lock*)",
+      "Bash(uv run:*)",
+      "Bash(uv sync:*)",
+      "Bash(ls \"/home/rgr/lab/oh yeah/vault-thesis-en/\"*.md)",
+      "Bash(ls \"/home/rgr/lab/oh yeah/vault-implementation-en/\"*.md)",
+      "Bash(find vault-thesis-en:*)",
+      "Bash(grep -ohP '\\\\[\\\\[[^\\\\]]+\\\\]\\\\]' vault-thesis-en/*.md vault-implementation-en/*.md)",
+      "Bash(ls -d obsidian-vault-*)",
+      "Bash(ls -d */)",
+      "Bash(ls *.md)",
+      "Bash(ls \"poc docs/\"*.md)",
+      "mcp__mcp-marvin__fetch_url",
+      "Read(//home/rgr/.claude/**)",
+      "mcp__mcp-marvin__research_topic",
+      "Bash(python -c \"import web_to_docs_backend; print\\('OK'\\)\")",
+      "Bash(wc -l *.md)",
+      "Bash(head -3 *.md)",
+      "Bash(docker exec:*)",
+      "Bash(awk '/^## [0-9]+\\\\. /{print NR\": \"$0}' cognee-knowledge-graph-memory.md)",
+      "Bash(head -5 backups/neo4j-pre-cognee-nuke-*.cypher)",
+      "Bash(tail -5 backups/neo4j-pre-cognee-nuke-*.cypher)",
+      "Bash(kill 2629753 2629745)",
+      "Bash(grep --line-buffered -v \"^$\")",
+      "Bash(kill 2637322 2637315)",
+      "Bash(kill 2644443 2644448)",
+      "Bash(disown sleep:*)",
+      "Bash(ps:*)",
+      "Bash(nohup uv:*)",
+      "Bash(disown)",
+      "Bash(grep -nA 15 \"def index_concepts\" memory.py)",
+      "Bash(sort -k9)",
+      "Bash(python3 -c ':*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('Module:', d['module_name']\\); print\\('Imports:', d['imports'][:10]\\); print\\('Total knowledge hits:', d['total_knowledge_hits']\\); print\\('Unique sources:', d['unique_sources']\\); print\\('Testable units:', len\\(d['testable_units']\\)\\); [print\\(f'  - {u[\\\\\"name\\\\\"]} \\({u[\\\\\"type\\\\\"]}\\) lines {u.get\\(\\\\\"start_line\\\\\",\\\\\"?\\\\\"\\)}-{u.get\\(\\\\\"end_line\\\\\",\\\\\"?\\\\\"\\)} | {len\\(u.get\\(\\\\\"knowledge_matches\\\\\",[]\\)\\)} KB hits'\\) for u in d['testable_units']]\")",
+      "Bash(mkdir:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "mcp-marvin"
+  ]
+}
