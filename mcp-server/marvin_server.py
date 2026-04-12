@@ -33,6 +33,7 @@ import prompt_engineer_backend
 import system_design_backend
 import code_improvement_backend
 import orchestrator_backend
+import ops_backend
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -251,6 +252,7 @@ MARVIN_TOOLS = [
     "get_user_score",
     "refine_plan", "save_plan",
     "improve_code", "tdd", "orchestrate",
+    "sync_vaults", "audit_code", "self_improve",
 ]
 # Single source of truth — anything that needs the tool count must read len(MARVIN_TOOLS)
 # at runtime, never hardcode. See vault/Marvin.md (intentionally has no tool count to
@@ -292,7 +294,7 @@ OVERVIEW_TOOLS = frozenset({
 # Tier 2 — Neo4j read tools: require prior Milvus retrieval (NEW gate).
 # These access full node content and edges — operating on S without
 # Milvus reduction means browsing the unconstrained graph.
-NEO4J_READ_TOOLS = frozenset({"get_concept", "traverse", "why_exists"})
+NEO4J_READ_TOOLS = frozenset({"get_concept", "traverse", "why_exists", "audit_code"})
 
 # Tier 3 — Write tools: require prior Milvus retrieval (same as before).
 WRITE_TOOLS = frozenset({
@@ -303,6 +305,7 @@ WRITE_TOOLS = frozenset({
     "generate_prompt", "refine_prompt",
     "generate_diagram", "save_diagram",
     "save_plan",
+    "sync_vaults", "self_improve",
 })
 
 # Union of tiers 2+3 for the gate check
@@ -658,6 +661,69 @@ def orchestrate(
         prompt=prompt,
         k_per_collection=k_per_collection,
     )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": False, "idempotentHint": True},
+    tags={"ops"},
+)
+def sync_vaults(
+    skip_cognify: Annotated[bool, Field(description="Skip cognee, sync existing LanceDB → Milvus only")] = False,
+    changed_files: Annotated[list[str] | None, Field(description="Changed .md paths for incremental cognify")] = None,
+) -> dict:
+    """Cognify vaults → Neo4j + LanceDB → Milvus vector sync.
+
+    Three modes:
+      - skip_cognify=True: transfer existing LanceDB vectors to Milvus (fast)
+      - changed_files=[...]: incremental cognify on listed .md files only
+      - neither: full cognify on all vaults (slow, ~7-9h on fresh wipe)
+
+    After cognify, syncs pre-computed vectors from LanceDB to Milvus.
+    Zero OpenAI embedding calls for the vector transfer step.
+
+    Args:
+        skip_cognify: Skip cognee, only sync LanceDB → Milvus
+        changed_files: List of changed .md file paths for incremental cognify
+    """
+    return ops_backend.sync(
+        skip_cognify=skip_cognify,
+        changed_files=changed_files,
+    )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"ops"},
+)
+def audit_code() -> dict:
+    """Self-audit: compare code AST against knowledge graph claims.
+
+    Pure set operations — zero LLM tokens. Checks:
+    - Tool count: KG claims vs actual @mcp.tool decorators
+    - MARVIN_TOOLS list vs decorated functions
+    - Relation types: defined in code vs used in KG
+    - Concept gaps: expected backend relations missing from KG
+    - Middleware tier coverage
+
+    Returns drift points, findings, code summary, and KG summary.
+    """
+    return ops_backend.audit()
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": False},
+    tags={"ops"},
+)
+def self_improve() -> dict:
+    """Deterministic self-improvement: audit → fix drift → log to Milvus.
+
+    Zero LLM tokens. Runs audit, auto-fixes what it can (tool count
+    updates, missing concept relations), re-syncs vectors, and logs
+    the cycle to Milvus as a decision.
+
+    Returns: drift before, fixes applied, actions taken.
+    """
+    return ops_backend.self_improve()
 
 
 @mcp.tool(

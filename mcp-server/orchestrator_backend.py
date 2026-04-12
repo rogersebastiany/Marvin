@@ -59,6 +59,12 @@ CHAINS = {
                 "description": "Run the SAME tests again. If any fail, the improvement broke behavior — revert or fix the improvement, not the tests.",
                 "command_template": "pytest {test_file} -v",
             },
+            {
+                "id": 7,
+                "action": "create_issue",
+                "input_from": [4, 6],
+                "description": "Create a GitHub issue with the improvement summary: what was changed, which KB knowledge motivated each change, and test results. Use `gh issue create`.",
+            },
         ],
     },
     "research": {
@@ -206,6 +212,45 @@ CHAINS = {
                 "action": "compare_and_report",
                 "input_from": [1, 7],
                 "description": "Diff tdd outputs: step 1 vs step 7. Report new knowledge hits, changed scores, new testable units. This is the improvement delta.",
+            },
+            {
+                "id": 9,
+                "action": "create_issue",
+                "input_from": [4, 6, 8],
+                "description": "Create a GitHub issue with the full improvement report: changes applied, KB knowledge that motivated them, test results, and the before/after tdd delta.",
+            },
+        ],
+    },
+    "sync_and_audit": {
+        "description": "Sync all vaults to Milvus, then audit code vs KG for drift",
+        "triggers": ["sync", "vault", "audit", "drift", "check"],
+        "requires": [],
+        "steps": [
+            {
+                "id": 1,
+                "tool": "sync_vaults",
+                "args_template": {"skip_cognify": True},
+                "description": "Sync LanceDB vectors → Milvus (skip cognify for speed). Use skip_cognify=False if vaults changed.",
+            },
+            {
+                "id": 2,
+                "tool": "audit_code",
+                "args_template": {},
+                "description": "Compare code AST against KG claims. Returns drift points and findings.",
+            },
+            {
+                "id": 3,
+                "action": "review_drift",
+                "input_from": 2,
+                "gate": "drift_zero_or_acceptable",
+                "description": "If drift_points > 0, review findings. Decide whether to run self_improve or fix manually.",
+            },
+            {
+                "id": 4,
+                "tool": "self_improve",
+                "args_template": {},
+                "description": "Auto-fix drift: update tool counts, add missing concept relations, re-sync, log to Milvus.",
+                "conditional": True,
             },
         ],
     },
