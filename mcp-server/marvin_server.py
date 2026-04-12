@@ -31,6 +31,8 @@ import docs_backend
 import web_to_docs_backend
 import prompt_engineer_backend
 import system_design_backend
+import code_improvement_backend
+import orchestrator_backend
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -248,6 +250,7 @@ MARVIN_TOOLS = [
     "inspect_schemas", "stats", "self_description",
     "get_user_score",
     "refine_plan", "save_plan",
+    "improve_code", "tdd", "orchestrate",
 ]
 # Single source of truth — anything that needs the tool count must read len(MARVIN_TOOLS)
 # at runtime, never hardcode. See vault/Marvin.md (intentionally has no tool count to
@@ -276,7 +279,7 @@ mcp = FastMCP(
 # refine_plan is included because it actively contrasts a draft against
 # Milvus (one search per collection per iteration) — that's the S→A reduction
 # operating on a plan rather than a free-form query.
-MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan"})
+MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan", "improve_code", "tdd", "orchestrate"})
 
 # Tier 1b — Safe overviews: ungated, but do NOT set the flag.
 # Seeing a menu of names is not a semantic reduction.
@@ -555,6 +558,105 @@ def save_plan(
         status=status,
         summary=summary,
         content=content,
+    )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval", "improvement"},
+)
+def improve_code(
+    file_path: Annotated[str, Field(description="Absolute path to the file to analyze")],
+    k_per_collection: Annotated[int, Field(ge=1, le=10, description="Top-k results per collection per chunk")] = 5,
+    score_threshold: Annotated[float, Field(ge=0.0, le=1.0, description="Minimum cosine similarity to include a match")] = 0.35,
+) -> dict:
+    """Contrast a code file against all Milvus knowledge — tautological code review.
+
+    Reads the file, chunks it by AST (functions/classes for Python, whole file
+    otherwise), embeds each chunk, and searches 5 Milvus collections (concepts,
+    decisions, sessions, doc_chunks, plans) for semantically related knowledge.
+
+    Returns per-chunk matches: what the knowledge base knows about each piece of
+    code. Use this to find contradictions between code and documented decisions,
+    missing patterns from docs, or concepts the code should implement.
+
+    Pure Milvus — no Neo4j. Portable across any Marvin environment.
+    Sets the Milvus gate flag (retrieval tool).
+
+    Args:
+        file_path: Absolute path to the source file
+        k_per_collection: Results per collection per chunk (1-10, default 5)
+        score_threshold: Min cosine similarity to include (default 0.35)
+    """
+    return code_improvement_backend.improve_code(
+        file_path=file_path,
+        k_per_collection=k_per_collection,
+        score_threshold=score_threshold,
+    )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval", "testing"},
+)
+def tdd(
+    file_path: Annotated[str, Field(description="Absolute path to the file to analyze")],
+    k_per_collection: Annotated[int, Field(ge=1, le=10, description="Top-k results per collection per chunk")] = 5,
+    score_threshold: Annotated[float, Field(ge=0.0, le=1.0, description="Minimum cosine similarity to include a match")] = 0.35,
+) -> dict:
+    """Code + Milvus knowledge → structured context for test generation.
+
+    Same vector walk as improve_code, but output shaped for writing tests.
+    Returns per-chunk: function signatures, args, return types, docstrings,
+    class methods, module imports, and Milvus knowledge hits grouped as
+    behavioral expectations — what the KB says this code should do.
+
+    The tool does the tautological retrieval. You write the tests.
+
+    Pure Milvus — no Neo4j. Portable. Sets the Milvus gate flag.
+
+    Args:
+        file_path: Absolute path to the source file
+        k_per_collection: Results per collection per chunk (1-10, default 5)
+        score_threshold: Min cosine similarity to include (default 0.35)
+    """
+    return code_improvement_backend.tdd(
+        file_path=file_path,
+        k_per_collection=k_per_collection,
+        score_threshold=score_threshold,
+    )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval", "orchestration"},
+)
+def orchestrate(
+    prompt: Annotated[str, Field(min_length=10, max_length=5000, description="The goal — what you want to accomplish")],
+    k_per_collection: Annotated[int, Field(ge=1, le=10, description="Milvus context results per collection")] = 3,
+) -> dict:
+    """Goal → structured execution plan. LLM-agnostic orchestration.
+
+    Takes a natural language goal, matches it against known tool chains
+    (tdd_improve, research, prompt_lifecycle, code_to_knowledge, full_improvement),
+    searches Milvus for relevant context, and returns a step-by-step plan
+    with tool calls, agent actions, gate conditions, and dependencies.
+
+    The plan is a protocol any MCP client can follow mechanically:
+    - Steps with tool calls include the tool name and args
+    - Steps with agent actions describe what the executor must do
+    - Gates block progression until a condition is met (tests_pass, score threshold)
+    - Dependencies link step outputs to subsequent step inputs
+
+    Sets the Milvus gate flag (searches all 5 collections for goal context).
+
+    Args:
+        prompt: Natural language goal (e.g., "improve memory.py with test safety")
+        k_per_collection: Milvus context depth per collection (1-10, default 3)
+    """
+    return orchestrator_backend.orchestrate(
+        prompt=prompt,
+        k_per_collection=k_per_collection,
     )
 
 
