@@ -217,18 +217,21 @@ def extract_kg_claims(driver) -> dict:
             if record:
                 claims["implementation_concepts"][name] = dict(record)
 
-        # Get all relation types actually used
+        # Get all relation types actually used (between :Concept nodes only —
+        # Cognee writes :Entity nodes with snake_case edges that would otherwise
+        # show as drift in the relation_type_drift check).
         result = s.run(
-            "MATCH ()-[r]->() RETURN DISTINCT type(r) AS rel_type, count(*) AS count "
+            "MATCH (:Concept)-[r]->(:Concept) "
+            "RETURN DISTINCT type(r) AS rel_type, count(*) AS count "
             "ORDER BY count DESC"
         )
         claims["relation_types_in_kg"] = [(r["rel_type"], r["count"]) for r in result]
 
-        # Get totals
+        # Get totals — :Concept only, excluding Cognee :Entity artifacts
         result = s.run("MATCH (c:Concept) RETURN count(c) AS n")
         claims["total_concepts"] = result.single()["n"]
 
-        result = s.run("MATCH ()-[r]->() RETURN count(r) AS n")
+        result = s.run("MATCH (:Concept)-[r]->(:Concept) RETURN count(r) AS n")
         claims["total_relations"] = result.single()["n"]
 
         # Scan implementation concept content for tool/backend references

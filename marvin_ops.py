@@ -86,78 +86,59 @@ def _now() -> str:
 # ── SYNC ────────────────────────────────────────────────────────────────────
 
 
-def cmd_sync(reporter: Reporter) -> bool:
-    """Load vaults → Neo4j → auto-link → bidirectional → Milvus index."""
-    import load_vaults
+def cmd_sync(reporter: Reporter, skip_cognify: bool = False,
+             changed_files: list[str] | None = None) -> bool:
+    """Cognee cognify → Neo4j + LanceDB → Milvus sync.
+
+    Three cognify modes:
+      - skip_cognify=True: no cognify, just sync existing LanceDB → Milvus
+      - changed_files=[...]: incremental cognify on listed .md files only
+      - neither: full cognify on all vaults + docs (~7-9h)
+
+    After cognify (or skip), syncs LanceDB vectors → Milvus.
+    If LanceDB does not exist, sync returns 0 gracefully.
+    """
     import memory
 
-    reporter.step("sync", "Starting vault sync")
+    reporter.step("sync", "Starting cognee sync")
     t0 = time.time()
 
-    # Ensure Milvus collections exist (idempotent)
+    # 1. Ensure Milvus collections exist (idempotent)
     created = memory.ensure_collections()
     if created:
         reporter.step("sync", f"Created Milvus collections: {', '.join(created)}")
 
-    all_concepts = []
-    all_edges = []
+    # 2. Cognee cognify
+    if skip_cognify:
+        reporter.step("sync", "skip_cognify=True — using existing Neo4j + LanceDB state")
+    elif changed_files is not None:
+        if len(changed_files) == 0:
+            reporter.step("sync", "No changed .md files — skipping cognify")
+        else:
+            import asyncio
+            import cognify_vaults
+            reporter.step("sync", f"Running incremental cognify on {len(changed_files)} changed files...")
+            asyncio.run(cognify_vaults.run_incremental(changed_files))
+            reporter.step("sync", "incremental cognify complete")
+    else:
+        import asyncio
+        import cognify_vaults
+        reporter.step("sync", "Running full cognify (this can take hours on a fresh wipe)...")
+        asyncio.run(cognify_vaults.run())
+        reporter.step("sync", "cognify complete")
 
-    # 1. Obsidian vaults
-    for vault_name, vault_path in load_vaults.VAULTS.items():
-        concepts, edges = load_vaults.load_vault(vault_name, vault_path)
-        reporter.step("sync", f"Loaded vault: {vault_name}", notes=len(concepts), links=len(edges))
-        all_concepts.extend(concepts)
-        all_edges.extend(edges)
+    # 3. Sync Concept vectors from LanceDB → Milvus (zero OpenAI calls)
+    reporter.step("sync", "Syncing Concept vectors from LanceDB → Milvus...")
+    n_concepts = _sync_lance_concepts_to_milvus()
+    reporter.step("sync", f"concepts synced", count=n_concepts)
 
-    # 2. docs/
-    docs = load_vaults.load_docs(load_vaults.DOCS_DIR)
-    reporter.step("sync", f"Loaded docs", count=len(docs))
-    all_concepts.extend(docs)
-
-    # 3. diagrams/
-    diagrams = load_vaults.load_diagrams(load_vaults.DIAGRAMS_DIR)
-    reporter.step("sync", f"Loaded diagrams", count=len(diagrams))
-    all_concepts.extend(diagrams)
-
-    # Remap English edges
-    remapped = 0
-    for e in all_edges:
-        if e["vault"].endswith("-en"):
-            old_src, old_tgt = e["source"], e["target"]
-            e["source"] = load_vaults.EN_TO_PT.get(e["source"], e["source"])
-            e["target"] = load_vaults.EN_TO_PT.get(e["target"], e["target"])
-            if e["source"] != old_src or e["target"] != old_tgt:
-                remapped += 1
-
-    # Merge duplicates
-    merged = load_vaults.merge_concepts(all_concepts)
-    ghosts = load_vaults.find_ghost_nodes(merged, all_edges)
-    merged.extend(ghosts)
-
-    reporter.step("sync", "Merged concepts",
-                  unique=len(merged), ghosts=len(ghosts), remapped_edges=remapped)
-
-    # Load into Neo4j
-    reporter.step("sync", "Loading into Neo4j...")
-    load_vaults.load_to_neo4j(merged, all_edges)
-
-    # Auto-link + bidirectional
-    reporter.step("sync", "Auto-linking and ensuring bidirectionality...")
-    from neo4j import GraphDatabase
-    driver = GraphDatabase.driver(
-        os.getenv("NEO4J_URI", "bolt://localhost:7687"),
-        auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautologia")),
-    )
-    load_vaults.auto_link_all(driver)
-    load_vaults.ensure_bidirectional_all(driver)
-    driver.close()
-
-    # Index into Milvus
-    reporter.step("sync", "Indexing into Milvus...")
-    load_vaults.index_to_milvus(merged)
+    # 4. Sync DocumentChunk vectors from LanceDB → Milvus (zero OpenAI calls)
+    reporter.step("sync", "Syncing DocumentChunk vectors from LanceDB → Milvus...")
+    n_chunks = _sync_lance_doc_chunks_to_milvus()
+    reporter.step("sync", f"doc_chunks synced", count=n_chunks)
 
     elapsed = round(time.time() - t0, 1)
-    reporter.summary("sync", "clean", elapsed_s=elapsed, concepts=len(merged))
+    reporter.summary("sync", "clean", elapsed_s=elapsed, concepts=n_concepts, doc_chunks=n_chunks)
     return True
 
 
@@ -350,10 +331,10 @@ def cmd_improve(reporter: Reporter) -> bool:
         reporter.step("improve",
                       f"Stale reference in '{ref['concept']}': {ref['reference']} — needs manual review")
 
-    # 6. Re-index Milvus concepts after changes
+    # 6. Re-sync LanceDB concepts to Milvus after graph fixes
     if fixes > 0:
-        reporter.step("improve", "Re-indexing concepts in Milvus after fixes...")
-        _reindex_concepts_in_milvus()
+        reporter.step("improve", "Re-syncing concepts from LanceDB → Milvus after fixes...")
+        _sync_lance_concepts_to_milvus()
 
     # 7. Log the improvement cycle to Milvus as a decision
     try:
@@ -374,11 +355,49 @@ def cmd_improve(reporter: Reporter) -> bool:
     return True
 
 
-def _reindex_concepts_in_milvus():
-    """Pull all concepts from Neo4j and re-index in Milvus."""
+def _get_lancedb_path() -> str | None:
+    """Resolve the Cognee LanceDB path from env or default.
+
+    Returns None if the path does not exist (e.g. CI with no prior cognify run).
+    """
+    lancedb_path = os.getenv("COGNEE_LANCEDB_PATH", "data/cognee.lancedb")
+    if not os.path.isabs(lancedb_path):
+        lancedb_path = str(ROOT / lancedb_path)
+    if not Path(lancedb_path).exists():
+        return None
+    return lancedb_path
+
+
+def _sync_lance_concepts_to_milvus() -> int:
+    """Sync Concept vectors from Cognee's LanceDB → Marvin's Milvus.
+
+    Reads pre-computed vectors from LanceDB (produced by cognify) and
+    joins with Neo4j concept names. Zero OpenAI embedding API calls.
+
+    Returns the number of concepts indexed.
+    """
+    import lancedb as ldb
     import memory
     from neo4j import GraphDatabase
+    from pymilvus import Collection
 
+    # 1. Read vectors from LanceDB
+    lance_path = _get_lancedb_path()
+    if lance_path is None:
+        return 0
+    db = ldb.connect(lance_path)
+    tbl = db.open_table("Concept_name")
+    df = tbl.to_pandas()
+
+    # Build lookup: UUID → (vector, description text)
+    lance_lookup: dict[str, dict] = {}
+    for _, row in df.iterrows():
+        lance_lookup[row["id"]] = {
+            "vector": row["vector"].tolist(),
+            "text": row["payload"]["text"],
+        }
+
+    # 2. Get canonical names from Neo4j
     driver = GraphDatabase.driver(
         os.getenv("NEO4J_URI", "bolt://localhost:7687"),
         auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASS", "tautologia")),
@@ -386,20 +405,119 @@ def _reindex_concepts_in_milvus():
     with driver.session() as s:
         concepts = list(s.run(
             "MATCH (c:Concept) "
-            "WHERE c.content IS NOT NULL AND size(c.content) > 50 "
-            "RETURN c.name AS name, c.vault AS vault, "
-            "c.summary AS summary, c.content AS content"
+            "RETURN c.id AS id, c.name AS name, "
+            "       coalesce(c.description, '') AS description"
         ))
     driver.close()
 
-    indexable = [
-        {"name": r["name"], "vault": r["vault"],
-         "summary": r["summary"] or "", "content": r["content"] or ""}
-        for r in concepts
-    ]
+    # 3. Join: Neo4j names + LanceDB vectors → Milvus
+    memory._ensure_connected()
+    col = Collection("concepts")
+    col.load()
 
-    if indexable:
-        memory.index_concepts(indexable)
+    # Clear existing
+    if col.num_entities > 0:
+        col.delete(expr='name != ""')
+        col.flush()
+
+    entries = []
+    for r in concepts:
+        if not r["name"]:
+            continue
+        lance = lance_lookup.get(r["id"])
+        if not lance:
+            continue
+        name = r["name"][:250]
+        desc = r["description"][:1000].encode("utf-8")[:1000].decode("utf-8", errors="ignore")
+        content = lance["text"][:8000].encode("utf-8")[:8000].decode("utf-8", errors="ignore")
+        entries.append({
+            "id": f"concept::{name}",
+            "name": name,
+            "vault": "cognee",
+            "summary": desc,
+            "content": content,
+            "vector": lance["vector"],
+        })
+
+    # Insert in batches
+    batch_size = 200
+    for i in range(0, len(entries), batch_size):
+        batch = entries[i : i + batch_size]
+        col.insert([
+            [e["id"] for e in batch],
+            [e["name"] for e in batch],
+            [e["vault"] for e in batch],
+            [e["summary"] for e in batch],
+            [e["content"] for e in batch],
+            [e["vector"] for e in batch],
+        ])
+    col.flush()
+
+    return len(entries)
+
+
+def _sync_lance_doc_chunks_to_milvus() -> int:
+    """Sync DocumentChunk vectors from Cognee's LanceDB → Marvin's Milvus.
+
+    Reads pre-computed vectors from LanceDB (produced by cognify).
+    Zero OpenAI embedding API calls.
+
+    Returns the number of chunks indexed.
+    """
+    import lancedb as ldb
+    import memory
+    from pymilvus import Collection
+
+    lance_path = _get_lancedb_path()
+    if lance_path is None:
+        return 0
+    db = ldb.connect(lance_path)
+    tbl = db.open_table("DocumentChunk_text")
+    df = tbl.to_pandas()
+
+    memory._ensure_connected()
+    col = Collection("doc_chunks")
+    col.load()
+
+    # Clear existing
+    if col.num_entities > 0:
+        col.delete(expr='doc_name != ""')
+        col.flush()
+
+    entries = []
+    for idx, row in df.iterrows():
+        text = row["payload"]["text"]
+        if len(text) < 50:
+            continue
+        chunk_id = row["id"]
+        # Extract a heading from the first line of text
+        lines = text.split("\n", 1)
+        heading = lines[0][:500].encode("utf-8")[:500].decode("utf-8", errors="ignore")
+        content = text[:8000].encode("utf-8")[:8000].decode("utf-8", errors="ignore")
+        entries.append({
+            "id": f"lance::{chunk_id}",
+            "doc_name": "cognee",
+            "chunk_index": idx,
+            "heading": heading,
+            "content": content,
+            "vector": row["vector"].tolist(),
+        })
+
+    # Insert in batches
+    batch_size = 200
+    for i in range(0, len(entries), batch_size):
+        batch = entries[i : i + batch_size]
+        col.insert([
+            [e["id"] for e in batch],
+            [e["doc_name"] for e in batch],
+            [e["chunk_index"] for e in batch],
+            [e["heading"] for e in batch],
+            [e["content"] for e in batch],
+            [e["vector"] for e in batch],
+        ])
+    col.flush()
+
+    return len(entries)
 
 
 # ── ALL ─────────────────────────────────────────────────────────────────────
@@ -445,11 +563,19 @@ def main():
         "--save", action="store_true",
         help="Save audit report to docs/self-audit-report.md",
     )
+    shared.add_argument(
+        "--skip-cognify", action="store_true",
+        help="Skip cognee cognify step, sync LanceDB → Milvus only",
+    )
+    shared.add_argument(
+        "--changed-files", nargs="*", default=None,
+        help="Changed .md file paths for incremental cognify (relative to repo root)",
+    )
 
     sub = parser.add_subparsers(dest="command", required=True)
 
     # sync
-    sub.add_parser("sync", parents=[shared], help="Load vaults → Neo4j + Milvus")
+    sub.add_parser("sync", parents=[shared], help="LanceDB → Milvus (cognify + sync)")
 
     # audit
     sub.add_parser("audit", parents=[shared], help="Self-audit: code vs KG drift")
@@ -465,7 +591,8 @@ def main():
 
     try:
         if args.command == "sync":
-            ok = cmd_sync(reporter)
+            ok = cmd_sync(reporter, skip_cognify=args.skip_cognify,
+                         changed_files=args.changed_files)
         elif args.command == "audit":
             ok = cmd_audit(reporter, threshold=args.threshold, save=args.save)
         elif args.command == "improve":

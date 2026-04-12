@@ -293,7 +293,9 @@ Marvin/
 │   └── ... (38 translated notes)
 │
 ├── load-vaults/                     ← Disposable ETL scripts
-│   ├── load_vaults.py               ← Vault → Neo4j loader
+│   ├── cognify_vaults.py            ← Cognee-based KG extractor (Vault → Neo4j :Concept)
+│   ├── cognee_models.py             ← Custom Concept(DataPoint) graph_model
+│   ├── smoke_concept_model.py       ← Cognee Path A regression smoke test
 │   ├── query_graph.py               ← Interactive Neo4j explorer
 │   ├── determinism_report.py        ← Ontological determinism metrics
 │   ├── setup_milvus.py              ← Milvus collection creator
@@ -347,12 +349,12 @@ docker compose up -d
 docker compose ps
 ```
 
-### 2. Load vaults into Neo4j
+### 2. Load vaults into Neo4j (cognee KG extraction)
 
 ```bash
 cd load-vaults
 uv sync
-uv run python load_vaults.py
+uv run python cognify_vaults.py    # ~7-9h on a fresh wipe (Tier 1 OpenAI)
 ```
 
 ### 3. Set up Milvus collections
