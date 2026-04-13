@@ -179,20 +179,6 @@ Any MCP Client (Claude Code, Cursor, VS Code, etc.)
 
 The agent never talks to Neo4j, Milvus, or any backend directly. Everything goes through Marvin's tools. This is architectural enforcement — the agent's world is exactly the tools Marvin exposes.
 
-### Backends
-
-| Module | What it does |
-|--------|-------------|
-| `ontology.py` | Neo4j — knowledge graph CRUD, edge typing, traversal |
-| `memory.py` | Milvus — episodic memory, semantic search, vector sync |
-| `docs_backend.py` | Local markdown docs — search, browse, read |
-| `web_to_docs_backend.py` | Web -> markdown fetcher with doc quality ranking |
-| `prompt_engineer_backend.py` | Transformer-Driven Prompt Architect framework |
-| `system_design_backend.py` | Mermaid.js diagram generation and review |
-| `code_improvement_backend.py` | AST chunking + Milvus vector walk for code review |
-| `orchestrator_backend.py` | Goal -> structured execution plan (7 chains) |
-| `ops_backend.py` | Vault sync, self-audit, self-improvement |
-
 ### Self-Improvement Loop
 
 ```
@@ -219,19 +205,99 @@ Memory follows a three-tier distillation inspired by [Ultra-Long-Horizon Agentic
 
 L1 is deliberately not persisted. Persisting it causes context to grow to 200k+ tokens and saturate. HCC keeps ~70k tokens effective by discarding L1 after distillation.
 
+<!-- AUTO:TOOLS:START -->
+## Marvin's Tools (47 total)
+
+| Tool | Tier | Description |
+|------|------|-------------|
+| `retrieve` | Milvus (sets gate) | Unified retrieval across ontology, episodic memory, and docs. |
+| `get_concept` | Neo4j Read (gated) | Get a concept with full content and all relations from the ontology. |
+| `traverse` | Neo4j Read (gated) | Walk the knowledge graph from a concept, returning its neighborhood. |
+| `why_exists` | Neo4j Read (gated) | Explain why a concept exists in the ontology — edge reasoning. |
+| `list_concepts` | Overview (ungated) | List all concept names in the knowledge graph, grouped by vault. |
+| `get_memory` | Milvus (sets gate) | Deep-dive into episodic memory — HCC prefetching (L2/L3 → context). |
+| `set_aliases` | Write (gated) | Set English aliases for a concept. Enables cross-language search. |
+| `batch_set_aliases` | Write (gated) | Set aliases for multiple concepts at once. |
+| `log_decision` | Always Allowed | Record a decision to episodic memory (L2 Knowledge). Fire-and-forget — returns immediately. |
+| `log_session` | Always Allowed | Record a session summary to episodic memory (L3 Wisdom). |
+| `expand` | Write (gated) | Add a new concept or relation to the knowledge graph. |
+| `link` | Write (gated) | Create a direct relation between two existing concepts. |
+| `auto_link` | Write (gated) | Scan concept content for references to other concepts and auto-create links. |
+| `ensure_bidirectional` | Write (gated) | For every A→B edge, ensure B→A also exists. |
+| `propose_schema_change` | Always Allowed | Propose a schema change to Neo4j or Milvus. |
+| `execute_schema_change` | Write (gated) | Execute a previously proposed schema change. |
+| `search_docs` | Milvus (sets gate) | Search local documentation files for a keyword or phrase. |
+| `list_docs` | Overview (ungated) | List all available local documentation files. |
+| `get_doc` | Overview (ungated) | Read a local documentation file. |
+| `fetch_url` | Always Allowed | Fetch a webpage and return as markdown. |
+| `save_doc` | Write (gated) | Fetch a webpage and save as local documentation. |
+| `rank_urls` | Always Allowed | Probe URLs and rank them by documentation quality BEFORE fetching. |
+| `crawl_docs` | Write (gated) | Crawl a documentation site and save pages as local docs. |
+| `research_topic` | Write (gated) | Fetch multiple URLs, merge into a single consolidated doc with bibliography. |
+| `extract_keywords` | Write (gated) | Extract keywords from a doc for knowledge graph densification. |
+| `classify_keywords` | Milvus (sets gate) | Classify extracted keywords against Milvus into 3 tiers. |
+| `generate_prompt` | Write (gated) | Generate a structured prompt using the Prompt Architect framework. |
+| `refine_prompt` | Write (gated) | Refine an existing prompt based on feedback. |
+| `audit_prompt` | Always Allowed | Audit a prompt against the Prompt Architect framework. |
+| `generate_diagram` | Write (gated) | Generate a Mermaid.js system design diagram. |
+| `judge_diagram` | Always Allowed | Review a Mermaid.js diagram for correctness and quality. |
+| `save_diagram` | Write (gated) | Save a mermaid diagram to diagrams/. |
+| `list_diagrams` | Overview (ungated) | List all saved mermaid diagrams. |
+| `get_diagram` | Overview (ungated) | Read a saved mermaid diagram. |
+| `inspect_schemas` | Overview (ungated) | Show current schemas for Neo4j and Milvus. |
+| `stats` | Overview (ungated) | Quick overview of the entire knowledge system. |
+| `self_description` | Overview (ungated) | Rebuild Marvin's identity prompt from the knowledge graph and cache it. |
+| `refine_plan` | Milvus (sets gate) | Contrast a plan draft against Milvus prior art — tautological refinement. |
+| `save_plan` | Write (gated) | Upsert a plan into the plans collection in Milvus. |
+| `improve_code` | Milvus (sets gate) | Contrast a code file against all Milvus knowledge — tautological code review. |
+| `tdd` | Milvus (sets gate) | Code + Milvus knowledge → structured context for test generation. |
+| `score_applicability` | Milvus (sets gate) | Behavioral code analysis → Milvus → applicability classification. |
+| `scan_owasp` | Milvus (sets gate) | OWASP Top 10 vulnerability scanner — static patterns + Milvus security knowledge. |
+| `orchestrate` | Milvus (sets gate) | Goal → structured execution plan. LLM-agnostic orchestration. |
+| `sync_vaults` | Write (gated) | Cognify vaults → Neo4j + LanceDB → Milvus vector sync. |
+| `audit_code` | Neo4j Read (gated) | Self-audit: compare code AST against knowledge graph claims. |
+| `self_improve` | Write (gated) | Deterministic self-improvement: audit → fix drift → log to Milvus. |
+
+### Tier Summary
+
+| Tier | Count | Tools |
+|------|-------|-------|
+| **Milvus (sets gate)** | 10 | `classify_keywords`, `get_memory`, `improve_code`, `orchestrate`, `refine_plan`, `retrieve`, `scan_owasp`, `score_applicability`, `search_docs`, `tdd` |
+| **Overview (ungated)** | 8 | `get_diagram`, `get_doc`, `inspect_schemas`, `list_concepts`, `list_diagrams`, `list_docs`, `self_description`, `stats` |
+| **Neo4j Read (gated)** | 4 | `audit_code`, `get_concept`, `traverse`, `why_exists` |
+| **Write (gated)** | 18 | `auto_link`, `batch_set_aliases`, `crawl_docs`, `ensure_bidirectional`, `execute_schema_change`, `expand`, `extract_keywords`, `generate_diagram`, `generate_prompt`, `link`, `refine_prompt`, `research_topic`, `save_diagram`, `save_doc`, `save_plan`, `self_improve`, `set_aliases`, `sync_vaults` |
+| **Always Allowed** | 7 | `audit_prompt`, `fetch_url`, `judge_diagram`, `log_decision`, `log_session`, `propose_schema_change`, `rank_urls` |
+
+### Backends (9 modules)
+
+| Module | Description |
+|--------|-------------|
+| `ontology.py` | Ontology backend — Python library wrapping Neo4j. |
+| `memory.py` | Memory backend — Python library wrapping Milvus. |
+| `docs_backend.py` | Docs backend — Python library for searching/browsing local markdown docs. |
+| `web_to_docs_backend.py` | Web-to-docs backend — Fetch websites and convert to local markdown. |
+| `prompt_engineer_backend.py` | Prompt engineer backend — Transformer-Driven Prompt Architect. |
+| `system_design_backend.py` | System design backend — Mermaid.js diagram generation and review. |
+| `code_improvement_backend.py` | Code improvement backend — contrast code against Milvus knowledge. |
+| `orchestrator_backend.py` | Orchestrator backend — goal-driven tool chain planner. |
+| `ops_backend.py` | Ops backend — vault sync, self-audit, and self-improvement. |
+
 ### Orchestrator Chains
 
-The `orchestrate` tool plans multi-step workflows that any MCP client can follow:
+| Chain | Triggers | Steps | Description |
+|-------|----------|-------|-------------|
+| `tdd_improve` | improve, refactor, tdd | 9 | TDD-guarded code improvement: behavioral scoring → lock with tests → apply only APPLICABLE concepts → verify |
+| `research` | research, docs, documentation | 8 | Knowledge-enriched research: rank URLs, fetch, consolidate, extract keywords, fill knowledge gaps, sync |
+| `prompt_lifecycle` | prompt, generate prompt, write prompt | 4 | Generate, audit, and refine a prompt using the Prompt Architect framework |
+| `code_to_knowledge` | enrich, knowledge gap, missing concept | 4 | Review code against KB, then enrich the ontology with missing concepts |
+| `full_improvement` | full improve, full cycle, complete improvement | 11 | Full file improvement cycle: behavioral scoring → TDD guard → apply APPLICABLE → verify → re-score delta |
+| `sync_and_audit` | sync, vault, audit | 4 | Sync all vaults to Milvus, then audit code vs KG for drift |
+| `densify` | densify, densification, keywords | 5 | Knowledge graph densification: extract keywords from docs, classify against Milvus, enrich matches, research gaps, sync |
 
-| Chain | What it does |
-|-------|-------------|
-| `tdd_improve` | Behavioral scoring -> lock with tests -> apply APPLICABLE concepts -> verify |
-| `full_improvement` | Full TDD cycle + improve + verify + re-score delta |
-| `research` | Rank URLs -> filter by quality -> fetch + consolidate + extract keywords |
-| `prompt_lifecycle` | Generate -> audit -> refine (if score < 7) |
-| `code_to_knowledge` | Review code against KB -> enrich ontology with missing concepts |
-| `sync_and_audit` | Sync vaults to Milvus -> audit code vs KG for drift |
-| `densify` | Extract keywords from docs -> classify against Milvus -> enrich + research gaps |
+### Milvus Gate Middleware
+
+All Neo4j reads and write tools are **blocked** unless a Milvus tier tool was called first in the session. Architectural enforcement (P=0), not prompt bias.
+<!-- AUTO:TOOLS:END -->
 
 ## Knowledge Graph
 
@@ -371,6 +437,7 @@ Marvin/
 | **LLM Output Drift** (Ouyang et al., 2024) | Smaller models = more consistent; RAG tasks most sensitive to drift | Validates that constrained context -> consistency |
 | **Ultra-Long-Horizon Agentic Science** (Schmidgall et al., 2025) | HCC (L1/L2/L3 memory) achieves 56.44% SOTA on MLE-Bench | Validates three-tier memory; maps directly to our Milvus collections |
 | **Deterministic Trajectory Optimization** (Nass et al., 2025) | EM converges probabilistic policies to deterministic optimum | Philosophical parallel — self-improvement converges toward determinism |
+| **[Optimizing the Interface Between KGs and LLMs](https://arxiv.org/abs/2505.24478)** (Markovic et al., 2025) | Graph extraction prompt is highest-impact hyperparameter; typed edges improve multi-hop reasoning; F1 0.145->0.654 from tuning | Validates Cognee as KG engine; confirms typed edges over generic RELATES_TO |
 
 ## License
 
