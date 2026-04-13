@@ -78,8 +78,8 @@ DECORATED_TOOLS = _extract_decorated_functions()
 
 
 class TestMarvinTools:
-    def test_has_45_tools(self):
-        assert len(MARVIN_TOOLS) == 45
+    def test_has_47_tools(self):
+        assert len(MARVIN_TOOLS) == 47
 
     def test_no_duplicates(self):
         assert len(MARVIN_TOOLS) == len(set(MARVIN_TOOLS))
@@ -105,7 +105,7 @@ class TestMarvinTools:
 class TestTierClassification:
     def test_milvus_tools(self):
         expected = {"retrieve", "get_memory", "search_docs", "refine_plan",
-                    "improve_code", "tdd", "orchestrate", "classify_keywords"}
+                    "improve_code", "tdd", "score_applicability", "scan_owasp", "orchestrate", "classify_keywords"}
         assert MILVUS_TOOLS == expected
 
     def test_overview_tools(self):
@@ -147,7 +147,7 @@ class TestTierClassification:
                     assert not overlap, f"{names[i]} and {names[j]} overlap: {overlap}"
 
     def test_tier_counts(self):
-        assert len(MILVUS_TOOLS) == 8
+        assert len(MILVUS_TOOLS) == 10
         assert len(OVERVIEW_TOOLS) == 8
         assert len(NEO4J_READ_TOOLS) == 4
         assert len(WRITE_TOOLS) == 18

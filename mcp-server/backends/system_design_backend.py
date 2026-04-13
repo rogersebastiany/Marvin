@@ -2,9 +2,16 @@
 System design backend — Mermaid.js diagram generation and review.
 
 Not an MCP server. Used internally by mcp-marvin.
+Domain-specific tooling for system architecture diagrams using Mermaid.js
+syntax. Supports C4, flowchart, sequence, and architecture-beta diagrams
+with structured scoring criteria.
 """
 
+import logging
+import re
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 DIAGRAMS_DIR = Path(__file__).parent.parent.parent / "diagrams"
@@ -12,6 +19,7 @@ DIAGRAMS_DIR.mkdir(exist_ok=True)
 
 
 def _safe_diagram_path(filename: str) -> Path | None:
+    """Resolve a diagram filename within DIAGRAMS_DIR, blocking path traversal."""
     path = (DIAGRAMS_DIR / filename).resolve()
     if not str(path).startswith(str(DIAGRAMS_DIR.resolve())):
         return None
@@ -19,6 +27,7 @@ def _safe_diagram_path(filename: str) -> Path | None:
 
 
 def _load_syntax_refs() -> str:
+    """Load all mermaid-*.md docs as syntax reference for diagram generation."""
     refs: list[str] = []
     for doc in sorted(DOCS_DIR.glob("mermaid-*.md")):
         refs.append(doc.read_text())
@@ -87,30 +96,68 @@ def generate_diagram(system_description: str, diagram_type: str = "auto", save_a
 
 
 def judge_diagram(mermaid_code: str) -> str:
-    """Review a Mermaid.js diagram for correctness and quality."""
+    """Review a Mermaid.js diagram for correctness and quality.
+
+    Includes domain-specific scoring criteria for system design diagrams
+    and validates the diagram type keyword.
+    """
+    validation = _validate_mermaid_syntax(mermaid_code)
+    validation_note = f"\n\n**⚠ Syntax Warning:** {validation}\n" if validation else ""
+
     return (
         f"# Task: Review a System Design Diagram\n\n"
-        f"## Diagram to Review\n```mermaid\n{mermaid_code}\n```\n\n"
+        f"## Diagram to Review\n```mermaid\n{mermaid_code}\n```\n"
+        f"{validation_note}\n"
         f"{DIAGRAM_GUIDELINES}\n\n"
         f"## Mermaid.js Syntax Reference\n{MERMAID_SYNTAX}\n\n"
         f"## Review Criteria\n"
         f"Score each 1-10:\n"
-        f"1. **Syntax Correctness** — valid mermaid code?\n"
-        f"2. **Completeness** — all components and relationships?\n"
-        f"3. **Clarity** — labels, layout, subgraphs?\n"
-        f"4. **Best Practices** — conventions, focus?\n\n"
-        f"Output: scores, issues, suggestions, improved version."
+        f"1. **Syntax Correctness** — valid mermaid code? Starts with recognized diagram type?\n"
+        f"2. **Completeness** — all components and relationships? External actors shown?\n"
+        f"3. **Clarity** — labels on every edge? Layout direction consistent? Subgraphs for grouping?\n"
+        f"4. **Best Practices** — one concern per diagram? Short IDs with descriptive labels? "
+        f"Protocols/tech on relationship labels? Trust zones or network boundaries shown?\n"
+        f"5. **Domain Accuracy** — does the diagram accurately represent the system described?\n\n"
+        f"Output: scores table, specific issues with line references, "
+        f"concrete suggestions, improved version in ```mermaid block."
     )
 
 
+# Valid Mermaid diagram type keywords for domain validation
+_VALID_DIAGRAM_TYPES = frozenset({
+    "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram",
+    "erDiagram", "gantt", "pie", "gitgraph", "mindmap", "timeline",
+    "C4Context", "C4Container", "C4Component", "C4Dynamic", "C4Deployment",
+    "architecture-beta", "block-beta", "sankey-beta", "xychart-beta",
+    "journey", "quadrantChart", "requirementDiagram", "zenuml", "packet-beta",
+})
+
+
+def _validate_mermaid_syntax(code: str) -> str | None:
+    """Check if code starts with a valid Mermaid diagram type keyword.
+
+    Returns None if valid, error message if invalid.
+    """
+    first_line = code.strip().split("\n")[0].strip()
+    # Extract the keyword (first word, ignoring direction like LR/TB)
+    keyword = re.split(r"[\s\-]", first_line)[0]
+    if keyword in _VALID_DIAGRAM_TYPES:
+        return None
+    return f"Unrecognized Mermaid diagram type '{keyword}'. Expected one of: {', '.join(sorted(_VALID_DIAGRAM_TYPES))}"
+
+
 def save_diagram(mermaid_code: str, filename: str) -> str:
-    """Save a mermaid diagram to diagrams/."""
+    """Save a mermaid diagram to diagrams/. Validates syntax keyword first."""
     if not filename.endswith(".mmd"):
         filename += ".mmd"
     path = _safe_diagram_path(filename)
     if not path:
         return f"Invalid filename '{filename}'."
+    warning = _validate_mermaid_syntax(mermaid_code)
+    if warning:
+        log.warning("save_diagram: %s", warning)
     path.write_text(mermaid_code)
+    log.info("Saved diagram: diagrams/%s (%d chars)", filename, len(mermaid_code))
     return f"Saved diagram to diagrams/{filename} ({len(mermaid_code)} chars)"
 
 

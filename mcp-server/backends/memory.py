@@ -2,10 +2,14 @@
 Memory backend — Python library wrapping Milvus.
 
 Not an MCP server. Used internally by mcp-marvin.
+Implements Hierarchical Cognitive Caching (HCC): L1 transient, L2 decisions, L3 sessions.
+Uses IVF_FLAT indexing with configurable nprobe for recall/speed tradeoff.
 """
 
+import logging
 import os
 import re
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,43 +21,72 @@ from pymilvus import (
     connections, utility,
 )
 
+log = logging.getLogger(__name__)
+
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
 MILVUS_PORT = os.getenv("MILVUS_PORT", "19530")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+# IVF_FLAT search parameter — higher nprobe = better recall, slower search
+MILVUS_NPROBE = int(os.getenv("MILVUS_NPROBE", "16"))
+# Max retries for transient connection failures
+_MAX_RETRIES = 3
+_RETRY_BACKOFF = 1.0  # seconds, doubles each retry
+# text-embedding-3-small max input is 8191 tokens ≈ ~30k chars conservatively
+_MAX_EMBED_CHARS = 30000
 
 _openai_client = None
 _connected = False
 
 
 def _ensure_connected():
+    """Lazily connect to Milvus on first use. Retries with exponential backoff."""
     global _connected
-    if not _connected:
-        connections.connect("default", host=MILVUS_HOST, port=MILVUS_PORT)
-        _connected = True
+    if _connected:
+        return
+    for attempt in range(_MAX_RETRIES):
+        try:
+            connections.connect("default", host=MILVUS_HOST, port=MILVUS_PORT)
+            _connected = True
+            log.info("Connected to Milvus at %s:%s", MILVUS_HOST, MILVUS_PORT)
+            return
+        except Exception as e:
+            if attempt < _MAX_RETRIES - 1:
+                wait = _RETRY_BACKOFF * (2 ** attempt)
+                log.warning("Milvus connection attempt %d failed: %s — retrying in %.1fs", attempt + 1, e, wait)
+                time.sleep(wait)
+            else:
+                log.error("Milvus connection failed after %d attempts: %s", _MAX_RETRIES, e)
+                raise
 
 
 def _get_openai():
+    """Lazily initialize the OpenAI client with timeout and retry config."""
     global _openai_client
     if _openai_client is None:
-        _openai_client = openai.OpenAI()
+        _openai_client = openai.OpenAI(
+            timeout=30.0,
+            max_retries=3,
+        )
+        log.info("OpenAI client initialized (model=%s, timeout=30s, retries=3)", EMBEDDING_MODEL)
     return _openai_client
 
 
 def _embed(text: str) -> list[float]:
-    """Embed a single text using OpenAI."""
+    """Embed a single text using OpenAI. Truncates to model max input."""
     client = _get_openai()
-    response = client.embeddings.create(input=text, model=EMBEDDING_MODEL)
+    truncated = text[:_MAX_EMBED_CHARS]
+    response = client.embeddings.create(input=truncated, model=EMBEDDING_MODEL)
     return response.data[0].embedding
 
 
 def _embed_batch(texts: list[str], batch_size: int = 100) -> list[list[float]]:
-    """Embed multiple texts in batches. Returns vectors in same order."""
+    """Embed multiple texts in batches. Truncates each to model max input."""
     client = _get_openai()
     all_vectors = []
     for i in range(0, len(texts), batch_size):
-        batch = texts[i : i + batch_size]
+        batch = [t[:_MAX_EMBED_CHARS] for t in texts[i : i + batch_size]]
         response = client.embeddings.create(input=batch, model=EMBEDDING_MODEL)
         all_vectors.extend([d.embedding for d in response.data])
     return all_vectors
@@ -69,7 +102,7 @@ def _search_collection(collection_name: str, query: str, limit: int, output_fiel
     results = col.search(
         data=[vector],
         anns_field="embedding",
-        param={"metric_type": "COSINE", "params": {"nprobe": 16}},
+        param={"metric_type": "COSINE", "params": {"nprobe": MILVUS_NPROBE}},
         limit=limit,
         output_fields=output_fields,
     )
@@ -215,6 +248,7 @@ def log_decision(
         [reasoning], [outcome], [session_id], [now], [vector],
     ])
     col.flush()
+    log.info("L2 decision logged: %s (%s)", objective[:60], record_id)
     return f"Logged decision: {objective[:60]} ({record_id})"
 
 
@@ -243,6 +277,7 @@ def log_session(
         [tool_call_count], [now], [vector],
     ])
     col.flush()
+    log.info("L3 session logged: %s (%s)", objective[:60], record_id)
     return f"Logged session: {objective[:60]} ({record_id})"
 
 
@@ -329,7 +364,7 @@ def _search_by_vector(
     results = col.search(
         data=[vector],
         anns_field="embedding",
-        param={"metric_type": "COSINE", "params": {"nprobe": 16}},
+        param={"metric_type": "COSINE", "params": {"nprobe": MILVUS_NPROBE}},
         limit=limit,
         output_fields=output_fields,
     )
@@ -519,7 +554,9 @@ def index_docs(docs_dir: str) -> str:
         ])
     col.flush()
 
-    return f"Indexed {len(all_chunks)} chunks from {len(list(docs_path.glob('*.md')))} docs."
+    result = f"Indexed {len(all_chunks)} chunks from {len(list(docs_path.glob('*.md')))} docs."
+    log.info(result)
+    return result
 
 
 def index_concepts(concepts: list[dict]) -> str:
@@ -572,7 +609,9 @@ def index_concepts(concepts: list[dict]) -> str:
         ])
     col.flush()
 
-    return f"Indexed {len(entries)} concepts."
+    result = f"Indexed {len(entries)} concepts."
+    log.info(result)
+    return result
 
 
 # ── Self Description (Identity Cache) ─────────────────────────────────────

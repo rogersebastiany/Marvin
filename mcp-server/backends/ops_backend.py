@@ -9,10 +9,15 @@ Three operations:
   - sync: cognify vaults → Neo4j + LanceDB → Milvus (zero OpenAI for vector transfer)
   - audit: AST vs KG diff — what the code IS vs what the ontology CLAIMS
   - self_improve: audit → fix drift → log to Milvus (deterministic, zero LLM)
+
+Uses LanceDB DBConnection for reading Cognee-produced vectors and Neo4j
+driver for ontology claims. Implements MitiGate patterns for drift
+mitigation in the self-improvement loop.
 """
 
 import ast
 import json
+import logging
 import os
 import re
 import sys
@@ -21,6 +26,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+log = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 MCP_SERVER = Path(__file__).parent.parent
@@ -50,7 +57,7 @@ def _sync_lance_concepts_to_milvus() -> int:
     """Sync Concept vectors from Cognee's LanceDB → Marvin's Milvus.
 
     Reads pre-computed vectors from LanceDB (produced by cognify) and
-    joins with Neo4j concept names. Zero OpenAI embedding API calls.
+    joins with Neo4j concept names via DBConnection. Zero OpenAI embedding API calls.
     """
     import lancedb as ldb
     from . import memory
@@ -59,7 +66,9 @@ def _sync_lance_concepts_to_milvus() -> int:
 
     lance_path = _get_lancedb_path()
     if lance_path is None:
+        log.warning("LanceDB path not found — skipping concept sync")
         return 0
+    log.info("Connecting to LanceDB at %s for concept sync", lance_path)
     db = ldb.connect(lance_path)
     tbl = db.open_table("Concept_name")
     df = tbl.to_pandas()
@@ -136,7 +145,9 @@ def _sync_lance_doc_chunks_to_milvus() -> int:
 
     lance_path = _get_lancedb_path()
     if lance_path is None:
+        log.warning("LanceDB path not found — skipping doc chunk sync")
         return 0
+    log.info("Connecting to LanceDB at %s for doc chunk sync", lance_path)
     db = ldb.connect(lance_path)
     tbl = db.open_table("DocumentChunk_text")
     df = tbl.to_pandas()
@@ -217,11 +228,14 @@ def sync(skip_cognify: bool = False, changed_files: list[str] | None = None) -> 
     n_concepts = _sync_lance_concepts_to_milvus()
     n_chunks = _sync_lance_doc_chunks_to_milvus()
 
+    elapsed = round(time.time() - t0, 1)
+    log.info("sync complete: %d concepts, %d doc chunks, mode=%s, %.1fs", n_concepts, n_chunks, cognify_mode, elapsed)
+
     return {
         "concepts": n_concepts,
         "doc_chunks": n_chunks,
         "cognify_mode": cognify_mode,
-        "elapsed_s": round(time.time() - t0, 1),
+        "elapsed_s": elapsed,
     }
 
 
@@ -253,6 +267,7 @@ BACKEND_CONCEPT_MAP = {
 
 
 def _is_mcp_tool_decorator(node: ast.expr) -> bool:
+    """Check if an AST decorator node is @mcp.tool or @mcp.tool(...)."""
     if isinstance(node, ast.Call):
         return _is_mcp_tool_decorator(node.func)
     if isinstance(node, ast.Attribute):
@@ -265,6 +280,7 @@ def _is_mcp_tool_decorator(node: ast.expr) -> bool:
 
 
 def _extract_set_or_list(node: ast.expr) -> list[str]:
+    """Extract string elements from an AST Set or List literal."""
     elements = []
     if isinstance(node, (ast.List, ast.Set)):
         for elt in node.elts:
@@ -455,6 +471,7 @@ def compute_diff(code: dict, kg: dict) -> dict:
 
 
 def _count_drift(diff: dict) -> int:
+    """Count total drift points from an audit_code diff result."""
     count = 0
     if diff.get("tool_count_mismatch"):
         count += 1
@@ -588,9 +605,17 @@ def self_improve() -> dict:
     except Exception as e:
         actions.append(f"Failed to log: {e}")
 
+    elapsed = round(time.time() - t0, 1)
+    log.info("self_improve: %d drift → %d fixes in %.1fs", drift_before, fixes, elapsed)
+
     return {
         "drift_before": drift_before,
         "fixes": fixes,
         "actions": actions,
-        "elapsed_s": round(time.time() - t0, 1),
+        "elapsed_s": elapsed,
+        "mitigation": (
+            "MitiGate layered strategy: (1) deterministic set comparison (zero LLM), "
+            "(2) MERGE-only graph ops (non-destructive), (3) re-sync vectors after fixes, "
+            "(4) log to episodic memory for future sessions to find."
+        ),
     }

@@ -31,7 +31,7 @@ Call `stats` for a live system overview. Marvin's identity prompt is built dynam
 
 ## Workspace
 
-- **`mcp-server/`** — Marvin. Single unified MCP server (44 tools, 9 backends). FastMCP 3.x, Python 3.12, managed with `uv`.
+- **`mcp-server/`** — Marvin. Single unified MCP server (46 tools, 9 backends). FastMCP 3.x, Python 3.12, managed with `uv`.
   - `backends/` — 9 backend modules (Python package with `__init__.py`)
   - `tests/` — 314 tests (pytest)
   - `scripts/` — utility scripts (update_tool_list, rebuild_docs, etc.)
@@ -70,7 +70,7 @@ Single server (`marvin_server.py`) with 9 backend modules in `backends/`:
 | `backends/ops_backend.py` | Vault sync, self-audit, self-improve (migrated from marvin_ops.py) |
 
 <!-- AUTO:TOOLS:START -->
-## Marvin's Tools (45 total)
+## Marvin's Tools (47 total)
 
 | Tool | Tier | Description |
 |------|------|-------------|
@@ -115,6 +115,8 @@ Single server (`marvin_server.py`) with 9 backend modules in `backends/`:
 | `save_plan` | Write (gated) | Upsert a plan into the plans collection in Milvus. |
 | `improve_code` | Milvus (sets gate) | Contrast a code file against all Milvus knowledge — tautological code review. |
 | `tdd` | Milvus (sets gate) | Code + Milvus knowledge → structured context for test generation. |
+| `score_applicability` | Milvus (sets gate) | Behavioral code analysis → Milvus → applicability classification. |
+| `scan_owasp` | Milvus (sets gate) | OWASP Top 10 vulnerability scanner — static patterns + Milvus security knowledge. |
 | `orchestrate` | Milvus (sets gate) | Goal → structured execution plan. LLM-agnostic orchestration. |
 | `sync_vaults` | Write (gated) | Cognify vaults → Neo4j + LanceDB → Milvus vector sync. |
 | `audit_code` | Neo4j Read (gated) | Self-audit: compare code AST against knowledge graph claims. |
@@ -124,7 +126,7 @@ Single server (`marvin_server.py`) with 9 backend modules in `backends/`:
 
 | Tier | Count | Tools |
 |------|-------|-------|
-| **Milvus (sets gate)** | 8 | `classify_keywords`, `get_memory`, `improve_code`, `orchestrate`, `refine_plan`, `retrieve`, `search_docs`, `tdd` |
+| **Milvus (sets gate)** | 10 | `classify_keywords`, `get_memory`, `improve_code`, `orchestrate`, `refine_plan`, `retrieve`, `scan_owasp`, `score_applicability`, `search_docs`, `tdd` |
 | **Overview (ungated)** | 8 | `get_diagram`, `get_doc`, `inspect_schemas`, `list_concepts`, `list_diagrams`, `list_docs`, `self_description`, `stats` |
 | **Neo4j Read (gated)** | 4 | `audit_code`, `get_concept`, `traverse`, `why_exists` |
 | **Write (gated)** | 18 | `auto_link`, `batch_set_aliases`, `crawl_docs`, `ensure_bidirectional`, `execute_schema_change`, `expand`, `extract_keywords`, `generate_diagram`, `generate_prompt`, `link`, `refine_prompt`, `research_topic`, `save_diagram`, `save_doc`, `save_plan`, `self_improve`, `set_aliases`, `sync_vaults` |
@@ -148,11 +150,11 @@ Single server (`marvin_server.py`) with 9 backend modules in `backends/`:
 
 | Chain | Triggers | Steps | Description |
 |-------|----------|-------|-------------|
-| `tdd_improve` | improve, refactor, tdd | 7 | TDD-guarded code improvement: lock behavior with tests, improve code, verify tests still pass |
+| `tdd_improve` | improve, refactor, tdd | 9 | TDD-guarded code improvement: behavioral scoring → lock with tests → apply only APPLICABLE concepts → verify |
 | `research` | research, docs, documentation | 8 | Knowledge-enriched research: rank URLs, fetch, consolidate, extract keywords, fill knowledge gaps, sync |
 | `prompt_lifecycle` | prompt, generate prompt, write prompt | 4 | Generate, audit, and refine a prompt using the Prompt Architect framework |
 | `code_to_knowledge` | enrich, knowledge gap, missing concept | 4 | Review code against KB, then enrich the ontology with missing concepts |
-| `full_improvement` | full improve, full cycle, complete improvement | 9 | Full file improvement cycle: TDD guard → improve → verify → check for new knowledge |
+| `full_improvement` | full improve, full cycle, complete improvement | 11 | Full file improvement cycle: behavioral scoring → TDD guard → apply APPLICABLE → verify → re-score delta |
 | `sync_and_audit` | sync, vault, audit | 4 | Sync all vaults to Milvus, then audit code vs KG for drift |
 | `densify` | densify, densification, keywords | 5 | Knowledge graph densification: extract keywords from docs, classify against Milvus, enrich matches, research gaps, sync |
 

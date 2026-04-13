@@ -8,7 +8,11 @@ LLM-agnostic: Claude Code, Cursor, Windsurf, brain.py — they all
 get the same plan, same gates, same step dependencies.
 """
 
+import logging
+
 from .memory import _embed, _search_by_vector, _RESSALVA_COLLECTIONS, _format_ressalva
+
+log = logging.getLogger(__name__)
 
 
 # ── Tool Chain Definitions ───────────────────────────────────────────────
@@ -16,54 +20,87 @@ from .memory import _embed, _search_by_vector, _RESSALVA_COLLECTIONS, _format_re
 
 CHAINS = {
     "tdd_improve": {
-        "description": "TDD-guarded code improvement: lock behavior with tests, improve code, verify tests still pass",
+        "description": "TDD-guarded code improvement: behavioral scoring → lock with tests → apply only APPLICABLE concepts → verify",
         "triggers": ["improve", "refactor", "tdd", "test", "safe change", "improve code"],
         "requires": ["file_path"],
         "steps": [
             {
                 "id": 1,
-                "tool": "tdd",
+                "tool": "score_applicability",
                 "args_template": {"file_path": "{file_path}"},
-                "description": "Analyze code against Milvus knowledge — get signatures, docstrings, and behavioral expectations for test generation",
+                "description": (
+                    "Behavioral analysis: embed what the code DOES (not what it looks like) against Milvus. "
+                    "Classifies each concept match as APPLICABLE (actionable), ALREADY_APPLIED (skip), or "
+                    "REFERENCE_ONLY (ignore). Only APPLICABLE concepts drive improvements."
+                ),
             },
             {
                 "id": 2,
-                "action": "write_tests",
+                "action": "review_applicability",
                 "input_from": 1,
-                "description": "Write pytest tests based on tdd output: one test per function/class, covering the behavioral expectations from Milvus knowledge",
-                "instruction": "Write tests to a file named test_{module_name}.py. Tests must verify CURRENT behavior — they are a safety net, not aspirational.",
+                "gate": "has_applicable_concepts",
+                "description": (
+                    "Review score_applicability output. If no APPLICABLE concepts found, report to user and stop — "
+                    "the code already implements relevant patterns. If APPLICABLE concepts exist, proceed with "
+                    "the ones with highest behavior_score."
+                ),
             },
             {
                 "id": 3,
-                "action": "run_tests",
-                "gate": "tests_pass",
-                "description": "Run pytest on the generated test file. ALL tests must pass before proceeding. If any fail, fix the tests (not the code) — they must reflect current behavior.",
-                "command_template": "pytest {test_file} -v",
+                "tool": "tdd",
+                "args_template": {"file_path": "{file_path}"},
+                "description": "Lock current behavior with tests. Signatures, docstrings, and behavioral expectations from Milvus.",
             },
             {
                 "id": 4,
-                "tool": "improve_code",
-                "args_template": {"file_path": "{file_path}"},
-                "description": "Get Milvus knowledge matches per code chunk — what the KB says about each function/class",
+                "action": "write_tests",
+                "input_from": 3,
+                "description": "Write pytest tests based on tdd output. Tests must verify CURRENT behavior — safety net, not aspirational.",
+                "instruction": "Write tests to a file named test_{module_name}.py.",
             },
             {
                 "id": 5,
-                "action": "apply_improvements",
-                "input_from": 4,
-                "description": "Apply code improvements based on improve_code knowledge matches. Change implementation, not contracts. Do not change function signatures or behavior that tests verify.",
-            },
-            {
-                "id": 6,
                 "action": "run_tests",
                 "gate": "tests_pass",
-                "description": "Run the SAME tests again. If any fail, the improvement broke behavior — revert or fix the improvement, not the tests.",
+                "description": "Green baseline — all tests must pass before any changes.",
                 "command_template": "pytest {test_file} -v",
             },
             {
+                "id": 6,
+                "action": "apply_improvements",
+                "input_from": [1, 2],
+                "description": (
+                    "Apply improvements ONLY for APPLICABLE concepts from step 1. "
+                    "Each change must be traceable to a specific concept + behavior_score. "
+                    "Change implementation, not contracts. Do not change function signatures."
+                ),
+            },
+            {
                 "id": 7,
+                "action": "run_tests",
+                "gate": "tests_pass",
+                "description": "Run the SAME tests. If any fail, the improvement broke behavior — revert.",
+                "command_template": "pytest {test_file} -v",
+            },
+            {
+                "id": 8,
+                "tool": "scan_owasp",
+                "args_template": {"file_path": "{file_path}"},
+                "description": (
+                    "OWASP security scan — static AST rules + Milvus behavioral matching. "
+                    "Runs after improvements are verified. Any CRITICAL/HIGH findings should "
+                    "be addressed before the issue is created."
+                ),
+            },
+            {
+                "id": 9,
                 "action": "create_issue",
-                "input_from": [4, 6],
-                "description": "Create a GitHub issue with the improvement summary: what was changed, which KB knowledge motivated each change, and test results. Use `gh issue create`.",
+                "input_from": [1, 6, 7, 8],
+                "description": (
+                    "Create a GitHub issue: APPLICABLE concepts found, which were applied, "
+                    "behavior_scores that justified each change, test results, and OWASP scan results. "
+                    "Flag any security findings from step 8."
+                ),
             },
         ],
     },
@@ -210,65 +247,99 @@ CHAINS = {
         ],
     },
     "full_improvement": {
-        "description": "Full file improvement cycle: TDD guard → improve → verify → check for new knowledge",
+        "description": "Full file improvement cycle: behavioral scoring → TDD guard → apply APPLICABLE → verify → re-score delta",
         "triggers": ["full improve", "full cycle", "complete improvement", "deep improve"],
         "requires": ["file_path"],
         "steps": [
             {
                 "id": 1,
-                "tool": "tdd",
+                "tool": "score_applicability",
                 "args_template": {"file_path": "{file_path}"},
-                "description": "Phase 1 — Analyze code for test generation context",
+                "description": (
+                    "Phase 1 — Behavioral analysis. Embed what the code DOES against Milvus. "
+                    "Classify matches: APPLICABLE (actionable), ALREADY_APPLIED (skip), REFERENCE_ONLY (ignore)."
+                ),
             },
             {
                 "id": 2,
-                "action": "write_tests",
+                "action": "review_applicability",
                 "input_from": 1,
-                "description": "Write pytest tests that lock current behavior",
+                "gate": "has_applicable_concepts",
+                "description": "If no APPLICABLE concepts, stop — code already implements relevant patterns. Otherwise proceed.",
             },
             {
                 "id": 3,
-                "action": "run_tests",
-                "gate": "tests_pass",
-                "command_template": "pytest {test_file} -v",
-                "description": "Green baseline — all tests must pass",
+                "tool": "tdd",
+                "args_template": {"file_path": "{file_path}"},
+                "description": "Phase 2 — Lock current behavior with tests before making changes.",
             },
             {
                 "id": 4,
-                "tool": "improve_code",
-                "args_template": {"file_path": "{file_path}"},
-                "description": "Phase 2 — Get KB knowledge for each code chunk",
+                "action": "write_tests",
+                "input_from": 3,
+                "description": "Write pytest tests that lock current behavior.",
             },
             {
                 "id": 5,
-                "action": "apply_improvements",
-                "input_from": 4,
-                "description": "Apply improvements based on KB matches. Preserve contracts.",
-            },
-            {
-                "id": 6,
                 "action": "run_tests",
                 "gate": "tests_pass",
                 "command_template": "pytest {test_file} -v",
-                "description": "Verify improvements didn't break behavior",
+                "description": "Green baseline — all tests must pass.",
+            },
+            {
+                "id": 6,
+                "action": "apply_improvements",
+                "input_from": [1, 2],
+                "description": (
+                    "Phase 3 — Apply improvements ONLY for APPLICABLE concepts. "
+                    "Each change traced to concept + behavior_score. Preserve contracts."
+                ),
             },
             {
                 "id": 7,
-                "tool": "tdd",
-                "args_template": {"file_path": "{file_path}"},
-                "description": "Phase 3 — Re-analyze improved code. Compare with step 1: did new knowledge surface? Are there new testable behaviors?",
+                "action": "run_tests",
+                "gate": "tests_pass",
+                "command_template": "pytest {test_file} -v",
+                "description": "Verify improvements didn't break behavior.",
             },
             {
                 "id": 8,
-                "action": "compare_and_report",
-                "input_from": [1, 7],
-                "description": "Diff tdd outputs: step 1 vs step 7. Report new knowledge hits, changed scores, new testable units. This is the improvement delta.",
+                "tool": "score_applicability",
+                "args_template": {"file_path": "{file_path}"},
+                "description": (
+                    "Phase 4 — Re-score after improvements. Compare with step 1: "
+                    "APPLICABLE concepts should have moved to ALREADY_APPLIED. "
+                    "New APPLICABLE concepts may have surfaced."
+                ),
             },
             {
                 "id": 9,
+                "action": "compare_and_report",
+                "input_from": [1, 8],
+                "description": (
+                    "Diff score_applicability outputs: step 1 vs step 8. "
+                    "Report: concepts that moved APPLICABLE → ALREADY_APPLIED (success), "
+                    "new APPLICABLE concepts that emerged, and the improvement delta."
+                ),
+            },
+            {
+                "id": 10,
+                "tool": "scan_owasp",
+                "args_template": {"file_path": "{file_path}"},
+                "description": (
+                    "OWASP security scan — static AST rules + Milvus behavioral matching. "
+                    "Runs after all improvements verified. Address CRITICAL/HIGH before closing."
+                ),
+            },
+            {
+                "id": 11,
                 "action": "create_issue",
-                "input_from": [4, 6, 8],
-                "description": "Create a GitHub issue with the full improvement report: changes applied, KB knowledge that motivated them, test results, and the before/after tdd delta.",
+                "input_from": [1, 6, 7, 9, 10],
+                "description": (
+                    "Create GitHub issue: APPLICABLE concepts found, which were applied, "
+                    "behavior_scores, test results, before/after delta, and OWASP scan results. "
+                    "Flag any security findings from step 10."
+                ),
             },
         ],
     },
@@ -453,6 +524,8 @@ def orchestrate(prompt: str, k_per_collection: int = 3) -> dict:
     # 4. Build the plan
     missing_params = [r for r in chain["requires"] if r not in params]
 
+    log.info("orchestrate: chain=%s, goal=%s, context=%d hits", best["chain"], prompt[:60], len(milvus_context))
+
     return {
         "goal": prompt,
         "chain": best["chain"],
@@ -461,6 +534,12 @@ def orchestrate(prompt: str, k_per_collection: int = 3) -> dict:
         "missing_parameters": missing_params,
         "steps": chain["steps"],
         "milvus_context": milvus_context,
+        "ontology_note": (
+            "The Milvus context above contains prior art from the operational ontology — "
+            "concepts, past decisions, session lessons, and documentation. Use this context "
+            "to inform each step execution. Do not ignore low-scoring matches — they may "
+            "contain constraints or lessons that prevent repeating past mistakes."
+        ),
         "alternative_chains": [
             {"chain": m["chain"], "description": m["description"], "score": m["score"]}
             for m in matches[1:]

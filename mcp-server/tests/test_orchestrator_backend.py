@@ -37,18 +37,21 @@ class TestChains:
         from backends.orchestrator_backend import CHAINS
         chain = CHAINS["tdd_improve"]
         assert chain["requires"] == ["file_path"]
-        assert len(chain["steps"]) == 7
-        # First step is tdd tool, last is create_issue
-        assert chain["steps"][0]["tool"] == "tdd"
+        assert len(chain["steps"]) == 9
+        # First step is score_applicability, last is create_issue, penultimate is scan_owasp
+        assert chain["steps"][0]["tool"] == "score_applicability"
         assert chain["steps"][-1]["action"] == "create_issue"
+        assert chain["steps"][-2]["tool"] == "scan_owasp"
 
     def test_full_improvement_chain_structure(self):
         from backends.orchestrator_backend import CHAINS
         chain = CHAINS["full_improvement"]
-        assert len(chain["steps"]) == 9
-        # Has two tdd calls (step 1 and step 7)
-        tdd_steps = [s for s in chain["steps"] if s.get("tool") == "tdd"]
-        assert len(tdd_steps) == 2
+        assert len(chain["steps"]) == 11
+        # Has score_applicability calls (step 1 and step 8)
+        score_steps = [s for s in chain["steps"] if s.get("tool") == "score_applicability"]
+        assert len(score_steps) == 2
+        # Has scan_owasp as penultimate step
+        assert chain["steps"][-2]["tool"] == "scan_owasp"
 
 
 # ── _match_chains ────────────────────────────────────────────────────────────
@@ -177,7 +180,7 @@ class TestOrchestrate:
         # Use multiple full_improvement triggers to outscore tdd_improve
         result = orchestrate("full cycle complete improvement on memory.py")
         assert result["chain"] == "full_improvement"
-        assert len(result["steps"]) == 9
+        assert len(result["steps"]) == 11
 
     def test_milvus_context_with_hits(self):
         from backends.orchestrator_backend import orchestrate

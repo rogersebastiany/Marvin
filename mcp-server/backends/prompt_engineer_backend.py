@@ -2,7 +2,14 @@
 Prompt engineer backend — Transformer-Driven Prompt Architect.
 
 Not an MCP server. Used internally by mcp-marvin.
+Implements the TDPA framework: 6 mandatory sections exploiting
+Transformer O(1) constant path length attention. Integrates operational
+ontology context and prompt bias awareness.
 """
+
+import logging
+
+log = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
 Role: The Transformer-Driven Prompt Architect (v4)
@@ -52,6 +59,22 @@ Every prompt you generate MUST follow this exact Markdown structure:
 ### 6. FINAL TASK
 [The specific trigger for the agent to start working]
 
+4. Operational Ontology Integration
+
+Every prompt exists within a domain. The operational ontology — the structured knowledge of that \
+domain — must inform the prompt's constraints, examples, and reasoning patterns. When generating \
+a prompt, consider: what domain concepts constrain the output? What relationships between concepts \
+must the reasoning respect? What prior decisions exist that the prompt should acknowledge?
+
+5. Prompt Bias Awareness
+
+A prompt is a bias (P>0). Architecture is a constraint (P=0). Be aware of:
+- Anchoring bias: first examples disproportionately influence output
+- Recency bias: later instructions override earlier ones in long contexts
+- Framing bias: how you describe the task constrains the solution space
+- MitiGate: use structured sections, cross-references, and explicit constraints \
+to reduce unintended bias. The ATTENTION MASK section is your primary mitigation tool.
+
 Trigger: When asked to create a prompt, apply the principles above and output ONLY the \
 generated prompt within the specified structure.\
 """
@@ -65,7 +88,8 @@ def _build_tool_catalog(marvin_tools: list[str]) -> str:
 
 
 def generate_prompt(task_description: str, domain: str = "general", tool_catalog: str = "") -> str:
-    """Generate a structured prompt following the Prompt Architect framework."""
+    """Generate a structured prompt integrating operational ontology context."""
+    log.info("generate_prompt: domain=%s, task=%s", domain, task_description[:60])
     return (
         f"{SYSTEM_PROMPT}\n\n"
         f"---\n\n"
@@ -74,10 +98,17 @@ def generate_prompt(task_description: str, domain: str = "general", tool_catalog
         f"(KNOWLEDGE BEYOND WEIGHTS) of the generated prompt.\n\n"
         f"{tool_catalog}\n\n"
         f"---\n\n"
+        f"## Operational Ontology Context\n"
+        f"Domain: **{domain}**. The generated prompt must respect the domain's "
+        f"ontological constraints — use `retrieve` to find relevant concepts, "
+        f"decisions, and documentation before generating. Ground the ATTENTION MASK "
+        f"section in domain-specific constraints, not generic rules.\n\n"
+        f"---\n\n"
         f"NOW GENERATE A PROMPT FOR THE FOLLOWING TASK:\n\n"
         f"**Task:** {task_description}\n"
         f"**Domain:** {domain}\n\n"
-        f"Apply all principles above. Output ONLY the generated prompt in the mandatory structure."
+        f"Apply all principles above, including operational ontology integration "
+        f"and bias awareness. Output ONLY the generated prompt in the mandatory structure."
     )
 
 
@@ -92,6 +123,8 @@ def refine_prompt(original_prompt: str, feedback: str, tool_catalog: str = "") -
         f"## Available MCP Tools\n{tool_catalog}\n\n"
         f"Analyze the original prompt against the mandatory structure. "
         f"Identify gaps (missing sections, weak few-shots, no constraints). "
+        f"Check for prompt bias: anchoring from examples, framing from task description, "
+        f"recency effects from instruction ordering. "
         f"Output the IMPROVED prompt in the mandatory structure."
     )
 
@@ -103,9 +136,11 @@ def audit_prompt(prompt_to_audit: str) -> str:
         f"---\n\n"
         f"AUDIT THE FOLLOWING PROMPT:\n\n"
         f"```\n{prompt_to_audit}\n```\n\n"
-        f"Evaluate it against all 6 mandatory sections. For each section, rate:\n"
+        f"Evaluate it against all 6 mandatory sections plus operational ontology "
+        f"integration and bias awareness. For each section, rate:\n"
         f"- PRESENT / MISSING / WEAK\n"
-        f"- Specific improvement suggestions\n\n"
+        f"- Specific improvement suggestions\n"
+        f"- Bias risk assessment (anchoring, framing, recency)\n\n"
         f"Then provide an overall score (1-10) and a rewritten version that addresses all gaps.\n"
         f"Output format:\n\n"
         f"### AUDIT REPORT\n"

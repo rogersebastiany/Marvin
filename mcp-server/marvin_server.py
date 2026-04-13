@@ -16,6 +16,7 @@ Capabilities:
 """
 
 import inspect
+import logging
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -26,6 +27,8 @@ from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.exceptions import ToolError
 from pydantic import Field
+
+log = logging.getLogger(__name__)
 
 from backends import ontology
 from backends import memory
@@ -210,11 +213,13 @@ _FALLBACK_INSTRUCTIONS = (
 @asynccontextmanager
 async def marvin_lifespan(server: FastMCP):
     """Initialize backend connections on startup, load identity, close on shutdown."""
-    # Eagerly connect instead of lazy singletons
+    # Eagerly connect instead of lazy singletons — retry logic in backends
+    log.info("Marvin lifespan: connecting to backends...")
     ontology._get_driver()
     memory._ensure_connected()
     memory._get_openai()
     memory.ensure_collections()
+    log.info("Marvin lifespan: all backends connected")
 
     # Load identity: cache hit → use cached, cache miss → build from KG
     cached = memory.get_cached_self_description()
@@ -252,7 +257,7 @@ MARVIN_TOOLS = [
     "generate_diagram", "judge_diagram", "save_diagram", "list_diagrams", "get_diagram",
     "inspect_schemas", "stats", "self_description",
     "refine_plan", "save_plan",
-    "improve_code", "tdd", "orchestrate",
+    "improve_code", "tdd", "score_applicability", "scan_owasp", "orchestrate",
     "sync_vaults", "audit_code", "self_improve",
 ]
 # Single source of truth — anything that needs the tool count must read len(MARVIN_TOOLS)
@@ -282,7 +287,7 @@ mcp = FastMCP(
 # refine_plan is included because it actively contrasts a draft against
 # Milvus (one search per collection per iteration) — that's the S→A reduction
 # operating on a plan rather than a free-form query.
-MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan", "improve_code", "tdd", "orchestrate", "classify_keywords"})
+MILVUS_TOOLS = frozenset({"retrieve", "get_memory", "search_docs", "refine_plan", "improve_code", "tdd", "score_applicability", "scan_owasp", "orchestrate", "classify_keywords"})
 
 # Tier 1b — Safe overviews: ungated, but do NOT set the flag.
 # Seeing a menu of names is not a semantic reduction.
@@ -329,11 +334,13 @@ class RetrieveBeforeActMiddleware(Middleware):
     """
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
+        """Set gate on Milvus calls; block gated tools if gate is unset."""
         tool_name = context.message.name
         ctx = context.fastmcp_context
 
         if tool_name in MILVUS_TOOLS and ctx:
             await ctx.set_state("retrieved", True)
+            log.debug("Milvus gate: flag set by '%s'", tool_name)
 
         if tool_name in GATED_TOOLS:
             retrieved = (await ctx.get_state("retrieved")) if ctx else False
@@ -400,6 +407,7 @@ class OrchestrationGateMiddleware(Middleware):
     """
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
+        """Require orchestrate before write tools; enforce provenance on expand."""
         tool_name = context.message.name
         ctx = context.fastmcp_context
 
@@ -564,7 +572,7 @@ def list_concepts() -> str:
     annotations={"readOnlyHint": True},
     tags={"retrieval"},
 )
-def get_memory(query: str, collection: str = "decisions", limit: int = 5) -> str:
+def get_memory(query: str, collection: str = "decisions", limit: int = 5, cross_reference: bool = True) -> str:
     """Deep-dive into episodic memory — HCC prefetching (L2/L3 → context).
 
     Search past decisions (L2 Knowledge) or sessions (L3 Wisdom) by semantic
@@ -574,16 +582,32 @@ def get_memory(query: str, collection: str = "decisions", limit: int = 5) -> str
     This is the HCC prefetching operation: embed the task descriptor,
     retrieve similar wisdom via cosine similarity.
 
+    When cross_reference is True (default), also fetches the complementary
+    HCC layer: querying L2 also returns top L3 matches, and vice versa.
+    This implements the full HCC context migration pattern (L2↔L3).
+
     Args:
         query: What you're about to do (semantic search key)
         collection: Which memory layer — "decisions" (L2), "sessions" (L3), or "plans"
         limit: Max results (default 5)
+        cross_reference: Also fetch from the complementary HCC layer (default True)
     """
     if collection == "sessions":
-        return memory.search_sessions(query, limit=limit)
+        primary = memory.search_sessions(query, limit=limit)
+        if cross_reference:
+            secondary = memory.search_decisions(query, limit=max(1, limit // 2))
+            if "No similar" not in secondary:
+                primary += f"\n\n### Cross-reference: L2 Decisions\n{secondary}"
+        return primary
     if collection == "plans":
         return memory.search_plans(query, limit=limit)
-    return memory.search_decisions(query, limit=limit)
+    # Default: decisions (L2)
+    primary = memory.search_decisions(query, limit=limit)
+    if cross_reference:
+        secondary = memory.search_sessions(query, limit=max(1, limit // 2))
+        if "No similar" not in secondary:
+            primary += f"\n\n### Cross-reference: L3 Sessions\n{secondary}"
+    return primary
 
 
 @mcp.tool(
@@ -725,6 +749,84 @@ def tdd(
         file_path=file_path,
         k_per_collection=k_per_collection,
         score_threshold=score_threshold,
+    )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval", "improvement"},
+)
+def score_applicability(
+    file_path: Annotated[str, Field(description="Absolute path to the file to analyze")],
+    k_per_collection: Annotated[int, Field(ge=1, le=10, description="Top-k results per collection per chunk")] = 5,
+    behavior_threshold: Annotated[float, Field(ge=0.0, le=1.0, description="Min cosine similarity for behavioral matches")] = 0.40,
+    code_threshold: Annotated[float, Field(ge=0.0, le=1.0, description="Min cosine similarity for raw code matches")] = 0.35,
+) -> dict:
+    """Behavioral code analysis → Milvus → applicability classification.
+
+    For each code chunk, generates a behavioral description from the AST
+    (what the code DOES as a flow, not what it looks like), embeds it
+    against Milvus, and classifies each concept match:
+
+    - APPLICABLE: behavior matches — the code does something this concept
+      addresses but doesn't implement it yet. These are actionable.
+    - ALREADY_APPLIED: concept tokens found in the code — already implemented.
+    - REFERENCE_ONLY: syntactically close but not behaviorally relevant.
+
+    The behavioral embedding is the key: it matches against what the code
+    DOES (its flow, patterns, responsibilities), not syntactic noise.
+    This makes the ontology actionable — you know WHAT to apply and WHERE.
+
+    Sets the Milvus gate flag (retrieval tool).
+
+    Args:
+        file_path: Absolute path to the source file
+        k_per_collection: Results per collection per chunk (1-10, default 5)
+        behavior_threshold: Min cosine similarity for behavioral matches (default 0.40)
+        code_threshold: Min cosine similarity for raw code matches (default 0.35)
+    """
+    return code_improvement_backend.score_applicability(
+        file_path=file_path,
+        k_per_collection=k_per_collection,
+        behavior_threshold=behavior_threshold,
+        code_threshold=code_threshold,
+    )
+
+
+@mcp.tool(
+    annotations={"readOnlyHint": True},
+    tags={"retrieval", "security", "owasp"},
+)
+def scan_owasp(
+    file_path: Annotated[str, Field(description="Absolute path to the file to scan")],
+    k_per_collection: Annotated[int, Field(ge=1, le=10, description="Top-k Milvus results per collection per chunk")] = 5,
+    behavior_threshold: Annotated[float, Field(ge=0.0, le=1.0, description="Min cosine similarity for behavioral security matches")] = 0.40,
+) -> dict:
+    """OWASP Top 10 vulnerability scanner — static patterns + Milvus security knowledge.
+
+    Two-layer security analysis:
+    1. Static AST rules — detect known dangerous patterns: SQL injection,
+       command injection, path traversal, hardcoded secrets, weak crypto,
+       unsafe deserialization, debug mode, sensitive logging, eval/exec.
+    2. Behavioral embedding — embed each chunk's security behavior against
+       Milvus OWASP/security knowledge for deeper matches.
+
+    Severity: CRITICAL > HIGH > MEDIUM > LOW > CLEAN.
+
+    Designed as the final step in improvement chains — after code is
+    improved and tests pass, scan for security debt.
+
+    Sets the Milvus gate flag (retrieval tool).
+
+    Args:
+        file_path: Absolute path to the source file to scan
+        k_per_collection: Milvus results per collection per chunk (1-10, default 5)
+        behavior_threshold: Min cosine similarity for behavioral matches (default 0.40)
+    """
+    return code_improvement_backend.scan_owasp(
+        file_path=file_path,
+        k_per_collection=k_per_collection,
+        behavior_threshold=behavior_threshold,
     )
 
 

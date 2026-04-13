@@ -2,15 +2,22 @@
 Ontology backend — Python library wrapping Neo4j.
 
 Not an MCP server. Used internally by mcp-marvin.
+Wraps Neo4j via the official Python driver with Cypher queries.
+Uses MERGE for non-destructive graph operations and typed edges
+from relation_types.json.
 """
 
 import json
+import logging
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
+
+log = logging.getLogger(__name__)
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
@@ -37,11 +44,29 @@ _ANY_REL = "|".join(RELATION_TYPES)
 _SYM_REL = "|".join(SYMMETRIC_TYPES)
 
 
+_MAX_RETRIES = 3
+_RETRY_BACKOFF = 1.0
+
+
 def _get_driver():
+    """Lazily initialize the Neo4j driver singleton. Retries on connection failure."""
     global _driver
-    if _driver is None:
-        _driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
-    return _driver
+    if _driver is not None:
+        return _driver
+    for attempt in range(_MAX_RETRIES):
+        try:
+            _driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
+            _driver.verify_connectivity()
+            log.info("Connected to Neo4j at %s", NEO4J_URI)
+            return _driver
+        except Exception as e:
+            if attempt < _MAX_RETRIES - 1:
+                wait = _RETRY_BACKOFF * (2 ** attempt)
+                log.warning("Neo4j connection attempt %d failed: %s — retrying in %.1fs", attempt + 1, e, wait)
+                time.sleep(wait)
+            else:
+                log.error("Neo4j connection failed after %d attempts: %s", _MAX_RETRIES, e)
+                raise
 
 
 def query(text: str, limit: int = 10) -> str:
@@ -216,6 +241,7 @@ def traverse(name: str, hops: int = 2) -> str:
             return f"Concept '{name}' not found."
 
         result = list(s.run(
+            f"CYPHER planner=dp "
             f"MATCH path = (c:Concept {{name: $name}})-[:{_ANY_REL}*1..{hops}]-(n:Concept) "
             "WHERE c <> n "
             "RETURN DISTINCT n.name AS name, n.vault AS vault, n.ghost AS ghost, "
@@ -404,6 +430,7 @@ def expand(
             )
             actions.append(f"Created relation: {concept_name} —[{rel}]→ {relate_to}")
 
+    log.info("expand: %s", "; ".join(actions))
     return "\n".join(actions)
 
 

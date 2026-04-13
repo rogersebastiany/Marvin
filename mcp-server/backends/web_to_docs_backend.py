@@ -2,9 +2,13 @@
 Web-to-docs backend — Fetch websites and convert to local markdown.
 
 Not an MCP server. Used internally by mcp-marvin.
+Pipeline: httpx fetch → BeautifulSoup (lxml parser) → content extraction →
+markdownify conversion → markdown cleanup → save to docs/.
+Uses concurrent.futures ThreadPoolExecutor for parallel fetching.
 """
 
 import json
+import logging
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -15,6 +19,8 @@ import httpx
 from bs4 import BeautifulSoup
 from markdownify import markdownify
 
+log = logging.getLogger(__name__)
+
 KEYWORD_MODEL = os.getenv("KEYWORD_MODEL", "gpt-4o-mini")
 
 MAX_WORKERS = 8
@@ -23,6 +29,7 @@ DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 
 
 def _safe_doc_path(filename: str) -> Path | None:
+    """Resolve a doc filename within DOCS_DIR, blocking path traversal."""
     path = (DOCS_DIR / filename).resolve()
     if not str(path).startswith(str(DOCS_DIR.resolve())):
         return None
@@ -30,6 +37,7 @@ def _safe_doc_path(filename: str) -> Path | None:
 
 
 def _slugify(text: str) -> str:
+    """Convert text to a URL-safe slug (lowercase, hyphens, max 80 chars)."""
     text = re.sub(r"[^\w\s-]", "", text.lower())
     return re.sub(r"[\s_]+", "-", text).strip("-")[:80]
 
@@ -40,6 +48,11 @@ _HEADERS = {
 
 
 def _fetch(url: str) -> httpx.Response:
+    """Fetch a URL with Marvin User-Agent, following redirects.
+
+    Raises:
+        httpx.HTTPStatusError: On non-2xx response.
+    """
     resp = httpx.get(url, headers=_HEADERS, follow_redirects=True, timeout=30)
     resp.raise_for_status()
     return resp
@@ -163,7 +176,7 @@ def _extract_main_content(html: str) -> str:
     This preserves content links/elements that happen to match noise patterns
     but live outside the noise regions.
     """
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
 
     # Step 1: Global pre-clean — remove tags that are ALWAYS noise regardless
     # of where they appear (script, style, noscript, svg, iframe)
@@ -204,17 +217,20 @@ def _clean_markdown(md: str) -> str:
 
 
 def _html_to_md(html: str) -> str:
+    """Convert raw HTML to clean markdown via content extraction + markdownify."""
     content = _extract_main_content(html)
     md = markdownify(content, heading_style="ATX", strip=["img", "script", "style"])
     return _clean_markdown(md)
 
 
 def _fetch_and_convert(url: str) -> str:
+    """Fetch a URL and return its content as clean markdown."""
     return _html_to_md(_fetch(url).text)
 
 
 def _extract_links(html: str, base_url: str, prefix: str) -> list[str]:
-    soup = BeautifulSoup(html, "html.parser")
+    """Extract absolute links from HTML that start with prefix, deduped."""
+    soup = BeautifulSoup(html, "lxml")
     links: list[str] = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
@@ -320,7 +336,7 @@ def _tier2_body(url: str, html: str) -> dict:
 
     Only called for URLs that passed tier 1.
     """
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
 
     # ── Extract <head> metadata ──
     head = soup.find("head")
@@ -501,6 +517,7 @@ def rank_urls(urls: list[str]) -> str:
     tier2_errors: list[str] = []
 
     def _fetch_and_score(t1: dict) -> dict:
+        """Fetch a tier-1 survivor and compute its full body quality score."""
         url = t1["url"]
         resp = _fetch(url)
         t2 = _tier2_body(url, resp.text)
@@ -573,6 +590,7 @@ def save_as_doc(url: str, filename: str) -> str:
         return f"Invalid filename '{filename}'."
     md = _fetch_and_convert(url)
     path.write_text(md)
+    log.info("save_as_doc: %d chars → docs/%s", len(md), filename)
     return f"Saved {len(md)} chars to docs/{filename}"
 
 
@@ -639,6 +657,7 @@ def crawl_docs(url: str, max_pages: int = 20, path_prefix: str = "") -> str:
 
         # Fetch batch in parallel — need raw HTML for link extraction
         def _fetch_html(u: str) -> tuple[str, str, str]:
+            """Fetch a URL and return (url, raw_html, markdown) tuple."""
             resp = _fetch(u)
             html = resp.text
             md = _html_to_md(html)

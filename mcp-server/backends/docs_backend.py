@@ -2,9 +2,14 @@
 Docs backend — Python library for searching/browsing local markdown docs.
 
 Not an MCP server. Used internally by mcp-marvin.
+Uses Pathlib for all filesystem operations with path traversal protection.
+Semantic search via Milvus IVF_FLAT index with keyword fallback.
 """
 
+import logging
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 
@@ -51,6 +56,7 @@ def search_docs(query: str) -> str:
                 results.append(f"**{doc.name}** (line {i + 1}):\n```\n{snippet}\n```")
 
     if results:
+        log.info("search_docs keyword fallback: %d matches for '%s'", len(results), query[:60])
         return f"Found {len(results)} match(es) (keyword fallback):\n\n" + "\n\n".join(results)
 
     return f"No results found for '{query}'."
