@@ -433,10 +433,10 @@ Marvin/
 
 | Paper | Key Finding | Relevance |
 |-------|-------------|-----------|
-| **DFAH** (Khatchadourian, 2024) | 89%+ action determinism with schema-first architecture; r=-0.11 det<->accuracy for general tools | Validates determinism is achievable; the null correlation doesn't apply to tautological tools |
-| **LLM Output Drift** (Ouyang et al., 2024) | Smaller models = more consistent; RAG tasks most sensitive to drift | Validates that constrained context -> consistency |
-| **Ultra-Long-Horizon Agentic Science** (Schmidgall et al., 2025) | HCC (L1/L2/L3 memory) achieves 56.44% SOTA on MLE-Bench | Validates three-tier memory; maps directly to our Milvus collections |
-| **Deterministic Trajectory Optimization** (Nass et al., 2025) | EM converges probabilistic policies to deterministic optimum | Philosophical parallel — self-improvement converges toward determinism |
+| **[Replayable Financial Agents (DFAH)](https://arxiv.org/abs/2601.15322)** (Khatchadourian, 2025) | 89%+ action determinism with schema-first architecture; r=-0.11 det<->accuracy for general tools | Validates determinism is achievable; the null correlation doesn't apply to tautological tools |
+| **[LLM Output Drift](https://arxiv.org/abs/2511.07585)** (Khatchadourian & Franco, 2025) | Smaller models = more consistent; RAG tasks most sensitive to drift | Validates that constrained context -> consistency |
+| **[Ultra-Long-Horizon Agentic Science](https://arxiv.org/abs/2601.10402)** (Zhu, Cai, Liu et al., 2025) | HCC (L1/L2/L3 memory) achieves 56.44% SOTA on MLE-Bench | Validates three-tier memory; maps directly to our Milvus collections |
+| **[Deterministic Trajectory Optimization](https://arxiv.org/abs/2407.13316)** (Filabadi, Lefebvre, Crevecoeur, 2024) | EM converges probabilistic policies to deterministic optimum | Philosophical parallel — self-improvement converges toward determinism |
 | **[Optimizing the Interface Between KGs and LLMs](https://arxiv.org/abs/2505.24478)** (Markovic et al., 2025) | Graph extraction prompt is highest-impact hyperparameter; typed edges improve multi-hop reasoning; F1 0.145->0.654 from tuning | Validates Cognee as KG engine; confirms typed edges over generic RELATES_TO |
 
 ## License
