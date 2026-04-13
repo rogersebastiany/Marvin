@@ -2,9 +2,9 @@
   "mcpServers": {
     "mcp-marvin": {
       "type": "stdio",
-      "command": "uv",
-      "args": ["run", "fastmcp", "run", "marvin_server.py", "--reload"],
-      "cwd": "mcp-server"
+      "command": "/home/rgr/.local/bin/uv",
+      "args": ["run", "--project", "/home/rgr/lab/oh yeah/mcp-server", "fastmcp", "run", "/home/rgr/lab/oh yeah/mcp-server/marvin_server.py"],
+      "cwd": "/home/rgr/lab/oh yeah/mcp-server"
     }
   }
 }
