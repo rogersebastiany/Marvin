@@ -1,0 +1,187 @@
+/*
+ * Neo4j Browser GraSS stylesheet for the Tautologia Ontologica knowledge graph.
+ *
+ * Import: Neo4j Browser → ⚙ Settings → scroll to "Graph Stylesheet" → drag this file
+ * Or: :style reset then :style <paste contents>
+ *
+ * Color scheme:
+ *   Cognee concepts (vault=None) — blue (#2196F3)
+ *   Agent concepts (vault=agent)  — green (#4CAF50)
+ *   Ghost concepts (vault=ghost)  — grey (#9E9E9E)
+ *   Cognee internals (__Node__, TextSummary, DocumentChunk, TextDocument) — dim
+ */
+
+node {
+  diameter: 40px;
+  color: #2196F3;
+  border-color: #1565C0;
+  border-width: 2px;
+  text-color-internal: #FFFFFF;
+  font-size: 10px;
+  caption: "{name}";
+}
+
+node.Concept {
+  diameter: 50px;
+  color: #2196F3;
+  border-color: #1565C0;
+  border-width: 2px;
+  text-color-internal: #FFFFFF;
+  font-size: 11px;
+  caption: "{name}";
+}
+
+/* Vault-based coloring — requires neo4j-setup-labels.cypher first */
+
+node.Cognee {
+  color: #2196F3;
+  border-color: #1565C0;
+  text-color-internal: #FFFFFF;
+}
+
+node.Agent {
+  color: #4CAF50;
+  border-color: #2E7D32;
+  text-color-internal: #FFFFFF;
+}
+
+node.Ghost {
+  color: #9E9E9E;
+  border-color: #616161;
+  text-color-internal: #FFFFFF;
+  diameter: 35px;
+  font-size: 9px;
+}
+
+node.__Node__ {
+  diameter: 25px;
+  color: #78909C;
+  border-color: #546E7A;
+  border-width: 1px;
+  text-color-internal: #FFFFFF;
+  font-size: 8px;
+  caption: "{id}";
+}
+
+node.TextSummary {
+  diameter: 20px;
+  color: #B0BEC5;
+  border-color: #90A4AE;
+  border-width: 1px;
+  text-color-internal: #37474F;
+  font-size: 8px;
+  caption: "";
+}
+
+node.DocumentChunk {
+  diameter: 20px;
+  color: #B0BEC5;
+  border-color: #90A4AE;
+  border-width: 1px;
+  text-color-internal: #37474F;
+  font-size: 8px;
+  caption: "";
+}
+
+node.TextDocument {
+  diameter: 30px;
+  color: #FFB74D;
+  border-color: #F57C00;
+  border-width: 2px;
+  text-color-internal: #37474F;
+  font-size: 9px;
+  caption: "{name}";
+}
+
+/* ── Relationship types ────────────────────────────────── */
+
+relationship {
+  color: #B0BEC5;
+  shaft-width: 1px;
+  font-size: 8px;
+  padding: 3px;
+  text-color-external: #546E7A;
+  text-color-internal: #FFFFFF;
+  caption: "<type>";
+}
+
+relationship.COMPOSES {
+  color: #42A5F5;
+  shaft-width: 2px;
+}
+
+relationship.IMPLEMENTS {
+  color: #66BB6A;
+  shaft-width: 2px;
+}
+
+relationship.REQUIRES {
+  color: #EF5350;
+  shaft-width: 2px;
+}
+
+relationship.ENABLES {
+  color: #AB47BC;
+  shaft-width: 2px;
+}
+
+relationship.EXTENDS {
+  color: #26A69A;
+  shaft-width: 2px;
+}
+
+relationship.PROVES {
+  color: #FFA726;
+  shaft-width: 2px;
+}
+
+relationship.CONTRADICTS {
+  color: #E53935;
+  shaft-width: 3px;
+  border-color: #B71C1C;
+}
+
+relationship.RELATES_TO {
+  color: #BDBDBD;
+  shaft-width: 1px;
+}
+
+relationship.EXEMPLIFIES {
+  color: #7E57C2;
+  shaft-width: 1px;
+}
+
+relationship.FORMALIZES {
+  color: #5C6BC0;
+  shaft-width: 2px;
+}
+
+relationship.DEFINES {
+  color: #29B6F6;
+  shaft-width: 2px;
+}
+
+relationship.ANALOGOUS_TO {
+  color: #EC407A;
+  shaft-width: 1px;
+}
+
+relationship.REDUCES {
+  color: #FF7043;
+  shaft-width: 2px;
+}
+
+relationship.MITIGATES {
+  color: #26C6DA;
+  shaft-width: 2px;
+}
+
+relationship.INFERS {
+  color: #9CCC65;
+  shaft-width: 1px;
+}
+
+relationship.EVOLVES_FROM {
+  color: #8D6E63;
+  shaft-width: 1px;
+}

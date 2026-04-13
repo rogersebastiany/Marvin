@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tautologia Ontologica — Knowledge Graph</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e17;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+    #viz { width: 100vw; height: 100vh; }
+    #controls {
+      position: fixed; top: 16px; left: 16px; z-index: 10;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    #controls button {
+      background: rgba(30, 40, 60, 0.9); color: #e0e0e0;
+      border: 1px solid #334; padding: 8px 16px; border-radius: 6px;
+      cursor: pointer; font-size: 13px; backdrop-filter: blur(8px);
+      transition: all 0.2s; text-align: left;
+    }
+    #controls button:hover { background: rgba(50, 70, 100, 0.95); border-color: #667; }
+    #controls button.active { background: rgba(33, 150, 243, 0.3); border-color: #2196F3; }
+    #legend {
+      position: fixed; bottom: 16px; left: 16px; z-index: 10;
+      background: rgba(15, 20, 35, 0.92); border: 1px solid #223;
+      border-radius: 8px; padding: 14px 18px; backdrop-filter: blur(8px);
+    }
+    #legend h3 { font-size: 13px; color: #90CAF9; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+    .legend-section { margin-bottom: 10px; }
+    .legend-section h4 { font-size: 11px; color: #78909C; margin-bottom: 5px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 12px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 6px currentColor; }
+    .legend-line { width: 20px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+    #title { position: fixed; top: 16px; right: 16px; z-index: 10; text-align: right; }
+    #title h1 { font-size: 20px; font-weight: 300; color: #90CAF9; letter-spacing: 2px; }
+    #title p { font-size: 12px; color: #546E7A; margin-top: 4px; }
+    #stats { position: fixed; top: 60px; right: 16px; z-index: 10; font-size: 11px; color: #546E7A; text-align: right; }
+    #tooltip {
+      display: none; position: fixed; z-index: 20;
+      background: rgba(15, 20, 35, 0.95); border: 1px solid #334;
+      border-radius: 8px; padding: 12px 16px; max-width: 350px;
+      backdrop-filter: blur(8px); font-size: 12px; line-height: 1.5;
+      pointer-events: none;
+    }
+    #tooltip h4 { color: #90CAF9; margin-bottom: 4px; }
+    #tooltip .vault { color: #78909C; font-size: 11px; }
+    #tooltip .summary { color: #B0BEC5; margin-top: 6px; }
+    #tooltip .degree { color: #4CAF50; font-size: 11px; margin-top: 2px; }
+    #search {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 10;
+    }
+    #search input {
+      background: rgba(15, 20, 35, 0.92); color: #e0e0e0;
+      border: 1px solid #334; padding: 8px 16px; border-radius: 6px;
+      font-size: 13px; width: 280px; outline: none;
+      backdrop-filter: blur(8px);
+    }
+    #search input:focus { border-color: #2196F3; }
+    #search input::placeholder { color: #546E7A; }
+  </style>
+</head>
+<body>
+
+<div id="viz"></div>
+
+<div id="controls">
+  <button onclick="loadView('full')" class="active">Full Graph</button>
+  <button onclick="loadView('hubs')">Top 30 Hubs</button>
+  <button onclick="loadView('thesis')">Thesis Core</button>
+  <button onclick="loadView('agent')">Agent Concepts</button>
+  <button onclick="loadView('implements')">IMPLEMENTS</button>
+  <button onclick="loadView('requires')">REQUIRES</button>
+  <button onclick="loadView('composes')">COMPOSES</button>
+  <button onclick="loadView('enables')">ENABLES</button>
+  <button onclick="loadView('security')">Security</button>
+</div>
+
+<div id="search">
+  <input type="text" id="searchInput" placeholder="Search concepts..." oninput="searchNode(this.value)">
+</div>
+
+<div id="title">
+  <h1>TAUTOLOGIA ONTOLOGICA</h1>
+  <p>Knowledge Graph Visualization</p>
+</div>
+<div id="stats"></div>
+
+<div id="legend">
+  <h3>Legend</h3>
+  <div class="legend-section">
+    <h4>Node color = dominant edge type</h4>
+    <div class="legend-item"><div class="legend-dot" style="color:#42A5F5;background:#42A5F5"></div> COMPOSES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#66BB6A;background:#66BB6A"></div> IMPLEMENTS</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#EF5350;background:#EF5350"></div> REQUIRES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#AB47BC;background:#AB47BC"></div> ENABLES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#26A69A;background:#26A69A"></div> EXTENDS</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#FFA726;background:#FFA726"></div> PROVES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#E53935;background:#E53935"></div> CONTRADICTS</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#5C6BC0;background:#5C6BC0"></div> FORMALIZES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#29B6F6;background:#29B6F6"></div> DEFINES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#EC407A;background:#EC407A"></div> ANALOGOUS_TO</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#FF7043;background:#FF7043"></div> REDUCES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#26C6DA;background:#26C6DA"></div> MITIGATES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#7E57C2;background:#7E57C2"></div> EXEMPLIFIES</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#9CCC65;background:#9CCC65"></div> INFERS</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#8D6E63;background:#8D6E63"></div> EVOLVES_FROM</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#90A4AE;background:#90A4AE"></div> RELATES_TO</div>
+  </div>
+  <div class="legend-section">
+    <h4>Node border = vault</h4>
+    <div class="legend-item"><div class="legend-dot" style="color:#E3F2FD;background:transparent;border:2px solid #E3F2FD"></div> Cognee (thesis)</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#00E676;background:transparent;border:2px solid #00E676"></div> Agent (discovered)</div>
+    <div class="legend-item"><div class="legend-dot" style="color:#78909C;background:transparent;border:2px solid #78909C"></div> Ghost (undefined)</div>
+  </div>
+</div>
+
+<div id="tooltip">
+  <h4 id="tip-name"></h4>
+  <div class="vault" id="tip-vault"></div>
+  <div class="degree" id="tip-degree"></div>
+  <div class="summary" id="tip-summary"></div>
+</div>
+
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<script src="graph-data.js"></script>
+<script>
+// Node color = dominant edge type (what kind of relationships this concept has most)
+// Border = vault (cognee/agent/ghost)
+const NODE_COLORS = {
+  COMPOSES:     { bg: '#1565C0', hi: '#42A5F5', shadow: 'rgba(66,165,245,0.6)' },
+  IMPLEMENTS:   { bg: '#2E7D32', hi: '#66BB6A', shadow: 'rgba(102,187,106,0.6)' },
+  REQUIRES:     { bg: '#C62828', hi: '#EF5350', shadow: 'rgba(239,83,80,0.6)' },
+  ENABLES:      { bg: '#6A1B9A', hi: '#AB47BC', shadow: 'rgba(171,71,188,0.6)' },
+  EXTENDS:      { bg: '#00695C', hi: '#26A69A', shadow: 'rgba(38,166,154,0.6)' },
+  PROVES:       { bg: '#E65100', hi: '#FFA726', shadow: 'rgba(255,167,38,0.6)' },
+  CONTRADICTS:  { bg: '#B71C1C', hi: '#E53935', shadow: 'rgba(229,57,53,0.7)' },
+  RELATES_TO:   { bg: '#546E7A', hi: '#90A4AE', shadow: 'rgba(144,164,174,0.4)' },
+  FORMALIZES:   { bg: '#283593', hi: '#5C6BC0', shadow: 'rgba(92,107,192,0.6)' },
+  DEFINES:      { bg: '#0277BD', hi: '#29B6F6', shadow: 'rgba(41,182,246,0.6)' },
+  ANALOGOUS_TO: { bg: '#AD1457', hi: '#EC407A', shadow: 'rgba(236,64,122,0.6)' },
+  REDUCES:      { bg: '#BF360C', hi: '#FF7043', shadow: 'rgba(255,112,67,0.6)' },
+  MITIGATES:    { bg: '#00838F', hi: '#26C6DA', shadow: 'rgba(38,198,218,0.6)' },
+  EXEMPLIFIES:  { bg: '#4527A0', hi: '#7E57C2', shadow: 'rgba(126,87,194,0.6)' },
+  INFERS:       { bg: '#558B2F', hi: '#9CCC65', shadow: 'rgba(156,204,101,0.6)' },
+  EVOLVES_FROM: { bg: '#4E342E', hi: '#8D6E63', shadow: 'rgba(141,110,99,0.5)' },
+  NONE:         { bg: '#37474F', hi: '#78909C', shadow: 'rgba(120,144,156,0.3)' },
+};
+
+const VAULT_BORDERS = {
+  cognee: '#B0BEC5',
+  agent:  '#00E676',
+  ghost:  '#546E7A',
+};
+
+const EDGE_COLORS = {
+  COMPOSES:'#42A5F5', IMPLEMENTS:'#66BB6A', REQUIRES:'#EF5350', ENABLES:'#AB47BC',
+  EXTENDS:'#26A69A', PROVES:'#FFA726', CONTRADICTS:'#E53935', RELATES_TO:'#757575',
+  FORMALIZES:'#5C6BC0', DEFINES:'#29B6F6', ANALOGOUS_TO:'#EC407A', REDUCES:'#FF7043',
+  MITIGATES:'#26C6DA', EXEMPLIFIES:'#7E57C2', INFERS:'#9CCC65', EVOLVES_FROM:'#8D6E63',
+};
+
+// Build lookup indexes
+const nodeById = {};
+GRAPH_DATA.nodes.forEach(n => { nodeById[n.id] = n; });
+
+const edgesByNode = {};
+GRAPH_DATA.edges.forEach(e => {
+  if (!edgesByNode[e.source]) edgesByNode[e.source] = [];
+  if (!edgesByNode[e.target]) edgesByNode[e.target] = [];
+  edgesByNode[e.source].push(e);
+  edgesByNode[e.target].push(e);
+});
+
+let network = null;
+let allVisNodes = null;
+let allVisEdges = null;
+
+function makeVisNode(n) {
+  const c = NODE_COLORS[n.dominant_edge] || NODE_COLORS.NONE;
+  const border = VAULT_BORDERS[n.vault] || VAULT_BORDERS.cognee;
+  const size = Math.min(10 + n.degree * 1.8, 55);
+  const fontSize = Math.min(10 + n.degree * 0.4, 18);
+  const bw = n.vault === 'agent' ? 3 : (n.vault === 'ghost' ? 1 : 2);
+  return {
+    id: n.id, label: n.name, size: size,
+    color: {
+      background: c.bg, border: border,
+      highlight: { background: c.hi, border: '#fff' },
+      hover: { background: c.hi, border: '#fff' },
+    },
+    font: { color: '#ECEFF1', size: fontSize, face: "'Segoe UI', system-ui, sans-serif", strokeWidth: 3, strokeColor: '#0a0e17' },
+    shadow: { enabled: true, color: c.shadow, size: 22, x: 0, y: 0 },
+    borderWidth: bw, borderWidthSelected: 4,
+    _data: n,
+  };
+}
+
+function makeVisEdge(e) {
+  const color = EDGE_COLORS[e.type] || '#555';
+  const w = e.type === 'CONTRADICTS' ? 3 : (e.type === 'RELATES_TO' ? 0.5 : 1.5);
+  return {
+    id: e.id, from: e.source, to: e.target,
+    color: { color: color, highlight: color, hover: color, opacity: 0.6 },
+    font: { color: color, size: 7, strokeWidth: 0, align: 'middle' },
+    width: w, smooth: { type: 'continuous', roundness: 0.12 },
+    arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+    _type: e.type,
+  };
+}
+
+function filterData(nodeFilter, edgeFilter) {
+  const filteredNodes = GRAPH_DATA.nodes.filter(nodeFilter);
+  const nodeIds = new Set(filteredNodes.map(n => n.id));
+  const filteredEdges = GRAPH_DATA.edges.filter(e =>
+    nodeIds.has(e.source) && nodeIds.has(e.target) && (!edgeFilter || edgeFilter(e))
+  );
+  return { nodes: filteredNodes, edges: filteredEdges };
+}
+
+function render(nodes, edges) {
+  const visNodes = new vis.DataSet(nodes.map(makeVisNode));
+  const visEdges = new vis.DataSet(edges.map(makeVisEdge));
+  allVisNodes = visNodes;
+  allVisEdges = visEdges;
+
+  const container = document.getElementById('viz');
+  const options = {
+    physics: {
+      solver: 'forceAtlas2Based',
+      forceAtlas2Based: {
+        gravitationalConstant: -50,
+        centralGravity: 0.005,
+        springLength: 100,
+        springConstant: 0.035,
+        damping: 0.9,
+        avoidOverlap: 0.4,
+      },
+      stabilization: { iterations: 250, fit: true },
+      maxVelocity: 25,
+    },
+    nodes: { shape: 'dot' },
+    edges: { selectionWidth: 2 },
+    interaction: {
+      hover: true, tooltipDelay: 50,
+      hideEdgesOnDrag: true,
+      zoomView: true, dragView: true,
+      multiselect: true,
+    },
+  };
+
+  if (network) network.destroy();
+  network = new vis.Network(container, { nodes: visNodes, edges: visEdges }, options);
+
+  // Tooltip
+  const tooltip = document.getElementById('tooltip');
+  network.on('hoverNode', (p) => {
+    const vis = visNodes.get(p.node);
+    if (!vis || !vis._data) return;
+    const d = vis._data;
+    document.getElementById('tip-name').textContent = d.name;
+    document.getElementById('tip-vault').textContent = d.vault + (d.labels ? ' · ' + d.labels.filter(l => l !== '__Node__').join(', ') : '');
+    document.getElementById('tip-degree').textContent = d.degree + ' connections';
+    document.getElementById('tip-summary').textContent = d.summary || '(no summary)';
+    tooltip.style.display = 'block';
+    tooltip.style.left = (p.event.center.x + 15) + 'px';
+    tooltip.style.top = (p.event.center.y + 15) + 'px';
+  });
+  network.on('blurNode', () => { tooltip.style.display = 'none'; });
+  network.on('dragStart', () => { tooltip.style.display = 'none'; });
+
+  // Double-click to focus on neighborhood
+  network.on('doubleClick', (p) => {
+    if (p.nodes.length === 0) return;
+    const nid = p.nodes[0];
+    const neighborEdges = GRAPH_DATA.edges.filter(e => e.source === nid || e.target === nid);
+    const neighborIds = new Set([nid]);
+    neighborEdges.forEach(e => { neighborIds.add(e.source); neighborIds.add(e.target); });
+    const neighborNodes = GRAPH_DATA.nodes.filter(n => neighborIds.has(n.id));
+    render(neighborNodes, neighborEdges);
+    document.getElementById('stats').innerHTML =
+      `${neighborNodes.length} nodes · ${neighborEdges.length} edges · neighborhood of ${nodeById[nid].name}`;
+    document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
+  });
+
+  document.getElementById('stats').innerHTML =
+    `${nodes.length} nodes · ${edges.length} edges`;
+}
+
+function loadView(view) {
+  document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+
+  let d;
+  switch (view) {
+    case 'full':
+      // Show top ~300 by degree
+      const sorted = [...GRAPH_DATA.nodes].sort((a,b) => b.degree - a.degree).slice(0, 300);
+      const ids = new Set(sorted.map(n => n.id));
+      const edges = GRAPH_DATA.edges.filter(e => ids.has(e.source) && ids.has(e.target));
+      render(sorted, edges);
+      break;
+    case 'hubs':
+      const top = [...GRAPH_DATA.nodes].sort((a,b) => b.degree - a.degree).slice(0, 30);
+      const topIds = new Set(top.map(n => n.id));
+      // Include their direct neighbors
+      const neighborIds = new Set(topIds);
+      GRAPH_DATA.edges.forEach(e => {
+        if (topIds.has(e.source)) neighborIds.add(e.target);
+        if (topIds.has(e.target)) neighborIds.add(e.source);
+      });
+      d = filterData(n => neighborIds.has(n.id));
+      render(d.nodes, d.edges);
+      break;
+    case 'thesis':
+      d = filterData(n => n.vault === 'cognee');
+      render(d.nodes, d.edges);
+      break;
+    case 'agent':
+      const agentIds = new Set(GRAPH_DATA.nodes.filter(n => n.vault === 'agent').map(n => n.id));
+      const agentNeighbors = new Set(agentIds);
+      GRAPH_DATA.edges.forEach(e => {
+        if (agentIds.has(e.source)) agentNeighbors.add(e.target);
+        if (agentIds.has(e.target)) agentNeighbors.add(e.source);
+      });
+      d = filterData(n => agentNeighbors.has(n.id));
+      render(d.nodes, d.edges);
+      break;
+    case 'implements':
+      d = filterData(() => true, e => e.type === 'IMPLEMENTS');
+      // Only keep nodes that have at least one IMPLEMENTS edge
+      const implNodeIds = new Set();
+      d.edges.forEach(e => { implNodeIds.add(e.source); implNodeIds.add(e.target); });
+      render(d.nodes.filter(n => implNodeIds.has(n.id)), d.edges);
+      break;
+    case 'requires':
+      d = filterData(() => true, e => e.type === 'REQUIRES');
+      const reqNodeIds = new Set();
+      d.edges.forEach(e => { reqNodeIds.add(e.source); reqNodeIds.add(e.target); });
+      render(d.nodes.filter(n => reqNodeIds.has(n.id)), d.edges);
+      break;
+    case 'composes':
+      d = filterData(() => true, e => e.type === 'COMPOSES');
+      const compNodeIds = new Set();
+      d.edges.forEach(e => { compNodeIds.add(e.source); compNodeIds.add(e.target); });
+      render(d.nodes.filter(n => compNodeIds.has(n.id)), d.edges);
+      break;
+    case 'enables':
+      d = filterData(() => true, e => e.type === 'ENABLES');
+      const enNodeIds = new Set();
+      d.edges.forEach(e => { enNodeIds.add(e.source); enNodeIds.add(e.target); });
+      render(d.nodes.filter(n => enNodeIds.has(n.id)), d.edges);
+      break;
+    case 'security':
+      const secNames = ['OWASP', 'Security', 'Authentication', 'CWE', 'Session', 'Identity', 'Credential', 'Encrypt'];
+      const secIds = new Set();
+      GRAPH_DATA.nodes.forEach(n => {
+        if (secNames.some(s => n.name.includes(s))) secIds.add(n.id);
+      });
+      // 2-hop neighborhood
+      const sec2 = new Set(secIds);
+      GRAPH_DATA.edges.forEach(e => {
+        if (secIds.has(e.source)) sec2.add(e.target);
+        if (secIds.has(e.target)) sec2.add(e.source);
+      });
+      d = filterData(n => sec2.has(n.id));
+      render(d.nodes, d.edges);
+      break;
+  }
+}
+
+function searchNode(query) {
+  if (!network || !allVisNodes || !query.trim()) {
+    // Reset all nodes to normal
+    if (allVisNodes) {
+      allVisNodes.forEach(n => {
+        allVisNodes.update({ id: n.id, opacity: 1.0 });
+      });
+    }
+    return;
+  }
+  const q = query.toLowerCase();
+  const matches = [];
+  allVisNodes.forEach(n => {
+    if (n.label && n.label.toLowerCase().includes(q)) {
+      matches.push(n.id);
+      allVisNodes.update({ id: n.id, opacity: 1.0 });
+    } else {
+      allVisNodes.update({ id: n.id, opacity: 0.12 });
+    }
+  });
+  if (matches.length === 1) {
+    network.focus(matches[0], { scale: 1.2, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+  }
+}
+
+// Init
+loadView('full');
+</script>
+</body>
+</html>
